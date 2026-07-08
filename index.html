@@ -21,15 +21,15 @@
   body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:80px;min-height:100vh}
   h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.08}
   header{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));color:#eef3ef;padding:20px 18px 18px;position:relative;overflow:hidden;border-radius:0 0 24px 24px}
-  header::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12)}
-  header .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  header::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);pointer-events:none}
+  header .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:2}
   header .eyebrow{font-family:"Sometype Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-soft)}
   header h1{font-size:1.55rem;font-weight:800;margin-top:4px}
   .outbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#dfe9e2;font-family:"Sometype Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-radius:9px;padding:7px 11px;cursor:pointer}
   .conn{font-family:"Sometype Mono",monospace;font-size:10px;margin-top:6px;color:#aec1b4}
   .conn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7d8a82;margin-right:5px;vertical-align:middle}
   .conn.ok .dot{background:#62d39a}.conn.bad .dot{background:#ef9b85}
-  .weekbar{display:flex;gap:5px;margin-top:14px}
+  .weekbar{display:flex;gap:5px;margin-top:14px;position:relative;z-index:2}
   .wb{flex:1;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 2px}
   .wb .d{font-family:"Sometype Mono",monospace;font-size:9px;letter-spacing:.05em;color:var(--accent-soft);text-transform:uppercase}
   .wb .m{font-size:1.05rem;margin-top:3px}
