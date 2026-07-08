@@ -957,6 +957,17 @@ async function savePerfil(){
 }
 
 /* ---------- TABS + INIT ---------- */
+async function doLogout(){
+  try{ if(sb) await sb.auth.signOut(); }
+  catch(e){ /* aunque falle la red, cerramos localmente igual */ }
+  user=null;perfil=null;plan={};act={};loads={};bien={};alim={};comi={};dia={};medidas=[];
+  const em=el("email"),pw=el("pass");if(em)em.value="";if(pw)pw.value="";
+  showOnly("authView");
+  el("conn").hidden=true;
+  el("headEyebrow").textContent="v2 · multi-usuario";
+  gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
+  window.scrollTo(0,0);
+}
 document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));el(b.dataset.v).classList.add("active");window.scrollTo(0,0);};});
 function init(){
   const now=new Date();viewY=now.getFullYear();viewM=now.getMonth();
@@ -965,13 +976,12 @@ function init(){
   el("btnLogin").onclick=()=>conBoton("btnLogin",login);
   el("btnSignup").onclick=()=>conBoton("btnSignup",signup);
   el("btnGoogle").onclick=()=>conBoton("btnGoogle",google);
-  el("btnLogout").onclick=async()=>{
-    try{await sb.auth.signOut();}catch(e){}
-    perfil=null;user=null;
-    el("email").value="";el("pass").value="";
-    showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";
-    gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
-  };
+  el("btnLogout").onclick=doLogout;
+  // Red de seguridad: delegación a nivel documento por si el onclick directo falla
+  document.addEventListener("click",e=>{
+    const t=e.target&&e.target.closest&&e.target.closest("#btnLogout");
+    if(t){e.preventDefault();doLogout();}
+  });
   el("saveMetric").onclick=()=>conBoton("saveMetric",saveMetric);
   el("pass").addEventListener("keydown",e=>{if(e.key==="Enter")conBoton("btnLogin",login);});
   if(!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
