@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Entreno</title>
 <meta name="theme-color" content="#1d4b39">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -392,9 +398,12 @@ function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id
   const inApp=(id==="app");
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   if(inApp){el("authView").hidden=true;el("onboardView").hidden=true;el("v-cal").classList.add("active");}
+  else{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));
+    const first=document.querySelector('#tabbar button[data-v="v-cal"]');if(first)first.classList.add("on");}
   el("tabbar").className="tabbar"+(inApp?" show":"");
   el("weekbar").hidden=!inApp;
-  el("btnLogout").hidden=(id==="authView");}
+  el("btnLogout").hidden=(id==="authView");
+  if(id==="authView")closeSheet();}
 async function onSession(session){
   user=session&&session.user||null;
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
@@ -956,7 +965,13 @@ function init(){
   el("btnLogin").onclick=()=>conBoton("btnLogin",login);
   el("btnSignup").onclick=()=>conBoton("btnSignup",signup);
   el("btnGoogle").onclick=()=>conBoton("btnGoogle",google);
-  el("btnLogout").onclick=()=>sb.auth.signOut();
+  el("btnLogout").onclick=async()=>{
+    try{await sb.auth.signOut();}catch(e){}
+    perfil=null;user=null;
+    el("email").value="";el("pass").value="";
+    showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";
+    gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
+  };
   el("saveMetric").onclick=()=>conBoton("saveMetric",saveMetric);
   el("pass").addEventListener("keydown",e=>{if(e.key==="Enter")conBoton("btnLogin",login);});
   if(!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
