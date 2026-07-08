@@ -178,6 +178,12 @@
   .fnrow:first-of-type{border-top:none}
   .fnrow .fl{font-weight:600;font-size:.94rem}.fnrow .fs{font-size:.78rem;color:var(--ink-soft)}
   .fnrow .acts{width:150px;flex:none}
+  .pe-row{border-top:1px solid var(--line);padding:12px 0}
+  .pe-row:first-of-type{border-top:none}
+  .pe-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .pe-day{font-family:"Sometype Mono",monospace;font-size:.72rem;color:var(--ink-faint);text-transform:uppercase;width:34px;flex:none}
+  .pe-top .chips{flex:1}
+  .pe-top .chip{padding:7px 10px;font-size:.8rem}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -215,12 +221,26 @@
     </div>
   </section>
 
-  <section id="seedView" hidden>
+  <section id="onboardView" hidden>
     <div class="card">
-      <h2 style="font-size:1.15rem">Falta sembrar tu perfil 🌱</h2>
-      <p class="muted" style="margin-top:8px">Tu cuenta (<span id="seedEmail" style="font-family:'Sometype Mono',monospace;font-size:.85rem"></span>) existe, pero no tiene perfil ni plan en la base. Ejecutá el seed en el SQL Editor y recargá.</p>
-      <button class="act ghost" id="btnReload" style="margin-top:16px">Ya lo ejecuté, recargar</button>
+      <span class="tag">Paso 1 de 2</span><h2 style="margin:3px 0 6px">¡Bienvenido/a! 👋</h2>
+      <p class="muted" style="font-size:.88rem">Contanos de vos para calcular tu objetivo calórico. Todo se puede cambiar después desde Perfil.</p>
+      <label class="fld">Tu nombre</label><input type="text" id="oNombre" placeholder="¿Cómo te llamamos?">
+      <label class="fld">Sexo</label><div class="chips" id="oSexo"></div>
+      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><input type="date" id="oNac"></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="oAlt" inputmode="numeric" placeholder="170"></div></div>
+      <label class="fld">Peso actual (kg)</label><input type="number" id="oPeso" step="0.1" inputmode="decimal" placeholder="70">
+      <label class="fld">Nivel de actividad</label><div class="chips" id="oFactor"></div>
+      <label class="fld">Objetivo</label><div class="chips" id="oObjetivo"></div>
+      <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="oAjuste" inputmode="numeric">
+      <p class="muted" style="font-size:.78rem;margin-top:4px">Se sugiere solo según tu objetivo; podés ajustarlo.</p>
     </div>
+    <div class="card">
+      <span class="tag">Paso 2 de 2</span><h2 style="margin:3px 0 6px">Tu semana</h2>
+      <div class="note" id="obReco" style="margin-top:8px"></div>
+      <div id="obPlanEditor"></div>
+      <p class="muted" style="font-size:.78rem;margin-top:10px">Es una sugerencia según tu objetivo: tocá los días para acomodarla a tu vida real.</p>
+    </div>
+    <button class="act" id="btnOnboard" style="margin-bottom:20px">Empezar 🚀</button>
   </section>
 
   <section class="view" id="v-cal">
@@ -240,8 +260,10 @@
   <section class="view" id="v-plan">
     <div class="card">
       <span class="tag">Tu semana</span><h2 style="margin:3px 0 10px">Plan de actividad</h2>
-      <div id="planList"></div>
-      <div class="note" style="margin-top:14px">🔧 En la sesión 6 este plan y tu perfil van a ser editables desde la app.</div>
+      <div class="note" id="planReco" style="margin-top:4px"></div>
+      <div id="planEditor"></div>
+      <button class="act ghost" id="btnTpl" style="margin-top:14px">✨ Usar plan sugerido según mi objetivo</button>
+      <button class="act" id="btnSavePlan" style="margin-top:10px">Guardar plan</button>
     </div>
   </section>
 
@@ -366,10 +388,10 @@ function balanceInfo(total,target){const diff=total-target;const obj=perfil.obje
   return{ok:diff<=0,txt:diff<=0?("Déficit de "+Math.abs(diff)+" kcal ✓"):("Exceso de "+diff+" kcal"),diff};}
 
 /* ---------- AUTH + CARGA ---------- */
-function showOnly(id){["authView","seedView"].forEach(v=>el(v).hidden=(v!==id));
+function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id));
   const inApp=(id==="app");
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  if(inApp){el("authView").hidden=true;el("seedView").hidden=true;el("v-cal").classList.add("active");}
+  if(inApp){el("authView").hidden=true;el("onboardView").hidden=true;el("v-cal").classList.add("active");}
   el("tabbar").className="tabbar"+(inApp?" show":"");
   el("weekbar").hidden=!inApp;
   el("btnLogout").hidden=(id==="authView");}
@@ -392,7 +414,7 @@ async function onSession(session){
     const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme].find(r=>r.error);
     if(err)throw err.error;
     perfil=rp.data;
-    if(!perfil){el("seedEmail").textContent=user.email||user.id;showOnly("seedView");setConn("bad","Falta perfil");return;}
+    if(!perfil){startOnboarding();return;}
     plan={};(rpl.data||[]).forEach(r=>plan[r.dia_semana]={tipo:r.tipo,detalle:r.detalle||""});
     act={};(ra.data||[]).forEach(r=>act[r.fecha]={estado:r.estado,extra_gym:r.extra_gym,extra_deporte:r.extra_deporte});
     loads={};(rc.data||[]).forEach(r=>{if(!loads[r.fecha])loads[r.fecha]=[];loads[r.fecha].push({ejercicio:r.ejercicio,kg:r.kg,reps:r.reps,series:r.series});});
@@ -411,7 +433,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanList();renderLegend();renderProgress();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderLegend();renderProgress();}
 function renderLegend(){
   let h='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="dotg"></i> Hecho</span><span><i class="dotr"></i> No fui</span><span><b class="plusmark">＋</b> Extra</span><span>🙂 Ánimo</span><span>🍴 Comida</span>';
   if(perfil.registra_alcohol)h+='<span>🍷 Alcohol</span>';
@@ -464,10 +486,83 @@ function renderStats(){
     break;}
   el("stStreak").textContent=streak;
 }
-function renderPlanList(){
+/* ---------- PLAN EDITABLE + ONBOARDING ---------- */
+const PLAN_TPL={
+ bajar:{1:["gym",""],2:["deporte","Cardio o deporte"],3:["gym",""],4:["descanso",""],5:["gym",""],6:["deporte","Actividad libre"],0:["descanso",""]},
+ mantener:{1:["gym",""],2:["descanso",""],3:["gym",""],4:["descanso",""],5:["gym",""],6:["deporte","Actividad libre"],0:["descanso",""]},
+ musculo:{1:["gym",""],2:["gym",""],3:["descanso",""],4:["gym",""],5:["gym",""],6:["descanso",""],0:["descanso",""]}
+};
+const PLAN_RECO={
+ bajar:"Para bajar grasa se sugieren 3 días de gym + 2 de deporte o cardio, con al menos un descanso completo.",
+ mantener:"Para mantener alcanzan 3 días de gym y algo de actividad libre el fin de semana.",
+ musculo:"Para ganar músculo se sugieren 4 días de gym con descansos intercalados para recuperar."};
+function tplFor(obj){const t=PLAN_TPL[obj]||PLAN_TPL.mantener;const r={};for(const k in t)r[k]={tipo:t[k][0],detalle:t[k][1]};return r;}
+const TIPOS=[["gym","🏋️ Gym"],["deporte","🏃 Deporte"],["descanso","😴 Libre"]];
+function buildEditor(contId,state,prefix){
   const orden=[1,2,3,4,5,6,0];
-  el("planList").innerHTML=orden.map(dw=>{const p=planFor(dw);
-    return '<div class="planrow"><span class="pd">'+DIAS[dw].slice(0,3)+'</span><span class="pi">'+(iconFor(p)||"😴")+'</span><span><span class="pt">'+(p.tipo==="descanso"?"Descanso":(p.tipo==="gym"?"Gimnasio":"Deporte"))+'</span><br><span class="ps">'+esc(p.detalle||"—")+'</span></span></div>';}).join("");
+  el(contId).innerHTML=orden.map(dw=>{
+    const s=state[dw]||(state[dw]={tipo:"descanso",detalle:""});
+    let h='<div class="pe-row"><div class="pe-top"><span class="pe-day">'+DIAS[dw].slice(0,3)+'</span><div class="chips">'+TIPOS.map(t=>'<span class="chip'+(s.tipo===t[0]?" on":"")+'" data-dw="'+dw+'" data-t="'+t[0]+'">'+t[1]+'</span>').join("")+'</div></div>';
+    if(s.tipo!=="descanso")h+='<input type="text" id="'+prefix+dw+'" placeholder="'+(s.tipo==="gym"?"Detalle (ej: Sesión A · full body)":"¿Qué deporte? (ej: Fútbol · cancha de 6)")+'" value="'+escA(s.detalle||"")+'">';
+    h+='</div>';return h;}).join("");
+  el(contId).querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncEditor(state,prefix);const dw=c.dataset.dw;state[dw]={tipo:c.dataset.t,detalle:state[dw].detalle||""};buildEditor(contId,state,prefix);});
+}
+function syncEditor(state,prefix){for(let dw=0;dw<7;dw++){const i=el(prefix+dw);if(i&&state[dw])state[dw].detalle=i.value;}}
+let planEdit={};
+function renderPlanTab(){
+  if(!perfil)return;
+  el("planReco").textContent="💡 "+(PLAN_RECO[perfil.objetivo]||PLAN_RECO.mantener);
+  planEdit={};for(let dw=0;dw<7;dw++){const p=planFor(dw);planEdit[dw]={tipo:p.tipo,detalle:p.detalle||""};}
+  buildEditor("planEditor",planEdit,"pe_");
+  el("btnTpl").onclick=()=>{planEdit=tplFor(perfil.objetivo);buildEditor("planEditor",planEdit,"pe_");};
+  el("btnSavePlan").onclick=()=>conBoton("btnSavePlan",savePlan);
+}
+async function savePlan(){
+  syncEditor(planEdit,"pe_");
+  const rows=[];for(let dw=0;dw<7;dw++){const s=planEdit[dw];rows.push({user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)});}
+  try{
+    const r=await sb.from("plan_semanal").upsert(rows);if(r.error)throw r.error;
+    plan={};rows.forEach(x=>plan[x.dia_semana]={tipo:x.tipo,detalle:x.detalle||""});
+    renderAll();toast("Plan guardado ✓");
+  }catch(e){toast("No se guardó: "+traducir(e));}
+}
+let obSexo=null,obFactor="1.375",obObjetivo="mantener",obPlan=null;
+function startOnboarding(){
+  setConn("ok","Cuenta creada");
+  el("headEyebrow").textContent="¡bienvenido/a!";
+  obSexo=null;obFactor="1.375";obObjetivo="mantener";obPlan=tplFor(obObjetivo);
+  el("oAjuste").value=SUGERIDO[obObjetivo];
+  refreshObChips();buildEditor("obPlanEditor",obPlan,"ob_");
+  el("obReco").textContent="💡 "+PLAN_RECO[obObjetivo];
+  el("btnOnboard").onclick=()=>conBoton("btnOnboard",saveOnboard);
+  showOnly("onboardView");
+}
+function refreshObChips(){
+  chipGroup("oSexo",[["M","Hombre"],["F","Mujer"]],obSexo,v=>{obSexo=v;refreshObChips();});
+  chipGroup("oFactor",FACTORES,obFactor,v=>{obFactor=v;refreshObChips();});
+  chipGroup("oObjetivo",OBJETIVOS,obObjetivo,v=>{obObjetivo=v;el("oAjuste").value=SUGERIDO[v];obPlan=tplFor(v);buildEditor("obPlanEditor",obPlan,"ob_");el("obReco").textContent="💡 "+PLAN_RECO[v];refreshObChips();});
+}
+async function saveOnboard(){
+  const nac=el("oNac").value,alt=parseInt(el("oAlt").value);
+  if(!el("oNombre").value.trim()){toast("Contanos tu nombre");return;}
+  if(!obSexo){toast("Elegí tu sexo (hace al cálculo calórico)");return;}
+  if(!nac){toast("Falta la fecha de nacimiento");return;}
+  if(!(alt>=100&&alt<=250)){toast("La altura debe estar entre 100 y 250 cm");return;}
+  syncEditor(obPlan,"ob_");
+  const pf={user_id:user.id,nombre:el("oNombre").value.trim(),sexo:obSexo,nacimiento:nac,altura_cm:alt,
+    peso_inicial_kg:el("oPeso").value!==""?parseFloat(el("oPeso").value):null,
+    factor_actividad:parseFloat(obFactor),objetivo:obObjetivo,
+    ajuste_kcal:el("oAjuste").value!==""?parseInt(el("oAjuste").value):0,
+    registra_alcohol:true,registra_fumar:false,registra_diario:true};
+  const rows=[];for(let dw=0;dw<7;dw++){const s=obPlan[dw];rows.push({user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)});}
+  try{
+    let r=await sb.from("perfiles").insert(pf);if(r.error)throw r.error;
+    r=await sb.from("plan_semanal").upsert(rows);if(r.error)throw r.error;
+    perfil=pf;plan={};rows.forEach(x=>plan[x.dia_semana]={tipo:x.tipo,detalle:x.detalle||""});
+    el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
+    showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
+    toast("¡Listo! Tu app quedó configurada 🎉");
+  }catch(e){toast("No se pudo crear el perfil: "+traducir(e));}
 }
 
 /* ---------- MODAL DEL DÍA ---------- */
@@ -862,7 +957,6 @@ function init(){
   el("btnSignup").onclick=()=>conBoton("btnSignup",signup);
   el("btnGoogle").onclick=()=>conBoton("btnGoogle",google);
   el("btnLogout").onclick=()=>sb.auth.signOut();
-  el("btnReload").onclick=()=>location.reload();
   el("saveMetric").onclick=()=>conBoton("saveMetric",saveMetric);
   el("pass").addEventListener("keydown",e=>{if(e.key==="Enter")conBoton("btnLogin",login);});
   if(!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
