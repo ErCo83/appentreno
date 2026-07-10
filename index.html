@@ -62,6 +62,7 @@
   .cell.empty{border:none;background:transparent;cursor:default}
   .cell .num{font-family:"Sometype Mono",monospace;font-size:11.5px;color:var(--ink-soft)}
   .cell .ic{font-size:.9rem;margin-top:2px;line-height:1}
+  .cell .ic.dbl{font-size:.62rem;letter-spacing:-1px}
   .cell .extra{position:absolute;top:3px;left:4px;font-size:.62rem;color:var(--blue);font-weight:800;line-height:1}
   .cell.descanso{background:#e7e9e4;opacity:.9}
   .cell.gym{border-top:2.5px solid var(--accent)}.cell.deporte{border-top:2.5px solid var(--pitch)}
@@ -175,7 +176,7 @@
   .wcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px;box-shadow:var(--shadow)}
   .wcard .wl{font-family:"Sometype Mono",monospace;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint)}
   .wcard .wv{font-size:1.5rem;margin-top:2px}
-  .wcard svg{width:100%;height:42px;display:block;margin-top:4px}
+  .wcard svg{width:100%;height:54px;display:block;margin-top:4px}
   .strip{display:flex;gap:3px;margin-top:8px}
   .strip .sq{flex:1;aspect-ratio:1;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
   .strip .sq.on{border:none}
@@ -190,6 +191,22 @@
   .pe-day{font-family:"Sometype Mono",monospace;font-size:.72rem;color:var(--ink-faint);text-transform:uppercase;width:34px;flex:none}
   .pe-top .chips{flex:1}
   .pe-top .chip{padding:7px 10px;font-size:.8rem}
+  select{width:100%;font-family:"Hanken Grotesk",sans-serif;font-size:1rem;padding:12px 8px;border:1px solid var(--line-2);border-radius:11px;background:var(--surface);color:var(--ink);cursor:pointer}
+  select:focus{outline:none;border-color:var(--accent)}
+  .dsel{display:flex;gap:6px}
+  .dsel select{padding:12px 4px}
+  .pend{display:none;font-family:"Sometype Mono",monospace;font-size:.62rem;color:var(--accent);margin-left:6px}
+  .pend.show{display:inline}
+  .fhint{background:#fdf2e9;border:1px solid var(--accent-soft);color:#9a4a22;border-radius:10px;padding:9px 11px;font-size:.8rem;margin:4px 0 10px}
+  .cell.done{background:#e4f0e9}
+  .cell.miss{background:#fbeae5}
+  .cell.other{opacity:.3}
+  .cell.other .num{color:var(--ink-faint)}
+  .stripdays{display:flex;gap:3px;margin-top:3px}
+  .stripdays span{flex:1;text-align:center;font-family:"Sometype Mono",monospace;font-size:.52rem;color:var(--ink-faint)}
+  .wkbal{margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;justify-content:space-between;align-items:baseline}
+  .wkbal .wkl{font-family:"Sometype Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+  .wkbal .wkv{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.15rem}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -233,7 +250,7 @@
       <p class="muted" style="font-size:.88rem">Contanos de vos para calcular tu objetivo calórico. Todo se puede cambiar después desde Perfil.</p>
       <label class="fld">Tu nombre</label><input type="text" id="oNombre" placeholder="¿Cómo te llamamos?">
       <label class="fld">Sexo</label><div class="chips" id="oSexo"></div>
-      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><input type="date" id="oNac"></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="oAlt" inputmode="numeric" placeholder="170"></div></div>
+      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="oNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="oAlt" inputmode="numeric" placeholder="170"></div></div>
       <label class="fld">Peso actual (kg)</label><input type="number" id="oPeso" step="0.1" inputmode="decimal" placeholder="70">
       <label class="fld">Nivel de actividad</label><div class="chips" id="oFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="oObjetivo"></div>
@@ -291,10 +308,16 @@
       <svg class="chart" id="chart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
       <div id="metricTable"></div>
     </div>
+    <div class="card" id="waistCard">
+      <span class="tag">Cintura</span><h2 style="margin:3px 0 4px">Evolución</h2>
+      <p class="muted" style="font-size:.84rem">La medida más honesta del progreso abdominal.</p>
+      <svg class="chart" id="waistChart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
+    </div>
     <div class="card">
       <span class="tag">Balance calórico</span><h2 style="margin:3px 0 4px">Últimos 14 días</h2>
       <p class="muted" style="font-size:.84rem" id="balHint"></p>
       <svg class="chart" id="defChart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
+      <div class="wkbal"><span class="wkl">Balance de esta semana</span><span class="wkv" id="wkBal">—</span></div>
     </div>
     <div class="card">
       <span class="tag">Bienestar</span><h2 style="margin:3px 0 12px">Energía, ánimo y sueño</h2>
@@ -316,7 +339,7 @@
       <p class="muted" style="font-size:.86rem">Alimentan tu objetivo calórico. Los cambios rigen de acá en adelante, tu historial no se toca.</p>
       <label class="fld">Nombre</label><input type="text" id="pNombre">
       <label class="fld">Sexo</label><div class="chips" id="pSexo"></div>
-      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><input type="date" id="pNac"></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
+      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
       <label class="fld">Peso inicial (kg)</label><input type="number" id="pPesoIni" step="0.1" inputmode="decimal">
       <label class="fld">Nivel de actividad</label><div class="chips" id="pFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="pObjetivo"></div>
@@ -462,14 +485,28 @@ function renderCalendar(){
   el("calTitle").textContent=MONTHS[viewM]+" "+viewY;
   const grid=el("calGrid");grid.innerHTML="";
   const first=new Date(viewY,viewM,1),lead=weekdayMon(first),days=new Date(viewY,viewM+1,0).getDate();
-  for(let i=0;i<lead;i++){const e=document.createElement("div");e.className="cell empty";grid.appendChild(e);}
-  for(let dn=1;dn<=days;dn++){const d=new Date(viewY,viewM,dn);const k=ymd(d);const p=planFor(d.getDay());
+  // días del mes anterior que completan la primera semana
+  for(let i=lead;i>0;i--){const d=new Date(viewY,viewM,1-i);grid.appendChild(makeCell(d,true));}
+  for(let dn=1;dn<=days;dn++){const d=new Date(viewY,viewM,dn);grid.appendChild(makeCell(d,false));}
+  // días del mes siguiente que completan la última semana
+  const usados=lead+days,faltan=(7-(usados%7))%7;
+  for(let i=1;i<=faltan;i++){const d=new Date(viewY,viewM+1,i);grid.appendChild(makeCell(d,true));}
+}
+function makeCell(d,otroMes){
+    const k=ymd(d);const p=planFor(d.getDay());
     const a=act[k]||{};const ach=achieved(k);const miss=a.estado==="no_fui"&&!ach;
     const hasExtra=(a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte");
     const isFut=k>todayStr(),isT=k===todayStr();
     const c=document.createElement("div");
-    c.className="cell "+p.tipo+(ach?" done":miss?" miss":"")+(isT?" today":"")+(isFut?" fut":"");
-    let center=p.tipo!=="descanso"?iconFor(p):(a.extra_deporte?"🏃":(a.extra_gym?"🏋️":""));
+    c.className="cell "+p.tipo+(ach?" done":miss?" miss":"")+(isT?" today":"")+(isFut?" fut":"")+(otroMes?" other":"");
+    // ícono: refleja lo que realmente hiciste; si no hiciste nada, lo planificado
+    let center;
+    const hizoGym=(p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym;
+    const hizoDep=(p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte;
+    if(hizoGym&&hizoDep)center="🏋️⚽";
+    else if(hizoGym)center="🏋️";
+    else if(hizoDep)center=(p.tipo==="deporte"?iconFor(p):"🏃");
+    else center=(p.tipo!=="descanso"?iconFor(p):"");
     let ind=ach?'<span class="st done"></span>':miss?'<span class="st miss"></span>':"";
     const b=bien[k];if(b&&b.animo)ind+='<span class="mi">'+EMO.animo[b.animo-1]+'</span>';
     if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+='<span class="mi">🍴</span>';
@@ -477,8 +514,10 @@ function renderCalendar(){
     if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+='<span class="mi">✍️</span>';
     const inds=ind?'<div class="inds">'+ind+'</div>':"";
     const plus=hasExtra?'<span class="extra">＋</span>':"";
-    c.innerHTML=plus+'<span class="num">'+dn+'</span><span class="ic">'+center+'</span>'+inds;
-    c.onclick=()=>openDay(k);grid.appendChild(c);}
+    const dbl=(hizoGym&&hizoDep);
+    c.innerHTML=plus+'<span class="num">'+d.getDate()+'</span><span class="ic'+(dbl?" dbl":"")+'">'+center+'</span>'+inds;
+    c.onclick=()=>openDay(k);
+    return c;
 }
 function renderStats(){
   const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-weekdayMon(now));
@@ -540,6 +579,7 @@ function startOnboarding(){
   setConn("ok","Cuenta creada");
   el("headEyebrow").textContent="¡bienvenido/a!";
   obSexo=null;obFactor="1.375";obObjetivo="mantener";obPlan=tplFor(obObjetivo);
+  buildDateSelects("oNac");
   el("oAjuste").value=SUGERIDO[obObjetivo];
   refreshObChips();buildEditor("obPlanEditor",obPlan,"ob_");
   el("obReco").textContent="💡 "+PLAN_RECO[obObjetivo];
@@ -552,10 +592,11 @@ function refreshObChips(){
   chipGroup("oObjetivo",OBJETIVOS,obObjetivo,v=>{obObjetivo=v;el("oAjuste").value=SUGERIDO[v];obPlan=tplFor(v);buildEditor("obPlanEditor",obPlan,"ob_");el("obReco").textContent="💡 "+PLAN_RECO[v];refreshObChips();});
 }
 async function saveOnboard(){
-  const nac=el("oNac").value,alt=parseInt(el("oAlt").value);
+  const nac=readDateSelects("oNac"),alt=parseInt(el("oAlt").value);
   if(!el("oNombre").value.trim()){toast("Contanos tu nombre");return;}
   if(!obSexo){toast("Elegí tu sexo (hace al cálculo calórico)");return;}
-  if(!nac){toast("Falta la fecha de nacimiento");return;}
+  if(!nac){toast("Completá día, mes y año de nacimiento");return;}
+  if(nac==="INVALIDA"){toast("Esa fecha de nacimiento no existe, revisala");return;}
   if(!(alt>=100&&alt<=250)){toast("La altura debe estar entre 100 y 250 cm");return;}
   syncEditor(obPlan,"ob_");
   const pf={user_id:user.id,nombre:el("oNombre").value.trim(),sexo:obSexo,nacimiento:nac,altura_cm:alt,
@@ -610,7 +651,7 @@ function renderModal(){
   h+=acc("act","🏃 Actividad",actSummary(),renderActBody(p));
   h+=acc("well","🌙 Bienestar",wellSummary(),renderWellBody());
   h+=acc("food","🍽️ Alimentación",foodSummary(),renderFoodBody());
-  if(perfil.registra_diario)h+=acc("dia","✍️ Diario",diaSummary(),renderDiaBody());
+  if(perfil.registra_diario)h+=acc("dia","✍️ Diario personal",diaSummary(),renderDiaBody());
   h+='<button class="act" id="saveDay" style="margin-top:6px">Guardar día</button>';
   h+='<button class="act ghost" id="closeSheet" style="margin-top:10px">Cerrar</button>';
   el("sheet").innerHTML=h;attachModal();
@@ -646,10 +687,10 @@ function renderWellBody(){
   return h;
 }
 function renderFoodBody(){
-  let h="";
+  let h='<div class="fhint">Escribí el alimento, poné las kcal (o tocá ✨) y sumalo con <b>＋</b> o <b>Enter</b>. Si te lo olvidás, al guardar lo agregamos igual.</div>';
   MOMENTS.forEach((m,mi)=>{
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
-    h+='<div class="meal"><div class="mh"><span>'+m+'</span><span class="mk">'+(sub>0?sub+" kcal":"")+'</span></div>';
+    h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span class="mk">'+(sub>0?sub+" kcal":"")+'</span></div>';
     mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><span class="fk">'+(it.kcal!=null?it.kcal+" kcal":"—")+'</span><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal"><button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button><button class="add" data-fadd="'+mi+'">＋</button></div></div>';
@@ -705,6 +746,24 @@ function addFood(mi){
   const kcal=ki.value!==""?parseFloat(ki.value):null;
   syncModal();mFood[MOMENTS[mi]].push({desc:desc,kcal:kcal});renderModal();
 }
+/* Rescata lo que el usuario escribió pero no confirmó con ＋ */
+function flushPendingFood(){
+  let n=0;
+  MOMENTS.forEach((m,mi)=>{
+    const di=el("fad"+mi),ki=el("fak"+mi);
+    if(!di)return;
+    const desc=(di.value||"").trim();if(!desc)return;
+    const kcal=(ki&&ki.value!=="")?parseFloat(ki.value):null;
+    mFood[m].push({desc:desc,kcal:kcal});
+    di.value="";if(ki)ki.value="";n++;
+  });
+  return n;
+}
+function markPending(mi){
+  const di=el("fad"+mi),w=el("fpend"+mi);
+  if(!di||!w)return;
+  w.className="pend"+((di.value||"").trim()?" show":"");
+}
 async function estimateFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi),btn=el("fest"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
@@ -757,7 +816,13 @@ function attachModal(){
   document.querySelectorAll("[data-est]").forEach(x=>x.onclick=()=>estimateFood(+x.dataset.est));
   document.querySelectorAll("[data-drm]").forEach(x=>x.onclick=()=>delDiario(parseInt(x.dataset.drm)));
   const inp=el("exSearch");if(inp){inp.oninput=()=>renderExSuggest(inp.value);inp.onfocus=()=>renderExSuggest(inp.value);}
-  MOMENTS.forEach((m,mi)=>{const fi=el("fad"+mi);if(fi){fi.oninput=()=>renderFoodSuggest(mi,fi.value);fi.onfocus=()=>renderFoodSuggest(mi,fi.value);}});
+  MOMENTS.forEach((m,mi)=>{const fi=el("fad"+mi);if(fi){
+    fi.oninput=()=>{renderFoodSuggest(mi,fi.value);markPending(mi);};
+    fi.onfocus=()=>renderFoodSuggest(mi,fi.value);
+    fi.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
+    const ki=el("fak"+mi);if(ki)ki.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
+    markPending(mi);
+  }});
   el("saveDay").onclick=()=>conBoton("saveDay",saveDay);
   el("closeSheet").onclick=closeSheet;
 }
@@ -772,6 +837,7 @@ el("ov").onclick=e=>{if(e.target.id==="ov")closeSheet();};
 
 async function saveDay(){
   syncModal();
+  const rescatados=flushPendingFood();
   try{
     // --- actividad ---
     const vacioAct=!mEstado&&!mExtraGym&&!mExtraDep;
@@ -810,27 +876,64 @@ async function saveDay(){
     if(items.length){const ic=await sb.from("comidas").insert(items);if(ic.error)throw ic.error;}
     if(items.length)comi[mKey]=items.map(i=>({momento:i.momento,descripcion:i.descripcion,kcal:i.kcal}));else delete comi[mKey];
 
-    renderAll();closeSheet();toast("Día guardado ✓");
+    renderAll();closeSheet();
+    toast(rescatados>0?("Día guardado ✓ (sumé "+rescatados+(rescatados===1?" alimento":" alimentos")+" que quedaban escritos)"):"Día guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
 
+
+
+/* ---------- SELECTORES DE FECHA DE NACIMIENTO ---------- */
+const MESES_CORTOS=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+function buildDateSelects(prefix){
+  const hoy=new Date(),yMax=hoy.getFullYear()-10,yMin=hoy.getFullYear()-100;
+  let dOpts='<option value="">Día</option>';
+  for(let d=1;d<=31;d++)dOpts+='<option value="'+d+'">'+d+'</option>';
+  let mOpts='<option value="">Mes</option>';
+  MESES_CORTOS.forEach((m,i)=>{mOpts+='<option value="'+(i+1)+'">'+m+'</option>';});
+  let yOpts='<option value="">Año</option>';
+  for(let y=yMax;y>=yMin;y--)yOpts+='<option value="'+y+'">'+y+'</option>';
+  el(prefix).innerHTML='<select id="'+prefix+'_d">'+dOpts+'</select><select id="'+prefix+'_m">'+mOpts+'</select><select id="'+prefix+'_y">'+yOpts+'</select>';
+}
+function setDateSelects(prefix,iso){
+  if(!iso)return;
+  const p=String(iso).split("-");if(p.length!==3)return;
+  const y=el(prefix+"_y"),m=el(prefix+"_m"),d=el(prefix+"_d");
+  if(y)y.value=String(parseInt(p[0],10));
+  if(m)m.value=String(parseInt(p[1],10));
+  if(d)d.value=String(parseInt(p[2],10));
+}
+function readDateSelects(prefix){
+  const y=el(prefix+"_y"),m=el(prefix+"_m"),d=el(prefix+"_d");
+  if(!y||!m||!d||!y.value||!m.value||!d.value)return "";
+  const yy=parseInt(y.value),mm=parseInt(m.value),dd=parseInt(d.value);
+  const test=new Date(yy,mm-1,dd);
+  if(test.getFullYear()!==yy||test.getMonth()!==mm-1||test.getDate()!==dd)return "INVALIDA";
+  return yy+"-"+String(mm).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+}
 
 /* ---------- PROGRESO ---------- */
 function dShort(s){const p=s.split("-");return parseInt(p[2],10)+"/"+parseInt(p[1],10);}
 function labelIdx(n){if(n<=0)return[];if(n===1)return[0];if(n<=6){const a=[];for(let i=0;i<n;i++)a.push(i);return a;}const set=new Set([0,Math.round((n-1)/4),Math.round((n-1)/2),Math.round(3*(n-1)/4),n-1]);return Array.from(set).sort((a,b)=>a-b);}
 const DAYL=["D","L","M","M","J","V","S"];
-function sparkline(points,color,fmin,fmax){
-  if(points.length===0)return '<svg viewBox="0 0 300 42"><text x="150" y="24" text-anchor="middle" fill="#9aa39c" font-family="Sometype Mono" font-size="9">sin datos</text></svg>';
-  const vals=points.map(p=>p.val);let mn=fmin!=null?fmin:Math.min(...vals),mx=fmax!=null?fmax:Math.max(...vals);if(mx===mn)mx=mn+1;
-  const W=300,H=42,pad=6;const x=i=>points.length===1?W/2:pad+(W-2*pad)*i/(points.length-1);const y=v=>H-pad-(H-2*pad)*(v-mn)/(mx-mn);
-  const path=points.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(p.val).toFixed(1)).join(" ");const last=points[points.length-1];
-  return '<svg viewBox="0 0 300 42" preserveAspectRatio="none"><path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+x(points.length-1).toFixed(1)+'" cy="'+y(last.val).toFixed(1)+'" r="3" fill="'+color+'"/></svg>';
+function sparkline(pointsAll,color,fmin,fmax){
+  const points=pointsAll.slice(-14);
+  if(points.length===0)return '<svg viewBox="0 0 300 54"><text x="150" y="28" text-anchor="middle" fill="#9aa39c" font-family="Sometype Mono" font-size="9">sin datos</text></svg>';
+  const vals=points.map(p=>Number(p.val));let mn=fmin!=null?fmin:Math.min(...vals),mx=fmax!=null?fmax:Math.max(...vals);if(mx===mn)mx=mn+1;
+  const W=300,H=54,top=6,bot=18;
+  const x=i=>points.length===1?W/2:8+(W-16)*i/(points.length-1);
+  const y=v=>H-bot-(H-bot-top)*(v-mn)/(mx-mn);
+  const path=points.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(Number(p.val)).toFixed(1)).join(" ");
+  const last=points[points.length-1];
+  const lbl=points.map((p,i)=>'<text x="'+x(i).toFixed(1)+'" y="51" text-anchor="middle" fill="#9aa39c" font-family="Sometype Mono" font-size="6.5">'+DAYL[parse(p.date).getDay()]+'</text>').join("");
+  return '<svg viewBox="0 0 300 54"><path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+x(points.length-1).toFixed(1)+'" cy="'+y(Number(last.val)).toFixed(1)+'" r="3" fill="'+color+'"/>'+lbl+'</svg>';
 }
 function streakNo(has){let n=0,d=new Date();for(let i=0;i<120;i++){const k=ymd(d);if(has(k))break;n++;d.setDate(d.getDate()-1);}return n;}
 function stripViz(label,has,color){
   const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(ymd(d));}
-  let cnt=0;const sq=days.map(k=>{const on=has(k);if(on)cnt++;return '<div class="sq'+(on?" on":"")+'" style="'+(on?"background:"+color:"")+'"></div>';}).join("");
-  return '<div style="margin-bottom:14px"><div class="strip">'+sq+'</div><div class="striplbl"><span>'+label+'</span><span>'+cnt+'/14 días</span></div></div>';
+  let cnt=0;const sq=days.map(k=>{const on=has(k);if(on)cnt++;return '<div class="sq'+(on?" on":"")+'" style="'+(on?"background:"+color:"")+'" title="'+k+'"></div>';}).join("");
+  const ini=days.map(k=>'<span>'+DAYL[parse(k).getDay()]+'</span>').join("");
+  return '<div style="margin-bottom:14px"><div class="strip">'+sq+'</div><div class="stripdays">'+ini+'</div><div class="striplbl"><span>'+label+'</span><span>'+cnt+'/14 días</span></div></div>';
 }
 function balLabels(){const o=perfil.objetivo;
   if(o==="musculo")return{top:"superávit ✓",tc:"#2f8f5b",bot:"falta",bc:"#e2643a",hint:"Sobre la línea = superávit (lo buscado para ganar músculo)"};
@@ -860,6 +963,8 @@ function renderProgress(){
   if(medidas.length===0)mt.innerHTML="";
   else{const rows=medidas.slice(-6).reverse().map(m=>'<tr><td>'+m.fecha+'</td><td>'+(m.peso_kg!=null?m.peso_kg+" kg":"—")+'</td><td>'+(m.cintura_cm!=null?m.cintura_cm+" cm":"—")+'</td></tr>').join("");mt.innerHTML='<table><tr><th>Fecha</th><th>Peso</th><th>Cintura</th></tr>'+rows+'</table>';}
   renderBalance(target);
+  renderWaist();
+  renderWeekBalance(target);
   const dates=Object.keys(bien).sort();
   function series(f){return dates.map(d=>({date:d,val:bien[d][f]})).filter(p=>p.val!=null);}
   const defs=[["energia","Energía",EMO.energia,1,5],["animo","Ánimo",EMO.animo,1,5],["sueno","Sueño",EMO.sueno,1,5],["horas_dormidas","Horas dormidas",null,null,null]];
@@ -871,6 +976,33 @@ function renderProgress(){
   const latest={};Object.keys(loads).sort().forEach(date=>{(loads[date]||[]).forEach(it=>{latest[it.ejercicio]={date:date,series:it.series,reps:it.reps,kg:it.kg};});});
   const keys=Object.keys(latest).sort((a,b)=>a.localeCompare(b,"es"));
   el("loadHistory").innerHTML=keys.length===0?'<p class="muted" style="font-size:.84rem;margin-top:8px">Todavía sin cargas.</p>':'<table><tr><th>Ejercicio</th><th>Ser.</th><th>Reps</th><th>Kg</th><th>Fecha</th></tr>'+keys.map(ex=>'<tr><td>'+esc(ex)+'</td><td>'+(latest[ex].series!=null?latest[ex].series:"—")+'</td><td>'+(latest[ex].reps!=null?latest[ex].reps:"—")+'</td><td>'+(latest[ex].kg!=null?latest[ex].kg+" kg":"—")+'</td><td>'+latest[ex].date.slice(5)+'</td></tr>').join("")+'</table>';
+}
+function renderWaist(){
+  const svg=el("waistChart");
+  const pts=medidas.filter(m=>m.cintura_cm!=null);
+  if(pts.length===0){svg.innerHTML='<text x="160" y="75" text-anchor="middle" fill="#69736d" font-family="Sometype Mono" font-size="11">Cargá tu cintura para ver la evolución</text>';return;}
+  const ws=pts.map(p=>Number(p.cintura_cm));let mn=Math.min(...ws),mx=Math.max(...ws);if(mx-mn<3){mx+=1.5;mn-=1.5;}
+  const W=320,H=150,pad=22;
+  const x=i=>pts.length===1?W/2:pad+(W-2*pad)*i/(pts.length-1);
+  const y=v=>H-pad-(H-2*pad)*(v-mn)/(mx-mn);
+  const path=pts.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(Number(p.cintura_cm)).toFixed(1)).join(" ");
+  const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(Number(p.cintura_cm)).toFixed(1)+'" r="3.5" fill="#3a6ea5"/>').join("");
+  const dl=labelIdx(pts.length).map(i=>'<text x="'+x(i).toFixed(1)+'" y="148" text-anchor="middle" fill="#9aa39c" font-family="Sometype Mono" font-size="7.5">'+dShort(pts[i].fecha)+'</text>').join("");
+  svg.innerHTML='<path d="'+path+'" fill="none" stroke="#3a6ea5" stroke-width="2.5" stroke-linejoin="round"/>'+dots+dl+'<text x="2" y="11" fill="#69736d" font-family="Sometype Mono" font-size="9">'+mx.toFixed(1)+'</text><text x="2" y="126" fill="#69736d" font-family="Sometype Mono" font-size="9">'+mn.toFixed(1)+'</text>';
+}
+function renderWeekBalance(target){
+  const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-weekdayMon(now));
+  let acum=0,dias=0;
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=ymd(d);
+    if(k>todayStr())break;
+    const c=consumedFor(k);if(c==null)continue;
+    acum+=(c-target);dias++;}
+  const box=el("wkBal");
+  if(dias===0){box.textContent="—";box.style.color="var(--ink-faint)";return;}
+  const signo=acum>0?"+":"";
+  box.textContent=signo+acum.toLocaleString("es-AR")+" kcal";
+  const bueno=(perfil.objetivo==="musculo")?(acum>=0):(perfil.objetivo==="mantener"?Math.abs(acum)<=1000:(acum<=0));
+  box.style.color=bueno?"var(--green)":"var(--accent)";
 }
 function renderBalance(target){
   const svg=el("defChart");
@@ -920,7 +1052,7 @@ function renderPerfil(){
   pfSexo=perfil.sexo;pfFactor=String(perfil.factor_actividad);pfObjetivo=perfil.objetivo;
   pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;pfDia=!!perfil.registra_diario;
   el("pNombre").value=perfil.nombre||"";
-  el("pNac").value=perfil.nacimiento||"";
+  buildDateSelects("pNac");setDateSelects("pNac",perfil.nacimiento);
   el("pAlt").value=perfil.altura_cm||"";
   el("pPesoIni").value=perfil.peso_inicial_kg!=null?perfil.peso_inicial_kg:"";
   el("pAjuste").value=perfil.ajuste_kcal!=null?perfil.ajuste_kcal:0;
@@ -937,8 +1069,9 @@ function refreshPerfilChips(){
   flagPair("fDiaSi","fDiaNo",pfDia,v=>{pfDia=v;refreshPerfilChips();});
 }
 async function savePerfil(){
-  const nac=el("pNac").value,alt=parseInt(el("pAlt").value);
-  if(!nac){toast("Falta la fecha de nacimiento");return;}
+  const nac=readDateSelects("pNac"),alt=parseInt(el("pAlt").value);
+  if(!nac){toast("Completá día, mes y año de nacimiento");return;}
+  if(nac==="INVALIDA"){toast("Esa fecha de nacimiento no existe, revisala");return;}
   if(!(alt>=100&&alt<=250)){toast("La altura debe estar entre 100 y 250 cm");return;}
   const payload={nombre:el("pNombre").value.trim()||null,sexo:pfSexo,nacimiento:nac,altura_cm:alt,
     peso_inicial_kg:el("pPesoIni").value!==""?parseFloat(el("pPesoIni").value):null,
