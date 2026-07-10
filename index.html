@@ -164,9 +164,14 @@
   .planrow .ps{font-size:.78rem;color:var(--ink-soft)}
   .tabbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:none;z-index:40;padding-bottom:env(safe-area-inset-bottom)}
   .tabbar.show{display:flex}
+  .tabbar{overflow:visible}
   .tabbar button{flex:1;background:none;border:none;padding:11px 4px 13px;cursor:pointer;color:var(--ink-faint);font-family:"Sometype Mono",monospace;font-size:9.5px;letter-spacing:.03em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:3px}
   .tabbar button .i{font-size:1.2rem;line-height:1;filter:grayscale(.5);opacity:.6}
   .tabbar button.on{color:var(--accent)}.tabbar button.on .i{filter:none;opacity:1}
+  .tabbar button.center{position:relative}
+  .tabbar button.center .i{width:52px;height:52px;margin-top:-24px;margin-bottom:1px;border-radius:50%;background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(20,53,39,.6);border:3px solid var(--bg);filter:none;opacity:1}
+  .tabbar button.center.on{color:var(--pitch)}
+  .tabbar button.center.on .i{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep))}
   .frow{display:flex;gap:10px}.frow>div{flex:1}
   svg.chart{width:100%;height:150px;display:block;margin-top:8px}
   table{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:6px}
@@ -207,6 +212,22 @@
   .wkbal{margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;justify-content:space-between;align-items:baseline}
   .wkbal .wkl{font-family:"Sometype Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
   .wkbal .wkv{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.15rem}
+  .rutcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .rutcard .rh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .rutcard .rn{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1rem}
+  .rutcard .rmeta{font-family:"Sometype Mono",monospace;font-size:.66rem;color:var(--ink-faint)}
+  .rutcard .rdel{background:none;border:none;color:var(--red);font-size:1.1rem;cursor:pointer;padding:0 4px}
+  .rej{display:flex;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem}
+  .rej:first-of-type{border-top:none}
+  .rej .rejn{flex:1}
+  .rej .rejv{font-family:"Sometype Mono",monospace;font-size:.72rem;color:var(--ink-soft);white-space:nowrap}
+  .rej .rmv{background:none;border:none;color:var(--red);font-size:1rem;cursor:pointer}
+  .rejadd{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .rejadd input.rname{flex:1 1 100%;padding:9px}
+  .rejadd input.rnum{width:60px;text-align:center;font-family:"Sometype Mono",monospace;padding:9px 2px}
+  .rejadd button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:10px;width:44px;font-size:1.1rem;cursor:pointer}
+  .planpick{margin-top:8px}
+  .planpick select{margin-top:5px}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -290,6 +311,19 @@
     </div>
   </section>
 
+  <section class="view" id="v-rutinas">
+    <div class="card">
+      <span class="tag">Rutinas</span><h2 style="margin:3px 0 6px">Tus rutinas de gimnasio</h2>
+      <p class="muted" style="font-size:.86rem">Creá rutinas con nombre (ej: "Sesión A · full body") y asignalas a tus días de gym en la pestaña Plan. Al abrir un día de gym, sus ejercicios aparecen precargados.</p>
+    </div>
+    <div id="rutinasList"></div>
+    <div class="card">
+      <span class="tag">Nueva rutina</span><h2 style="margin:3px 0 8px">Crear</h2>
+      <input type="text" id="nuevaRutina" placeholder="Nombre (ej: Sesión A · full body)">
+      <button class="act" id="btnNuevaRutina" style="margin-top:10px">＋ Crear rutina</button>
+    </div>
+  </section>
+
   <section class="view" id="v-prog">
     <div class="stats-row">
       <div class="stat"><b id="cBal">0</b><span>En objetivo / mes</span></div>
@@ -361,9 +395,10 @@
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <nav class="tabbar" id="tabbar">
-  <button class="on" data-v="v-cal"><span class="i">📅</span>Calendario</button>
-  <button data-v="v-plan"><span class="i">🗓️</span>Plan</button>
   <button data-v="v-prog"><span class="i">📈</span>Progreso</button>
+  <button data-v="v-plan"><span class="i">🗓️</span>Plan</button>
+  <button class="on center" data-v="v-cal"><span class="i">📅</span>Calendario</button>
+  <button data-v="v-rutinas"><span class="i">🏋️</span>Rutinas</button>
   <button data-v="v-perfil"><span class="i">👤</span>Perfil</button>
 </nav>
 
@@ -377,6 +412,7 @@ const CONFIG = {
 
 let sb=null,user=null,perfil=null;
 let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[];
+let rutinas=[],rutinaEj={};  // rutinas[] = {id,nombre}; rutinaEj[rutina_id] = [{ejercicio,series,reps,kg,orden}]
 let viewY,viewM;
 
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -402,7 +438,7 @@ const ERRORES=[[/invalid login credentials/i,"Email o contraseña incorrectos."]
 function traducir(e){const m=(e&&e.message)||String(e||"");for(const[re,t]of ERRORES)if(re.test(m))return t;return "No se pudo completar: "+m;}
 
 /* ---------- PERFIL / PLAN ---------- */
-function planFor(dow){return plan[dow]||{tipo:"descanso",detalle:""};}
+function planFor(dow){return plan[dow]||{tipo:"descanso",detalle:"",rutina_id:null};}
 function iconFor(p){if(p.tipo==="gym")return "🏋️";if(p.tipo==="deporte"){const d=(p.detalle||"").toLowerCase();if(d.includes("fútbol")||d.includes("futbol"))return "⚽";if(d.includes("yoga"))return "🧘";if(d.includes("nataci"))return "🏊";return "🏃";}return "";}
 function plannedCountWeek(){let n=0;for(let i=0;i<7;i++)if(planFor(i).tipo!=="descanso")n++;return n;}
 function achieved(k){const a=act[k];return !!(a&&(a.estado==="cumpli"||a.extra_gym||a.extra_deporte));}
@@ -432,7 +468,7 @@ async function onSession(session){
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
-    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme]=await Promise.all([
+    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
       sb.from("actividad").select("*"),
@@ -441,13 +477,17 @@ async function onSession(session){
       sb.from("alimentacion_dia").select("*"),
       sb.from("comidas").select("*").order("id"),
       sb.from("diario").select("*").order("creado"),
-      sb.from("medidas").select("*").order("fecha")
+      sb.from("medidas").select("*").order("fecha"),
+      sb.from("rutinas").select("*").order("nombre"),
+      sb.from("rutina_ejercicios").select("*").order("orden")
     ]);
-    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme].find(r=>r.error);
+    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre].find(r=>r.error);
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
-    plan={};(rpl.data||[]).forEach(r=>plan[r.dia_semana]={tipo:r.tipo,detalle:r.detalle||""});
+    plan={};(rpl.data||[]).forEach(r=>plan[r.dia_semana]={tipo:r.tipo,detalle:r.detalle||"",rutina_id:r.rutina_id||null});
+    rutinas=(rru.data||[]).map(r=>({id:r.id,nombre:r.nombre}));
+    rutinaEj={};(rre.data||[]).forEach(r=>{if(!rutinaEj[r.rutina_id])rutinaEj[r.rutina_id]=[];rutinaEj[r.rutina_id].push({ejercicio:r.ejercicio,series:r.series,reps:r.reps,kg:r.kg,orden:r.orden});});
     act={};(ra.data||[]).forEach(r=>act[r.fecha]={estado:r.estado,extra_gym:r.extra_gym,extra_deporte:r.extra_deporte});
     loads={};(rc.data||[]).forEach(r=>{if(!loads[r.fecha])loads[r.fecha]=[];loads[r.fecha].push({ejercicio:r.ejercicio,kg:r.kg,reps:r.reps,series:r.series});});
     bien={};(rb.data||[]).forEach(r=>bien[r.fecha]=r);
@@ -465,7 +505,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderLegend();renderProgress();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();}
 function renderLegend(){
   let h='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="dotg"></i> Hecho</span><span><i class="dotr"></i> No fui</span><span><b class="plusmark">＋</b> Extra</span><span>🙂 Ánimo</span><span>🍴 Comida</span>';
   if(perfil.registra_alcohol)h+='<span>🍷 Alcohol</span>';
@@ -548,29 +588,33 @@ function tplFor(obj){const t=PLAN_TPL[obj]||PLAN_TPL.mantener;const r={};for(con
 const TIPOS=[["gym","🏋️ Gym"],["deporte","🏃 Deporte"],["descanso","😴 Libre"]];
 function buildEditor(contId,state,prefix){
   const orden=[1,2,3,4,5,6,0];
+  const withRutina=(prefix==="pe_"); // solo el editor del plan real ofrece asignar rutina
   el(contId).innerHTML=orden.map(dw=>{
     const s=state[dw]||(state[dw]={tipo:"descanso",detalle:""});
     let h='<div class="pe-row"><div class="pe-top"><span class="pe-day">'+DIAS[dw].slice(0,3)+'</span><div class="chips">'+TIPOS.map(t=>'<span class="chip'+(s.tipo===t[0]?" on":"")+'" data-dw="'+dw+'" data-t="'+t[0]+'">'+t[1]+'</span>').join("")+'</div></div>';
     if(s.tipo!=="descanso")h+='<input type="text" id="'+prefix+dw+'" placeholder="'+(s.tipo==="gym"?"Detalle (ej: Sesión A · full body)":"¿Qué deporte? (ej: Fútbol · cancha de 6)")+'" value="'+escA(s.detalle||"")+'">';
+    if(withRutina&&s.tipo==="gym"){
+      h+='<div class="planpick"><label class="fld" style="margin-top:8px">Rutina precargada (opcional)</label><select id="'+prefix+"rut_"+dw+'"><option value="">— Ninguna —</option>'+rutinas.map(r=>'<option value="'+r.id+'"'+(String(s.rutina_id||"")===String(r.id)?" selected":"")+'>'+esc(r.nombre)+'</option>').join("")+'</select></div>';
+    }
     h+='</div>';return h;}).join("");
-  el(contId).querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncEditor(state,prefix);const dw=c.dataset.dw;state[dw]={tipo:c.dataset.t,detalle:state[dw].detalle||""};buildEditor(contId,state,prefix);});
+  el(contId).querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncEditor(state,prefix);const dw=c.dataset.dw;const prev=state[dw]||{};state[dw]={tipo:c.dataset.t,detalle:prev.detalle||"",rutina_id:prev.rutina_id||null};buildEditor(contId,state,prefix);});
 }
-function syncEditor(state,prefix){for(let dw=0;dw<7;dw++){const i=el(prefix+dw);if(i&&state[dw])state[dw].detalle=i.value;}}
+function syncEditor(state,prefix){for(let dw=0;dw<7;dw++){const i=el(prefix+dw);if(i&&state[dw])state[dw].detalle=i.value;const rs=el(prefix+"rut_"+dw);if(rs&&state[dw])state[dw].rutina_id=rs.value?parseInt(rs.value):null;}}
 let planEdit={};
 function renderPlanTab(){
   if(!perfil)return;
   el("planReco").textContent="💡 "+(PLAN_RECO[perfil.objetivo]||PLAN_RECO.mantener);
-  planEdit={};for(let dw=0;dw<7;dw++){const p=planFor(dw);planEdit[dw]={tipo:p.tipo,detalle:p.detalle||""};}
+  planEdit={};for(let dw=0;dw<7;dw++){const p=planFor(dw);planEdit[dw]={tipo:p.tipo,detalle:p.detalle||"",rutina_id:p.rutina_id||null};}
   buildEditor("planEditor",planEdit,"pe_");
   el("btnTpl").onclick=()=>{planEdit=tplFor(perfil.objetivo);buildEditor("planEditor",planEdit,"pe_");};
   el("btnSavePlan").onclick=()=>conBoton("btnSavePlan",savePlan);
 }
 async function savePlan(){
   syncEditor(planEdit,"pe_");
-  const rows=[];for(let dw=0;dw<7;dw++){const s=planEdit[dw];rows.push({user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)});}
+  const rows=[];for(let dw=0;dw<7;dw++){const s=planEdit[dw];rows.push({user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null),rutina_id:s.tipo==="gym"?(s.rutina_id||null):null});}
   try{
     const r=await sb.from("plan_semanal").upsert(rows);if(r.error)throw r.error;
-    plan={};rows.forEach(x=>plan[x.dia_semana]={tipo:x.tipo,detalle:x.detalle||""});
+    plan={};rows.forEach(x=>plan[x.dia_semana]={tipo:x.tipo,detalle:x.detalle||"",rutina_id:x.rutina_id||null});
     renderAll();toast("Plan guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
@@ -616,7 +660,7 @@ async function saveOnboard(){
 }
 
 /* ---------- MODAL DEL DÍA ---------- */
-let mKey,mEstado,mExtraGym,mExtraDep,logRows;
+let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false;
 let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo;
 let mFood,mTotalManual,mAlcohol,mAlcTipo;
 let openSec={act:true,well:false,food:false,dia:false};
@@ -624,6 +668,15 @@ function openDay(key){
   mKey=key;const a=act[key]||{};
   mEstado=a.estado||null;mExtraGym=!!a.extra_gym;mExtraDep=!!a.extra_deporte;
   logRows=(loads[key]||[]).map(r=>({ex:r.ejercicio,series:r.series!=null?r.series:"",reps:r.reps!=null?r.reps:"",kg:r.kg!=null?r.kg:""}));
+  mRutinaPrecargada=false;
+  // Si es día de gym, no hay cargas guardadas todavía, y el plan tiene rutina: precargar
+  if(logRows.length===0){
+    const p=planFor(parse(key).getDay());
+    if(p.tipo==="gym"&&p.rutina_id&&rutinaEj[p.rutina_id]){
+      logRows=rutinaEj[p.rutina_id].map(e=>({ex:e.ejercicio,series:e.series!=null?e.series:"",reps:e.reps!=null?e.reps:"",kg:e.kg!=null?e.kg:""}));
+      mRutinaPrecargada=logRows.length>0;
+    }
+  }
   const b=bien[key]||{};
   mEnergia=b.energia||null;mAnimo=b.animo||null;mSueno=b.sueno||null;
   mHoras=b.horas_dormidas!=null?b.horas_dormidas:"";mTexto=b.sueno_texto||"";
@@ -668,6 +721,7 @@ function renderActBody(p){
 }
 function renderLoggerHTML(){
   let h='<div class="seclabel">Ejercicios realizados</div>';
+  if(mRutinaPrecargada)h+='<div class="fhint" style="background:#e9f2ec;border-color:#a9d4bc;color:#20603c">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
   if(logRows.length===0)h+='<p class="muted" style="font-size:.86rem;margin-bottom:4px">Buscá y agregá los ejercicios que hiciste.</p>';
   logRows.forEach((r,i)=>{h+='<div class="logrow"><div class="top"><span class="lname">'+esc(r.ex)+'</span><button class="rmv" data-rm="'+i+'">✕</button></div><div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div></div>';});
   h+='<div class="searchwrap"><input type="text" id="exSearch" placeholder="Buscar o agregar ejercicio…" autocomplete="off"><div class="suggest" id="exSuggest"></div></div>';
@@ -1089,6 +1143,69 @@ async function savePerfil(){
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
 
+
+/* ---------- RUTINAS ---------- */
+let rutEjAdd={}; // buffer temporal de ejercicio nuevo por rutina (no usado; se lee del DOM)
+function renderRutinas(){
+  const cont=el("rutinasList");if(!cont)return;
+  if(rutinas.length===0){cont.innerHTML='<div class="card"><p class="muted" style="font-size:.9rem">Todavía no tenés rutinas. Creá la primera abajo — por ejemplo "Sesión A · full body" — y después agregale ejercicios.</p></div>';return;}
+  cont.innerHTML=rutinas.map(r=>{
+    const ejs=rutinaEj[r.id]||[];
+    let h='<div class="rutcard"><div class="rh"><span class="rn">'+esc(r.nombre)+'</span><button class="rdel" data-delrut="'+r.id+'" title="Borrar rutina">🗑️</button></div>';
+    h+='<div class="rmeta">'+(ejs.length?ejs.length+(ejs.length===1?" ejercicio":" ejercicios"):"sin ejercicios aún")+'</div>';
+    ejs.forEach((e,i)=>{const det=[];if(e.series!=null)det.push(e.series+"×"+(e.reps!=null?e.reps:"—"));if(e.kg!=null)det.push(e.kg+" kg");
+      h+='<div class="rej"><span class="rejn">'+esc(e.ejercicio)+'</span><span class="rejv">'+(det.join(" · ")||"—")+'</span><button class="rmv" data-delej="'+r.id+"_"+i+'">✕</button></div>';});
+    h+='<div class="rejadd"><input type="text" class="rname" id="rn_'+r.id+'" placeholder="Ejercicio (ej: Press banca)"><input type="number" class="rnum" id="rs_'+r.id+'" placeholder="ser" inputmode="numeric"><input type="number" class="rnum" id="rr_'+r.id+'" placeholder="rep" inputmode="numeric"><input type="number" class="rnum" id="rk_'+r.id+'" placeholder="kg" inputmode="decimal" step="0.5"><button data-addej="'+r.id+'">＋</button></div>';
+    h+='</div>';return h;}).join("");
+  cont.querySelectorAll("[data-delrut]").forEach(b=>b.onclick=()=>delRutina(parseInt(b.dataset.delrut)));
+  cont.querySelectorAll("[data-delej]").forEach(b=>b.onclick=()=>{const p=b.dataset.delej.split("_");delRutinaEj(parseInt(p[0]),parseInt(p[1]));});
+  cont.querySelectorAll("[data-addej]").forEach(b=>b.onclick=()=>addRutinaEj(parseInt(b.dataset.addej)));
+}
+async function crearRutina(){
+  const inp=el("nuevaRutina");const nombre=(inp.value||"").trim();
+  if(!nombre){inp.focus();return;}
+  if(rutinas.some(r=>r.nombre.toLowerCase()===nombre.toLowerCase())){toast("Ya tenés una rutina con ese nombre");return;}
+  try{
+    const r=await sb.from("rutinas").insert({user_id:user.id,nombre:nombre}).select().single();
+    if(r.error)throw r.error;
+    rutinas.push({id:r.data.id,nombre:r.data.nombre});rutinas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
+    rutinaEj[r.data.id]=[];inp.value="";renderRutinas();toast("Rutina creada ✓");
+  }catch(e){toast("No se pudo crear: "+traducir(e));}
+}
+async function delRutina(id){
+  const r=rutinas.find(x=>x.id===id);if(!r)return;
+  if(!confirm('¿Borrar la rutina "'+r.nombre+'"? Los días que la usaban quedarán sin rutina precargada.'))return;
+  try{
+    const res=await sb.from("rutinas").delete().eq("id",id);if(res.error)throw res.error;
+    rutinas=rutinas.filter(x=>x.id!==id);delete rutinaEj[id];
+    for(let dw=0;dw<7;dw++)if(plan[dw]&&plan[dw].rutina_id===id)plan[dw].rutina_id=null;
+    renderRutinas();toast("Rutina borrada");
+  }catch(e){toast("No se pudo borrar: "+traducir(e));}
+}
+async function addRutinaEj(rutId){
+  const n=el("rn_"+rutId),s=el("rs_"+rutId),rp=el("rr_"+rutId),k=el("rk_"+rutId);
+  const nombre=(n.value||"").trim();if(!nombre){n.focus();return;}
+  const orden=(rutinaEj[rutId]||[]).length;
+  const fila={rutina_id:rutId,orden:orden,ejercicio:nombre,
+    series:s.value!==""?parseInt(s.value):null,reps:rp.value!==""?parseInt(rp.value):null,kg:k.value!==""?parseFloat(k.value):null};
+  try{
+    const r=await sb.from("rutina_ejercicios").insert(fila).select().single();if(r.error)throw r.error;
+    if(!rutinaEj[rutId])rutinaEj[rutId]=[];
+    rutinaEj[rutId].push({ejercicio:fila.ejercicio,series:fila.series,reps:fila.reps,kg:fila.kg,orden:orden,_id:r.data.id});
+    renderRutinas();
+  }catch(e){toast("No se pudo agregar: "+traducir(e));}
+}
+async function delRutinaEj(rutId,idx){
+  const arr=rutinaEj[rutId]||[];const e=arr[idx];if(!e)return;
+  try{
+    // borrar por coincidencia (rutina + orden + ejercicio) si no tenemos _id
+    let q=sb.from("rutina_ejercicios").delete().eq("rutina_id",rutId).eq("ejercicio",e.ejercicio);
+    if(e._id)q=sb.from("rutina_ejercicios").delete().eq("id",e._id);
+    const r=await q;if(r.error)throw r.error;
+    arr.splice(idx,1);renderRutinas();
+  }catch(e2){toast("No se pudo borrar: "+traducir(e2));}
+}
+
 /* ---------- TABS + INIT ---------- */
 async function doLogout(){
   try{ if(sb) await sb.auth.signOut(); }
@@ -1116,6 +1233,7 @@ function init(){
     if(t){e.preventDefault();doLogout();}
   });
   el("saveMetric").onclick=()=>conBoton("saveMetric",saveMetric);
+  el("btnNuevaRutina").onclick=()=>conBoton("btnNuevaRutina",crearRutina);
   el("pass").addEventListener("keydown",e=>{if(e.key==="Enter")conBoton("btnLogin",login);});
   if(!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
     showOnly("authView");gmsg("err","⚙️ Falta pegar SUPABASE_URL y SUPABASE_ANON_KEY en CONFIG.");
