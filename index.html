@@ -228,6 +228,28 @@
   .rejadd button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:10px;width:44px;font-size:1.1rem;cursor:pointer}
   .planpick{margin-top:8px}
   .planpick select{margin-top:5px}
+  .diaryhead{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .diaryhead input{flex:1;min-width:140px}
+  .diarystat{display:flex;gap:10px;margin-bottom:14px}
+  .dstat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
+  .dstat b{font-family:"Bricolage Grotesque",sans-serif;font-size:1.4rem;font-weight:800;display:block;line-height:1}
+  .dstat span{font-family:"Sometype Mono",monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+  .dgroup{margin-bottom:18px}
+  .dgroup>.dgh{font-family:"Sometype Mono",monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;position:sticky;top:0;background:var(--bg);padding:4px 0}
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:9px}
+  .dcard .dch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+  .dcard .dday{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.95rem}
+  .dcard .dtime{font-family:"Sometype Mono",monospace;font-size:.66rem;color:var(--ink-faint)}
+  .dcard .dtxt{font-size:.94rem;white-space:pre-wrap;line-height:1.55}
+  .dcard .dfoot{display:flex;justify-content:flex-end;margin-top:8px}
+  .dcard .ddel{background:none;border:none;color:var(--red);font-size:.8rem;cursor:pointer;font-family:"Sometype Mono",monospace}
+  .dcard .ddream{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-2);font-size:.86rem;color:var(--ink-soft)}
+  .dcard .ddream b{color:var(--pitch);font-weight:600}
+  .dempty{text-align:center;padding:30px 16px;color:var(--ink-soft)}
+  .dempty .big{font-size:2.4rem}
+  .dquick{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:16px}
+  .futurehint{background:linear-gradient(135deg,#f3ede4,#eef2ec);border:1px dashed var(--accent-soft);border-radius:14px;padding:14px 16px;margin-top:6px;font-size:.86rem;color:var(--ink-soft)}
+  .futurehint b{color:var(--accent)}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -313,8 +335,12 @@
 
   <section class="view" id="v-rutinas">
     <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="actbtn on" id="subRutinas">🏋️ Rutinas</button>
+        <button class="actbtn" id="subPlan">🗓️ Plan semanal</button>
+      </div>
       <span class="tag">Rutinas</span><h2 style="margin:3px 0 6px">Tus rutinas de gimnasio</h2>
-      <p class="muted" style="font-size:.86rem">Creá rutinas con nombre (ej: "Sesión A · full body") y asignalas a tus días de gym en la pestaña Plan. Al abrir un día de gym, sus ejercicios aparecen precargados.</p>
+      <p class="muted" style="font-size:.86rem">Creá rutinas con nombre (ej: "Sesión A · full body") y asignalas a tus días de gym. Al abrir un día de gym, sus ejercicios aparecen precargados.</p>
     </div>
     <div id="rutinasList"></div>
     <div class="card">
@@ -390,15 +416,37 @@
       <p class="muted" style="font-size:.78rem;margin-top:12px">Al desactivar, la sección se oculta; lo ya registrado no se borra.</p>
     </div>
   </section>
+
+  <section class="view" id="v-diario">
+    <div class="card">
+      <span class="tag">Diario personal</span><h2 style="margin:3px 0 6px">Tu bitácora</h2>
+      <p class="muted" style="font-size:.86rem">Todo lo que escribís, en un solo lugar. Escribí libremente: pensamientos, cómo te sentiste, lo que quieras recordar.</p>
+    </div>
+    <div class="diarystat">
+      <div class="dstat"><b id="dTotal">0</b><span>Anotaciones</span></div>
+      <div class="dstat"><b id="dDias">0</b><span>Días escritos</span></div>
+      <div class="dstat"><b id="dRacha">0</b><span>Racha días</span></div>
+    </div>
+    <div class="dquick">
+      <label class="fld" style="margin-top:0">Nueva anotación de hoy</label>
+      <textarea id="dQuickTxt" placeholder="¿Qué querés registrar hoy?"></textarea>
+      <button class="act" id="btnDQuick" style="margin-top:10px">＋ Guardar anotación</button>
+    </div>
+    <div class="diaryhead">
+      <input type="text" id="dSearch" placeholder="🔍 Buscar en tus anotaciones…" autocomplete="off">
+    </div>
+    <div id="diaryList"></div>
+    <div class="futurehint">✨ <b>Próximamente:</b> un narrador con IA va a poder tejer una historia de ficción a partir de tus anotaciones y sueños, en el género que elijas. Todo lo que escribas hoy es material para esa historia.</div>
+  </section>
 </main>
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <nav class="tabbar" id="tabbar">
   <button data-v="v-prog"><span class="i">📈</span>Progreso</button>
-  <button data-v="v-plan"><span class="i">🗓️</span>Plan</button>
-  <button class="on center" data-v="v-cal"><span class="i">📅</span>Calendario</button>
   <button data-v="v-rutinas"><span class="i">🏋️</span>Rutinas</button>
+  <button class="on center" data-v="v-cal"><span class="i">📅</span>Calendario</button>
+  <button data-v="v-diario" id="tabDiario"><span class="i">📖</span>Diario</button>
   <button data-v="v-perfil"><span class="i">👤</span>Perfil</button>
 </nav>
 
@@ -456,7 +504,8 @@ function balanceInfo(total,target){const diff=total-target;const obj=perfil.obje
 function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id));
   const inApp=(id==="app");
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  if(inApp){el("authView").hidden=true;el("onboardView").hidden=true;el("v-cal").classList.add("active");}
+  if(inApp){el("authView").hidden=true;el("onboardView").hidden=true;el("v-cal").classList.add("active");
+    const td=el("tabDiario");if(td)td.style.display=(perfil&&perfil.registra_diario)?"":"none";}
   else{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));
     const first=document.querySelector('#tabbar button[data-v="v-cal"]');if(first)first.classList.add("on");}
   el("tabbar").className="tabbar"+(inApp?" show":"");
@@ -505,7 +554,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();}
 function renderLegend(){
   let h='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="dotg"></i> Hecho</span><span><i class="dotr"></i> No fui</span><span><b class="plusmark">＋</b> Extra</span><span>🙂 Ánimo</span><span>🍴 Comida</span>';
   if(perfil.registra_alcohol)h+='<span>🍷 Alcohol</span>';
@@ -1137,12 +1186,96 @@ async function savePerfil(){
     if(r.error)throw r.error;
     perfil=Object.assign({},perfil,payload);
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
+    const td=el("tabDiario");if(td)td.style.display=perfil.registra_diario?"":"none";
     renderAll();renderPerfil();
     el("targetPreview").innerHTML="🎯 Objetivo calórico actual: <b>~"+calorieTarget()+" kcal/día</b>";
     toast("Perfil guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
 
+
+
+/* ---------- SECCIÓN DIARIO PERSONAL ---------- */
+let dQuery="";
+function allDiaryEntries(){
+  // aplana dia{fecha:[{id,creado,texto}]} en lista ordenada por creado desc, con la fecha
+  const list=[];
+  Object.keys(dia).forEach(f=>{(dia[f]||[]).forEach(e=>list.push({fecha:f,id:e.id,creado:e.creado,texto:e.texto}));});
+  list.sort((a,b)=>(a.creado<b.creado?1:-1));
+  return list;
+}
+function diaryStreak(){
+  // días consecutivos (hasta hoy) con al menos una anotación
+  let n=0,d=new Date();
+  for(let i=0;i<400;i++){const k=ymd(d);
+    if(dia[k]&&dia[k].length){n++;d.setDate(d.getDate()-1);continue;}
+    if(k===todayStr()){d.setDate(d.getDate()-1);continue;} // hoy sin escribir aún no corta
+    break;}
+  return n;
+}
+function renderDiary(){
+  if(!perfil||!perfil.registra_diario)return;
+  const all=allDiaryEntries();
+  el("dTotal").textContent=all.length;
+  el("dDias").textContent=Object.keys(dia).filter(f=>dia[f]&&dia[f].length).length;
+  el("dRacha").textContent=diaryStreak();
+  const q=dQuery.trim().toLowerCase();
+  let items=all;
+  if(q)items=all.filter(e=>(e.texto||"").toLowerCase().includes(q));
+  const cont=el("diaryList");
+  if(all.length===0){cont.innerHTML='<div class="dempty"><div class="big">📖</div><p style="margin-top:8px">Tu diario está en blanco.<br>Escribí tu primera anotación arriba.</p></div>';return;}
+  if(items.length===0){cont.innerHTML='<div class="dempty"><p>No encontré anotaciones con «'+esc(dQuery)+'».</p></div>';return;}
+  // agrupar por mes
+  const groups={};
+  items.forEach(e=>{const d=parse(e.fecha);const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!groups[key])groups[key]=[];groups[key].push(e);});
+  const orderedKeys=Object.keys(groups).sort((a,b)=>a<b?1:-1);
+  let h="";
+  orderedKeys.forEach(mk=>{
+    const [yy,mm]=mk.split("-");const titulo=MONTHS[parseInt(mm)-1]+" "+yy;
+    h+='<div class="dgroup"><div class="dgh">'+titulo+'</div>';
+    groups[mk].forEach(e=>{
+      const d=parse(e.fecha);const t=new Date(e.creado);
+      const hh=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+      const diaNom=DIAS[d.getDay()];
+      // sueño registrado ese día (si hay)
+      const b=bien[e.fecha];const dream=(b&&b.sueno_texto)?b.sueno_texto:"";
+      h+='<div class="dcard"><div class="dch"><span class="dday">'+diaNom.charAt(0).toUpperCase()+diaNom.slice(1)+' '+d.getDate()+'</span><span class="dtime">'+hh+' hs</span></div>';
+      h+='<div class="dtxt">'+highlight(e.texto,q)+'</div>';
+      if(dream)h+='<div class="ddream">💭 <b>Soñé:</b> '+esc(dream)+'</div>';
+      h+='<div class="dfoot"><button class="ddel" data-ddel="'+e.id+'">✕ eliminar</button></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  cont.innerHTML=h;
+  cont.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>delDiaryEntry(parseInt(b.dataset.ddel)));
+}
+function highlight(txt,q){
+  if(!q)return esc(txt);
+  const e=esc(txt);const idx=e.toLowerCase().indexOf(q);
+  if(idx<0)return e;
+  // resaltar todas las apariciones
+  const re=new RegExp("("+q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi");
+  return e.replace(re,'<mark style="background:#fce8b2;border-radius:3px">$1</mark>');
+}
+async function addDiaryFromSection(){
+  const ta=el("dQuickTxt");const t=(ta.value||"").trim();if(!t){ta.focus();return;}
+  const hoy=todayStr();
+  try{
+    const {data,error}=await sb.from("diario").insert({user_id:user.id,fecha:hoy,texto:t}).select().single();
+    if(error)throw error;
+    if(!dia[hoy])dia[hoy]=[];dia[hoy].push({id:data.id,creado:data.creado,texto:t});
+    ta.value="";renderDiary();renderCalendar();toast("Anotación guardada ✓");
+  }catch(e){toast("No se guardó: "+traducir(e));}
+}
+async function delDiaryEntry(id){
+  try{
+    const {error}=await sb.from("diario").delete().eq("id",id);
+    if(error)throw error;
+    Object.keys(dia).forEach(f=>{dia[f]=(dia[f]||[]).filter(e=>e.id!==id);if(!dia[f].length)delete dia[f];});
+    renderDiary();renderCalendar();
+  }catch(e){toast("No se pudo borrar");}
+}
 
 /* ---------- RUTINAS ---------- */
 let rutEjAdd={}; // buffer temporal de ejercicio nuevo por rutina (no usado; se lee del DOM)
@@ -1219,6 +1352,14 @@ async function doLogout(){
   window.scrollTo(0,0);
 }
 document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));el(b.dataset.v).classList.add("active");window.scrollTo(0,0);};});
+// Sub-toggle Rutinas <-> Plan (viven en la misma pestaña de la barra)
+function showSub(which){
+  el("subRutinas").className="actbtn"+(which==="rutinas"?" on":"");
+  el("subPlan").className="actbtn"+(which==="plan"?" on":"");
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  el(which==="plan"?"v-plan":"v-rutinas").classList.add("active");
+  window.scrollTo(0,0);
+}
 function init(){
   const now=new Date();viewY=now.getFullYear();viewM=now.getMonth();
   el("prevM").onclick=()=>{viewM--;if(viewM<0){viewM=11;viewY--;}renderCalendar();};
@@ -1234,6 +1375,10 @@ function init(){
   });
   el("saveMetric").onclick=()=>conBoton("saveMetric",saveMetric);
   el("btnNuevaRutina").onclick=()=>conBoton("btnNuevaRutina",crearRutina);
+  el("btnDQuick").onclick=()=>conBoton("btnDQuick",addDiaryFromSection);
+  el("dSearch").oninput=()=>{dQuery=el("dSearch").value;renderDiary();};
+  el("subRutinas").onclick=()=>showSub("rutinas");
+  el("subPlan").onclick=()=>showSub("plan");
   el("pass").addEventListener("keydown",e=>{if(e.key==="Enter")conBoton("btnLogin",login);});
   if(!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
     showOnly("authView");gmsg("err","⚙️ Falta pegar SUPABASE_URL y SUPABASE_ANON_KEY en CONFIG.");
