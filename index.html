@@ -507,7 +507,7 @@ function makeCell(d,otroMes){
     else if(hizoGym)center="🏋️";
     else if(hizoDep)center=(p.tipo==="deporte"?iconFor(p):"🏃");
     else center=(p.tipo!=="descanso"?iconFor(p):"");
-    let ind=ach?'<span class="st done"></span>':miss?'<span class="st miss"></span>':"";
+    let ind="";
     const b=bien[k];if(b&&b.animo)ind+='<span class="mi">'+EMO.animo[b.animo-1]+'</span>';
     if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+='<span class="mi">🍴</span>';
     if(perfil.registra_alcohol&&alim[k]&&alim[k].alcohol)ind+='<span class="mi">🍷</span>';
