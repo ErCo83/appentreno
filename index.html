@@ -257,6 +257,36 @@
   .dquick{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:16px}
   .futurehint{background:linear-gradient(135deg,#f3ede4,#eef2ec);border:1px dashed var(--accent-soft);border-radius:14px;padding:14px 16px;margin-top:6px;font-size:.86rem;color:var(--ink-soft)}
   .futurehint b{color:var(--accent)}
+  .narrador{background:linear-gradient(135deg,#f3ede4,#eef2ec);border:1px solid var(--accent-soft);border-radius:16px;padding:16px;margin-top:6px;margin-bottom:16px}
+  .narrador h3{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:6px}
+  .narrador .sub{font-size:.82rem;color:var(--ink-soft);margin:4px 0 12px}
+  .narrpanel{display:none;margin-top:12px}
+  .narrpanel.show{display:block;animation:fade .3s ease}
+  .genchips{display:flex;gap:6px;flex-wrap:wrap}
+  .genchip{padding:9px 13px;border-radius:12px;border:1px solid var(--line-2);background:#fff;font-size:.86rem;cursor:pointer;font-weight:600}
+  .genchip.on{background:var(--pitch);color:#fff;border-color:var(--pitch)}
+  .genchip .ga{display:block;font-family:"Sometype Mono",monospace;font-size:.6rem;font-weight:400;opacity:.7;margin-top:1px}
+  .rangepick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .rangebtn{padding:8px 12px;border-radius:10px;border:1px solid var(--line-2);background:#fff;font-size:.82rem;cursor:pointer}
+  .rangebtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .srcchecks{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+  .srcrow{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .srcrow input{width:auto;flex:none}
+  .srcrow label{flex:1;font-size:.88rem;cursor:pointer}
+  .srcrow .srch{font-family:"Sometype Mono",monospace;font-size:.62rem;color:var(--ink-faint)}
+  .storycard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .storycard .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .storycard .stitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.05rem;line-height:1.2}
+  .storycard .smeta{font-family:"Sometype Mono",monospace;font-size:.62rem;color:var(--ink-faint);text-transform:uppercase;margin-top:3px}
+  .storycard .stext{font-size:.94rem;line-height:1.62;white-space:pre-wrap;margin-top:10px;display:none}
+  .storycard .stext.show{display:block}
+  .storycard .sactions{display:flex;gap:8px;margin-top:10px}
+  .storycard .sbtn{font-family:"Sometype Mono",monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;background:var(--surface-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 11px;cursor:pointer;color:var(--ink)}
+  .storycard .sbtn.del{color:var(--red)}
+  .gengenero{font-family:"Sometype Mono",monospace;font-size:.6rem;text-transform:uppercase;background:var(--pitch);color:#fff;padding:2px 7px;border-radius:6px;letter-spacing:.05em}
+  .narrloading{text-align:center;padding:20px;color:var(--ink-soft);font-size:.9rem}
+  .narrloading .dots{font-size:1.5rem;letter-spacing:3px;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -447,7 +477,47 @@
       <input type="text" id="dSearch" placeholder="🔍 Buscar en tus anotaciones…" autocomplete="off">
     </div>
     <div id="diaryList"></div>
-    <div class="futurehint">✨ <b>Próximamente:</b> un narrador con IA va a poder tejer una historia de ficción a partir de tus anotaciones y sueños, en el género que elijas. Todo lo que escribas hoy es material para esa historia.</div>
+    <div class="narrador">
+      <h3>✨ Narrador de tu diario</h3>
+      <p class="sub">Convertí un período de tu diario en un relato de ficción. La IA usa lo que escribiste, tus sueños y tu día a día.</p>
+      <button class="act" id="btnAbrirNarr">Generar una historia</button>
+      <div class="narrpanel" id="narrPanel">
+        <label class="fld">1 · ¿Qué período?</label>
+        <div class="rangepick" id="rangePick">
+          <button class="rangebtn on" data-range="semana">Última semana</button>
+          <button class="rangebtn" data-range="mes">Último mes</button>
+          <button class="rangebtn" data-range="libre">Elegir fechas</button>
+        </div>
+        <div id="rangeLibre" style="display:none;margin-top:8px">
+          <div class="frow"><div><label class="fld" style="margin-top:4px">Desde</label><input type="date" id="narrDesde"></div><div><label class="fld" style="margin-top:4px">Hasta</label><input type="date" id="narrHasta"></div></div>
+          <p class="muted" style="font-size:.75rem;margin-top:4px">Máximo un mes (31 días).</p>
+        </div>
+
+        <label class="fld">2 · ¿Qué incluir?</label>
+        <div class="srcchecks" id="srcChecks">
+          <div class="srcrow"><input type="checkbox" id="src_diario" checked><label for="src_diario">📔 Diario personal <span class="srch">— el alma del relato</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_suenos" checked><label for="src_suenos">💭 Sueños <span class="srch">— material onírico</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_animo" checked><label for="src_animo">🙂 Ánimo y energía <span class="srch">— color emocional</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_gym" checked><label for="src_gym">🏋️ Entrenamientos <span class="srch">— contexto</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_comidas" checked><label for="src_comidas">🍴 Comidas <span class="srch">— detalles cotidianos</span></label></div>
+        </div>
+
+        <label class="fld">3 · ¿Qué género?</label>
+        <div class="genchips" id="genChips">
+          <button class="genchip on" data-gen="distopia">Distopía<span class="ga">ci-fi / P. K. Dick</span></button>
+          <button class="genchip" data-gen="comedia">Comedia<span class="ga">D. Adams</span></button>
+          <button class="genchip" data-gen="accion">Acción<span class="ga">thriller</span></button>
+          <button class="genchip" data-gen="suspenso">Suspenso<span class="ga">E. A. Poe</span></button>
+          <button class="genchip" data-gen="drama">Drama<span class="ga">introspectivo</span></button>
+          <button class="genchip" data-gen="poesia">Poesía<span class="ga">Neruda</span></button>
+        </div>
+
+        <button class="act" id="btnGenerar" style="margin-top:16px">✨ Crear mi historia</button>
+        <div class="narrloading" id="narrLoading" style="display:none"><div class="dots">✦ ✦ ✦</div><p style="margin-top:8px">Tejiendo tu historia… esto puede tardar unos segundos.</p></div>
+      </div>
+    </div>
+
+    <div id="historiasList"></div>
   </section>
 </main>
 
@@ -472,6 +542,7 @@ const CONFIG = {
 let sb=null,user=null,perfil=null;
 let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[];
 let rutinas=[],rutinaEj={};  // rutinas[] = {id,nombre}; rutinaEj[rutina_id] = [{ejercicio,series,reps,kg,orden}]
+let historias=[];  // historias generadas por el narrador
 let viewY,viewM;
 
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -532,7 +603,7 @@ async function onSession(session){
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
-    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre]=await Promise.all([
+    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
       sb.from("actividad").select("*"),
@@ -543,14 +614,16 @@ async function onSession(session){
       sb.from("diario").select("*").order("creado"),
       sb.from("medidas").select("*").order("fecha"),
       sb.from("rutinas").select("*").order("nombre"),
-      sb.from("rutina_ejercicios").select("*").order("orden")
+      sb.from("rutina_ejercicios").select("*").order("orden"),
+      sb.from("historias").select("*").order("creada",{ascending:false})
     ]);
-    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre].find(r=>r.error);
+    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi].find(r=>r.error&&r.error.code!=="42P01");
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
     plan={};(rpl.data||[]).forEach(r=>plan[r.dia_semana]={tipo:r.tipo,detalle:r.detalle||"",rutina_id:r.rutina_id||null});
     rutinas=(rru.data||[]).map(r=>({id:r.id,nombre:r.nombre}));
+    historias=(rhi&&rhi.data)?rhi.data:[];
     rutinaEj={};(rre.data||[]).forEach(r=>{if(!rutinaEj[r.rutina_id])rutinaEj[r.rutina_id]=[];rutinaEj[r.rutina_id].push({ejercicio:r.ejercicio,series:r.series,reps:r.reps,kg:r.kg,orden:r.orden});});
     act={};(ra.data||[]).forEach(r=>act[r.fecha]={estado:r.estado,extra_gym:r.extra_gym,extra_deporte:r.extra_deporte});
     loads={};(rc.data||[]).forEach(r=>{if(!loads[r.fecha])loads[r.fecha]=[];loads[r.fecha].push({ejercicio:r.ejercicio,kg:r.kg,reps:r.reps,series:r.series});});
@@ -569,7 +642,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();renderHistorias();}
 function renderLegend(){
   const conocerme=perfil.objetivo==="conocerme";
   let h='';
@@ -1243,6 +1316,106 @@ async function savePerfil(){
 
 
 
+
+/* ---------- NARRADOR DEL DIARIO ---------- */
+let narrRange="semana",narrGenero="distopia";
+const GEN_LABEL={distopia:"Distopía",comedia:"Comedia",accion:"Acción",suspenso:"Suspenso",drama:"Drama",poesia:"Poesía"};
+function narrRangeFechas(){
+  const hoy=new Date();
+  if(narrRange==="libre"){
+    const d=el("narrDesde").value,h=el("narrHasta").value;
+    return {desde:d,hasta:h};
+  }
+  const hasta=ymd(hoy);const desde=new Date(hoy);
+  desde.setDate(hoy.getDate()-(narrRange==="mes"?30:7)+1);
+  return {desde:ymd(desde),hasta:hasta};
+}
+function initNarrador(){
+  const abrir=el("btnAbrirNarr");if(!abrir)return;
+  abrir.onclick=()=>{const p=el("narrPanel");p.classList.toggle("show");abrir.textContent=p.classList.contains("show")?"Cerrar":"Generar una historia";};
+  el("rangePick").querySelectorAll(".rangebtn").forEach(b=>b.onclick=()=>{
+    narrRange=b.dataset.range;
+    el("rangePick").querySelectorAll(".rangebtn").forEach(x=>x.classList.toggle("on",x===b));
+    el("rangeLibre").style.display=(narrRange==="libre")?"block":"none";
+  });
+  el("genChips").querySelectorAll(".genchip").forEach(b=>b.onclick=()=>{
+    narrGenero=b.dataset.gen;
+    el("genChips").querySelectorAll(".genchip").forEach(x=>x.classList.toggle("on",x===b));
+  });
+  el("btnGenerar").onclick=generarHistoria;
+}
+async function generarHistoria(){
+  const {desde,hasta}=narrRangeFechas();
+  if(!desde||!hasta){toast("Elegí las fechas del período");return;}
+  if(desde>hasta){toast("La fecha 'desde' debe ser anterior a 'hasta'");return;}
+  const dias=Math.round((parse(hasta)-parse(desde))/86400000)+1;
+  if(dias>31){toast("El período no puede superar un mes (31 días)");return;}
+  const fuentes=[];
+  [["diario","src_diario"],["suenos","src_suenos"],["animo","src_animo"],["gym","src_gym"],["comidas","src_comidas"]].forEach(([k,id])=>{if(el(id)&&el(id).checked)fuentes.push(k);});
+  if(fuentes.length===0){toast("Elegí al menos una fuente de datos");return;}
+  if(!fuentes.includes("diario")&&!fuentes.includes("suenos")){
+    if(!confirm("Sin diario ni sueños, la historia va a tener poco material personal. ¿Generar igual?"))return;
+  }
+  const btn=el("btnGenerar");btn.disabled=true;
+  el("narrLoading").style.display="block";
+  try{
+    const {data,error}=await sb.functions.invoke("narrar-diario",{body:{desde,hasta,genero:narrGenero,fuentes}});
+    if(error)throw error;
+    if(data&&data.error){
+      const msgs={sin_material:"No encontré datos en ese período. Probá otro rango o escribí algo en tu diario primero.",
+        rango_muy_largo:"El período no puede superar un mes.",
+        limite_diario:"Llegaste al límite de historias por hoy. Volvé mañana ✨",
+        sinclave:"Falta configurar la clave de IA en el servidor.",
+        sin_suscripcion:"Esta función requiere una suscripción activa."};
+      toast(msgs[data.error]||("No se pudo generar: "+data.error));
+      return;
+    }
+    if(!data||!data.texto){toast("La historia salió vacía, probá de nuevo");return;}
+    // Guardar en la tabla historias
+    const fila={user_id:user.id,titulo:data.titulo||"Sin título",genero:narrGenero,desde,hasta,fuentes:fuentes.join(","),texto:data.texto};
+    const ins=await sb.from("historias").insert(fila).select().single();
+    if(ins.error)throw ins.error;
+    historias.unshift(ins.data);
+    el("narrPanel").classList.remove("show");
+    el("btnAbrirNarr").textContent="Generar una historia";
+    renderHistorias();
+    toast("¡Tu historia está lista! ✨");
+    // scroll a la historia nueva
+    setTimeout(()=>{const first=el("historiasList").querySelector(".storycard");if(first)first.scrollIntoView({behavior:"smooth",block:"center"});},100);
+  }catch(e){
+    toast("No se pudo generar: revisá que la función narrar-diario esté desplegada");
+  }finally{
+    btn.disabled=false;el("narrLoading").style.display="none";
+  }
+}
+function renderHistorias(){
+  const cont=el("historiasList");if(!cont)return;
+  if(!historias||historias.length===0){cont.innerHTML="";return;}
+  let h='<h2 style="font-size:1.05rem;margin:8px 0 10px;font-family:Bricolage Grotesque">📚 Tus historias</h2>';
+  h+=historias.map(s=>{
+    const d=new Date(s.creada);const fch=d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
+    const periodo=fmtDMY(s.desde)+" – "+fmtDMY(s.hasta);
+    return '<div class="storycard"><div class="sh"><div><div class="stitle">'+esc(s.titulo||"Sin título")+'</div><div class="smeta"><span class="gengenero">'+esc(GEN_LABEL[s.genero]||s.genero)+'</span> · '+periodo+'</div></div></div>'+
+      '<div class="stext" id="story_'+s.id+'">'+esc(s.texto)+'</div>'+
+      '<div class="sactions"><button class="sbtn" data-story="'+s.id+'">📖 Leer</button><button class="sbtn del" data-storydel="'+s.id+'">🗑️ Borrar</button></div></div>';
+  }).join("");
+  cont.innerHTML=h;
+  cont.querySelectorAll("[data-story]").forEach(b=>b.onclick=()=>{
+    const t=el("story_"+b.dataset.story);const open=t.classList.toggle("show");
+    b.textContent=open?"▲ Cerrar":"📖 Leer";
+  });
+  cont.querySelectorAll("[data-storydel]").forEach(b=>b.onclick=()=>borrarHistoria(parseInt(b.dataset.storydel)));
+}
+function fmtDMY(iso){const p=iso.split("-");return parseInt(p[2])+"/"+parseInt(p[1]);}
+async function borrarHistoria(id){
+  const s=historias.find(x=>x.id===id);if(!s)return;
+  if(!confirm('¿Borrar la historia "'+(s.titulo||"sin título")+'"? No se puede recuperar.'))return;
+  try{
+    const r=await sb.from("historias").delete().eq("id",id);if(r.error)throw r.error;
+    historias=historias.filter(x=>x.id!==id);renderHistorias();toast("Historia borrada");
+  }catch(e){toast("No se pudo borrar");}
+}
+
 /* ---------- SECCIÓN DIARIO PERSONAL ---------- */
 let dQuery="";
 function allDiaryEntries(){
@@ -1473,6 +1646,7 @@ function init(){
   el("btnNuevaRutina").onclick=()=>conBoton("btnNuevaRutina",crearRutina);
   el("btnDQuick").onclick=()=>conBoton("btnDQuick",addDiaryFromSection);
   el("dSearch").oninput=()=>{dQuery=el("dSearch").value;renderDiary();};
+  initNarrador();
   el("subRutinas").onclick=()=>showSub("rutinas");
   el("subPlan").onclick=()=>showSub("plan");
   if(el("subRutinas2"))el("subRutinas2").onclick=()=>showSub("rutinas");
