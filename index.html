@@ -287,6 +287,32 @@
   .narrloading{text-align:center;padding:20px;color:var(--ink-soft);font-size:.9rem}
   .narrloading .dots{font-size:1.5rem;letter-spacing:3px;animation:pulse 1.2s infinite}
   @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+  /* Tour de bienvenida */
+  .tourov{position:fixed;inset:0;background:rgba(20,40,30,.72);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);padding:20px}
+  .tourov.show{display:flex}
+  .tourcard{background:var(--surface);border-radius:22px;max-width:400px;width:100%;padding:28px 24px 22px;box-shadow:0 20px 60px -20px rgba(20,53,39,.6);text-align:center;animation:up .35s cubic-bezier(.2,.8,.2,1)}
+  .tourcard .emoji{font-size:3rem;line-height:1}
+  .tourcard h2{font-size:1.4rem;font-weight:800;margin:14px 0 8px}
+  .tourcard p{color:var(--ink-soft);font-size:.96rem;line-height:1.55}
+  .tourcard .highlight{background:linear-gradient(135deg,#f3ede4,#eef2ec);border:1px solid var(--accent-soft);border-radius:12px;padding:12px 14px;margin:14px 0;font-size:.9rem;color:var(--ink)}
+  .tourdots{display:flex;gap:6px;justify-content:center;margin:18px 0 16px}
+  .tourdots .td{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+  .tourdots .td.on{background:var(--accent);width:20px;border-radius:99px}
+  .tournav{display:flex;gap:10px}
+  .tournav button{flex:1;padding:13px;border-radius:13px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;border:none}
+  .tournav .prev{background:var(--surface-2);color:var(--ink);border:1px solid var(--line-2)}
+  .tournav .next{background:var(--accent);color:#fff}
+  .tourskip{background:none;border:none;color:var(--ink-faint);font-size:.82rem;cursor:pointer;margin-top:12px;text-decoration:underline}
+  /* Botón de ayuda (?) */
+  .helpbtn{position:absolute;top:20px;right:60px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#eef3ef;width:30px;height:30px;border-radius:50%;font-size:.95rem;font-weight:700;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center}
+  /* Tip contextual */
+  .tipov{position:fixed;inset:0;background:rgba(20,40,30,.55);display:none;align-items:center;justify-content:center;z-index:190;backdrop-filter:blur(2px);padding:24px}
+  .tipov.show{display:flex}
+  .tipcard{background:var(--surface);border-radius:18px;max-width:360px;width:100%;padding:22px;box-shadow:var(--shadow);animation:up .3s ease}
+  .tipcard .te{font-size:2rem}
+  .tipcard h3{font-size:1.15rem;font-weight:800;margin:8px 0 6px}
+  .tipcard p{color:var(--ink-soft);font-size:.92rem;line-height:1.5}
+  .tipcard button{width:100%;margin-top:16px;padding:12px;border:none;border-radius:12px;background:var(--pitch);color:#fff;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -299,7 +325,7 @@
       <h1>Entreno</h1>
       <div class="conn" id="conn" hidden><span class="dot"></span><span id="connTxt">—</span></div>
     </div>
-    <button class="outbtn" id="btnLogout" hidden>Salir</button>
+    <button class="helpbtn" id="btnHelp" hidden title="Ayuda de esta sección">?</button><button class="outbtn" id="btnLogout" hidden>Salir</button>
   </div>
   <div class="weekbar" id="weekbar" hidden></div>
 </header>
@@ -456,6 +482,11 @@
       <div class="fnrow"><span><span class="fl">✍️ Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
       <p class="muted" style="font-size:.78rem;margin-top:12px">Al desactivar, la sección se oculta; lo ya registrado no se borra.</p>
     </div>
+    <div class="card">
+      <span class="tag">Ayuda</span><h2 style="margin:3px 0 8px">¿Necesitás una mano?</h2>
+      <p class="muted" style="font-size:.86rem;margin-bottom:12px">Volvé a ver la introducción cuando quieras. Y recordá: en cada sección tenés el signo <b>?</b> arriba a la derecha para un recordatorio rápido.</p>
+      <button class="act ghost" id="btnVerTour">🎬 Ver el tutorial de nuevo</button>
+    </div>
   </section>
 
   <section class="view" id="v-diario">
@@ -522,6 +553,8 @@
 </main>
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="tourov" id="tourOv"><div class="tourcard" id="tourCard"></div></div>
+<div class="tipov" id="tipOv"><div class="tipcard" id="tipCard"></div></div>
 <div class="toast" id="toast"></div>
 <nav class="tabbar" id="tabbar">
   <button data-v="v-prog"><span class="i">📈</span>Progreso</button>
@@ -597,6 +630,7 @@ function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id
   el("tabbar").className="tabbar"+(inApp?" show":"");
   el("weekbar").hidden=!inApp;
   el("btnLogout").hidden=(id==="authView");
+  const bh=el("btnHelp");if(bh)bh.hidden=(id!=="app");
   if(id==="authView")closeSheet();}
 async function onSession(session){
   user=session&&session.user||null;
@@ -634,6 +668,8 @@ async function onSession(session){
     medidas=(rme.data||[]);
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
     setConn("ok","Sincronizado");showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
+    initOnboardingState();
+    if(!perfil.vio_tour)setTimeout(()=>startTour(),500);
   }catch(e){setConn("bad","Sin conexión");gmsg("err",traducir(e));}
 }
 async function login(){gmsg(null,"");const email=el("email").value.trim(),password=el("pass").value;if(!email||!password){gmsg("err","Completá email y contraseña.");return;}const{error}=await sb.auth.signInWithPassword({email,password});if(error)gmsg("err",traducir(error));}
@@ -808,7 +844,8 @@ async function saveOnboard(){
     perfil=pf;plan={};rows.forEach(x=>plan[x.dia_semana]={tipo:x.tipo,detalle:x.detalle||""});
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
     showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
-    toast("¡Listo! Tu app quedó configurada 🎉");
+    initOnboardingState();
+    setTimeout(()=>startTour(),400);
   }catch(e){toast("No se pudo crear el perfil: "+traducir(e));}
 }
 
@@ -1317,6 +1354,64 @@ async function savePerfil(){
 
 
 
+
+/* ---------- ONBOARDING GUIADO (tour + tips contextuales) ---------- */
+const TOUR=[
+  {emoji:"🎉",titulo:"¡Tu perfil está listo!",texto:"Configuramos tu objetivo calórico y tu semana. Todo esto lo podés cambiar cuando quieras desde la pestaña Perfil.",hl:"Tip: en Perfil también activás o desactivás qué querés registrar (alcohol, diario, etc.)."},
+  {emoji:"✨",titulo:"Tu diferencial: el Narrador",texto:"Lo que hace única a esta app: en la sección Diario, un narrador con IA convierte lo que escribís y soñás en un relato de ficción del género que elijas.",hl:"Cuanto más escribas en tu diario, mejores historias vas a poder generar."},
+  {emoji:"📅",titulo:"Tu día a día",texto:"El Calendario es el corazón. Tocá cualquier día para registrar tu entrenamiento, cómo dormiste, qué comiste y tu ánimo. El color del día te muestra si cumpliste tu plan.",hl:"El botón central de la barra, siempre te trae de vuelta acá."},
+  {emoji:"🏋️",titulo:"Rutinas y Progreso",texto:"En Rutinas armás tus sesiones de gym reutilizables y las asignás a tus días. En Progreso ves tu evolución: peso, cargas y tendencias.",hl:"¿Perdido en alguna sección? Tocá el signo ? arriba a la derecha."}
+];
+let tourIdx=0;
+function startTour(){tourIdx=0;renderTour();el("tourOv").classList.add("show");}
+function renderTour(){
+  const s=TOUR[tourIdx],last=tourIdx===TOUR.length-1,first=tourIdx===0;
+  let h='<div class="emoji">'+s.emoji+'</div><h2>'+s.titulo+'</h2><p>'+s.texto+'</p>';
+  if(s.hl)h+='<div class="highlight">💡 '+s.hl+'</div>';
+  h+='<div class="tourdots">'+TOUR.map((_,i)=>'<span class="td'+(i===tourIdx?" on":"")+'"></span>').join("")+'</div>';
+  h+='<div class="tournav">';
+  if(!first)h+='<button class="prev" id="tourPrev">Atrás</button>';
+  h+='<button class="next" id="tourNext">'+(last?"¡Empezar! 🚀":"Siguiente")+'</button></div>';
+  if(!last)h+='<button class="tourskip" id="tourSkip">Saltar introducción</button>';
+  el("tourCard").innerHTML=h;
+  const p=el("tourPrev");if(p)p.onclick=()=>{tourIdx--;renderTour();};
+  el("tourNext").onclick=()=>{if(last)finishTour();else{tourIdx++;renderTour();}};
+  const sk=el("tourSkip");if(sk)sk.onclick=finishTour;
+}
+async function finishTour(){
+  el("tourOv").classList.remove("show");
+  if(perfil&&!perfil.vio_tour){
+    perfil.vio_tour=true;
+    try{await sb.from("perfiles").update({vio_tour:true}).eq("user_id",user.id);}catch(e){}
+  }
+}
+
+// Tips contextuales por sección
+const TIPS={
+  "v-prog":{e:"📈",t:"Progreso",p:"Acá ves tu evolución en el tiempo: peso, cintura (si tu objetivo es bajar), balance calórico y tus cargas en el gym. Cargá tu peso periódicamente para ver la tendencia."},
+  "v-rutinas":{e:"🏋️",t:"Rutinas y Plan",p:"Creá rutinas con nombre (Sesión A, B...) y asignalas a tus días de gym desde 'Plan semanal'. Al abrir un día de gym, sus ejercicios aparecen precargados listos para completar."},
+  "v-diario":{e:"📖",t:"Diario personal",p:"Escribí lo que quieras, cuando quieras. Y cuando tengas varias entradas, usá el Narrador ✨ para convertir un período en una historia de ficción. Tus sueños también cuentan."},
+  "v-cal":{e:"📅",t:"Calendario",p:"Tocá un día para registrar todo: entrenamiento, bienestar, comidas y diario. El fondo verde significa que cumpliste tu plan; el rojizo, que no fuiste."},
+  "v-perfil":{e:"👤",t:"Perfil",p:"Tus datos y objetivo (que definen tu meta calórica), y los interruptores de qué registrar. Desde acá también podés volver a ver el tutorial cuando quieras."}
+};
+let tipsVistos=new Set();
+function currentView(){const v=document.querySelector(".view.active");return v?v.id:"v-cal";}
+function showTip(viewId,forzar){
+  const t=TIPS[viewId];if(!t)return;
+  if(!forzar&&tipsVistos.has(viewId))return;
+  el("tipCard").innerHTML='<div class="te">'+t.e+'</div><h3>'+t.t+'</h3><p>'+t.p+'</p><button id="tipOk">Entendido</button>';
+  el("tipOv").classList.add("show");
+  el("tipOk").onclick=()=>{el("tipOv").classList.remove("show");};
+  if(!tipsVistos.has(viewId)){
+    tipsVistos.add(viewId);
+    perfil.tips_vistos=Array.from(tipsVistos).join(",");
+    try{sb.from("perfiles").update({tips_vistos:perfil.tips_vistos}).eq("user_id",user.id);}catch(e){}
+  }
+}
+function initOnboardingState(){
+  tipsVistos=new Set((perfil.tips_vistos||"").split(",").filter(Boolean));
+}
+
 /* ---------- NARRADOR DEL DIARIO ---------- */
 let narrRange="semana",narrGenero="distopia";
 const GEN_LABEL={distopia:"Distopía",comedia:"Comedia",accion:"Acción",suspenso:"Suspenso",drama:"Drama",poesia:"Poesía"};
@@ -1617,7 +1712,10 @@ async function doLogout(){
   gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
   window.scrollTo(0,0);
 }
-document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));const target=b.dataset.v;if(target==="v-rutinas"){showSub("rutinas");}else{el(target).classList.add("active");}window.scrollTo(0,0);};});
+document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));const target=b.dataset.v;if(target==="v-rutinas"){showSub("rutinas");}else{el(target).classList.add("active");}window.scrollTo(0,0);
+  // tip contextual la primera vez que entra a esta sección (si ya vio el tour)
+  if(perfil&&perfil.vio_tour)setTimeout(()=>showTip(target,false),250);
+};});
 // Sub-toggle Rutinas <-> Plan (viven en la misma pestaña de la barra)
 function showSub(which){
   const on="actbtn on",off="actbtn";
@@ -1647,6 +1745,8 @@ function init(){
   el("btnDQuick").onclick=()=>conBoton("btnDQuick",addDiaryFromSection);
   el("dSearch").oninput=()=>{dQuery=el("dSearch").value;renderDiary();};
   initNarrador();
+  el("btnHelp").onclick=()=>showTip(currentView(),true);
+  el("btnVerTour").onclick=()=>startTour();
   el("subRutinas").onclick=()=>showSub("rutinas");
   el("subPlan").onclick=()=>showSub("plan");
   if(el("subRutinas2"))el("subRutinas2").onclick=()=>showSub("rutinas");
