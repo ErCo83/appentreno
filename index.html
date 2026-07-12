@@ -25,7 +25,7 @@
   header .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:2}
   header .eyebrow{font-family:"Sometype Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-soft)}
   header h1{font-size:1.55rem;font-weight:800;margin-top:4px}
-  .outbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#dfe9e2;font-family:"Sometype Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-radius:9px;padding:7px 11px;cursor:pointer}
+  .outbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#dfe9e2;font-family:"Sometype Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-radius:9px;padding:0 12px;height:30px;display:flex;align-items:center;cursor:pointer;flex:none}
   .conn{font-family:"Sometype Mono",monospace;font-size:10px;margin-top:6px;color:#aec1b4}
   .conn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7d8a82;margin-right:5px;vertical-align:middle}
   .conn.ok .dot{background:#62d39a}.conn.bad .dot{background:#ef9b85}
@@ -304,7 +304,8 @@
   .tournav .next{background:var(--accent);color:#fff}
   .tourskip{background:none;border:none;color:var(--ink-faint);font-size:.82rem;cursor:pointer;margin-top:12px;text-decoration:underline}
   /* Botón de ayuda (?) */
-  .helpbtn{position:absolute;top:20px;right:60px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#eef3ef;width:30px;height:30px;border-radius:50%;font-size:.95rem;font-weight:700;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center}
+  .headbtns{display:flex;align-items:center;gap:8px}
+  .helpbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#eef3ef;width:30px;height:30px;border-radius:50%;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
   /* Tip contextual */
   .tipov{position:fixed;inset:0;background:rgba(20,40,30,.55);display:none;align-items:center;justify-content:center;z-index:190;backdrop-filter:blur(2px);padding:24px}
   .tipov.show{display:flex}
@@ -325,7 +326,7 @@
       <h1>Entreno</h1>
       <div class="conn" id="conn" hidden><span class="dot"></span><span id="connTxt">—</span></div>
     </div>
-    <button class="helpbtn" id="btnHelp" hidden title="Ayuda de esta sección">?</button><button class="outbtn" id="btnLogout" hidden>Salir</button>
+    <div class="headbtns"><button class="helpbtn" id="btnHelp" hidden title="Ayuda de esta sección">?</button><button class="outbtn" id="btnLogout" hidden>Salir</button></div>
   </div>
   <div class="weekbar" id="weekbar" hidden></div>
 </header>
