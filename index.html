@@ -1396,21 +1396,25 @@ const TIPS={
   "v-perfil":{e:"👤",t:"Perfil",p:"Tus datos y objetivo (que definen tu meta calórica), y los interruptores de qué registrar. Desde acá también podés volver a ver el tutorial cuando quieras."}
 };
 let tipsVistos=new Set();
+let tipsSesion=new Set();  // tips ya mostrados en esta sesión (salvaguarda anti-repetición)
 function currentView(){const v=document.querySelector(".view.active");return v?v.id:"v-cal";}
-function showTip(viewId,forzar){
+async function showTip(viewId,forzar){
   const t=TIPS[viewId];if(!t)return;
-  if(!forzar&&tipsVistos.has(viewId))return;
+  // No mostrar automáticamente si ya lo vio (en la base) o si ya se mostró en esta sesión
+  if(!forzar&&(tipsVistos.has(viewId)||tipsSesion.has(viewId)))return;
   el("tipCard").innerHTML='<div class="te">'+t.e+'</div><h3>'+t.t+'</h3><p>'+t.p+'</p><button id="tipOk">Entendido</button>';
   el("tipOv").classList.add("show");
   el("tipOk").onclick=()=>{el("tipOv").classList.remove("show");};
+  tipsSesion.add(viewId);
   if(!tipsVistos.has(viewId)){
     tipsVistos.add(viewId);
     perfil.tips_vistos=Array.from(tipsVistos).join(",");
-    try{sb.from("perfiles").update({tips_vistos:perfil.tips_vistos}).eq("user_id",user.id);}catch(e){}
+    try{await sb.from("perfiles").update({tips_vistos:perfil.tips_vistos}).eq("user_id",user.id);}catch(e){}
   }
 }
 function initOnboardingState(){
   tipsVistos=new Set((perfil.tips_vistos||"").split(",").filter(Boolean));
+  tipsSesion=new Set();
 }
 
 /* ---------- NARRADOR DEL DIARIO ---------- */
