@@ -317,6 +317,70 @@
   .privacy-note{text-align:center;font-size:.78rem;color:var(--ink-faint);margin-top:16px;line-height:1.5}
   .privacy-note a{color:var(--accent);text-decoration:none;font-weight:600}
   .privacy-note a:hover{text-decoration:underline}
+  /* Mi historia — línea de tiempo de recuerdos */
+  .tl{position:relative;padding-left:26px;margin-top:4px}
+  .tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--accent-soft),var(--line-2))}
+  .tlgroup{margin-bottom:20px}
+  .tlgh{font-family:"Sometype Mono",monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 10px -26px;padding-left:26px;position:relative}
+  .tlgh::before{content:"";position:absolute;left:2px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+  .rcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px;position:relative}
+  .rcard::before{content:"";position:absolute;left:-24px;top:20px;width:9px;height:9px;border-radius:50%;background:var(--surface);border:2px solid var(--accent-soft)}
+  .rcard .rwhen{font-family:"Sometype Mono",monospace;font-size:.66rem;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+  .rcard .rage{color:var(--ink-faint);text-transform:none;letter-spacing:0}
+  .rcard .rtit{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.02rem;margin:4px 0 6px;line-height:1.25}
+  .rcard .rtxt{font-size:.93rem;line-height:1.58;white-space:pre-wrap;color:var(--ink)}
+  .rcard .rfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
+  .rcard .rcat{font-family:"Sometype Mono",monospace;font-size:.6rem;text-transform:uppercase;background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink-soft);padding:3px 8px;border-radius:7px;letter-spacing:.05em}
+  .rcard .rdel{background:none;border:none;color:var(--red);font-size:.72rem;cursor:pointer;font-family:"Sometype Mono",monospace;text-transform:uppercase}
+  .whenpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .whenbtn{padding:8px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-size:.82rem;cursor:pointer}
+  .whenbtn.on{background:var(--pitch);color:#fff;border-color:var(--pitch)}
+  .whenfields{margin-top:10px}
+  .rquick{display:flex;justify-content:center;margin-top:12px}
+  .rquickbtn{background:var(--surface-2);border:1px solid var(--line-2);border-radius:11px;padding:9px 14px;font-size:.82rem;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;gap:6px}
+  .rquickbtn:active{background:var(--line)}
+  /* Reporte mensual */
+  .repov{position:fixed;inset:0;background:var(--bg);display:none;z-index:210;overflow:auto}
+  .repov.show{display:block}
+  .rephead{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));color:#eef3ef;padding:20px 18px 18px;position:relative;overflow:hidden}
+  .rephead::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);pointer-events:none}
+  .rephead .inner{max-width:680px;margin:0 auto;position:relative;z-index:2}
+  .rephead .eyebrow{font-family:"Sometype Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-soft)}
+  .rephead h2{font-size:1.5rem;font-weight:800;margin-top:4px;text-transform:capitalize}
+  .rephead .who{font-size:.82rem;color:#aec1b4;margin-top:4px}
+  .repbody{max-width:680px;margin:0 auto;padding:16px 16px 40px}
+  .repnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .repnav button{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;width:40px;height:40px;font-size:1.1rem;cursor:pointer;color:var(--ink)}
+  .repnav .lbl{font-family:"Sometype Mono",monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+  .repsec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .repsec h3{font-size:1.02rem;font-weight:800;color:var(--pitch);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .repgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .repkpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .repkpi .k{font-family:"Sometype Mono",monospace;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:block}
+  .repkpi .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.32rem;line-height:1.15;margin-top:3px;display:block}
+  .repkpi .d{font-family:"Sometype Mono",monospace;font-size:.62rem;margin-top:2px;display:block}
+  .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--ink-faint)}
+  .repbar{height:9px;border-radius:99px;background:#e3e6e1;overflow:hidden;margin:8px 0 4px}
+  .repbar>span{display:block;height:100%;border-radius:99px;background:var(--green)}
+  .repline{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-size:.88rem}
+  .repline:first-of-type{border-top:none}
+  .repline .rl{color:var(--ink-soft)}
+  .repline .rv{font-family:"Sometype Mono",monospace;font-weight:600}
+  .repempty{color:var(--ink-faint);font-size:.86rem;font-style:italic}
+  .repactions{display:flex;gap:10px;margin-top:18px}
+  .repactions button{flex:1;padding:13px;border-radius:13px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.92rem;cursor:pointer;border:none}
+  .repactions .pdf{background:var(--accent);color:#fff}
+  .repactions .close{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
+  .repfoot{text-align:center;font-family:"Sometype Mono",monospace;font-size:.62rem;color:var(--ink-faint);margin-top:16px}
+  @media print{
+    body{background:#fff;padding:0}
+    body>*{display:none !important}
+    .repov{display:block !important;position:static !important;background:#fff !important;overflow:visible !important}
+    .repov .repnav,.repov .repactions{display:none !important}
+    .rephead{border-radius:0;background:#1d4b39 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .repsec{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+    .repkpi,.repbar>span{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -388,6 +452,7 @@
       <div class="dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
       <div class="grid" id="calGrid"></div>
       <div class="legend" id="calLegend"></div>
+      <div class="rquick"><button class="rquickbtn" id="btnQuickRec">🕰️ Cargar un recuerdo</button></div>
     </div>
   </section>
 
@@ -423,6 +488,9 @@
   </section>
 
   <section class="view" id="v-prog">
+    <div class="card" style="padding:14px">
+      <button class="act" id="btnReporte">📄 Ver reporte del mes</button>
+    </div>
     <div class="stats-row">
       <div class="stat"><b id="cBal">0</b><span>En objetivo / mes</span></div>
       <div class="stat" id="statAlc"><b id="cAlc">0</b><span>Días s/alcohol</span></div>
@@ -497,6 +565,10 @@
 
   <section class="view" id="v-diario">
     <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="actbtn on" id="subDiario">📔 Diario</button>
+        <button class="actbtn" id="subHistoria">🕰️ Mi historia</button>
+      </div>
       <span class="tag">Diario personal</span><h2 style="margin:3px 0 6px">Tu bitácora</h2>
       <p class="muted" style="font-size:.86rem">Todo lo que escribís, en un solo lugar. Escribí libremente: pensamientos, cómo te sentiste, lo que quieras recordar.</p>
     </div>
@@ -524,6 +596,7 @@
           <button class="rangebtn on" data-range="semana">Última semana</button>
           <button class="rangebtn" data-range="mes">Último mes</button>
           <button class="rangebtn" data-range="libre">Elegir fechas</button>
+          <button class="rangebtn" data-range="vida">🕰️ Mi vida entera</button>
         </div>
         <div id="rangeLibre" style="display:none;margin-top:8px">
           <div class="frow"><div><label class="fld" style="margin-top:4px">Desde</label><input type="date" id="narrDesde"></div><div><label class="fld" style="margin-top:4px">Hasta</label><input type="date" id="narrHasta"></div></div>
@@ -537,6 +610,7 @@
           <div class="srcrow"><input type="checkbox" id="src_animo" checked><label for="src_animo">🙂 Ánimo y energía <span class="srch">— color emocional</span></label></div>
           <div class="srcrow"><input type="checkbox" id="src_gym" checked><label for="src_gym">🏋️ Entrenamientos <span class="srch">— contexto</span></label></div>
           <div class="srcrow"><input type="checkbox" id="src_comidas" checked><label for="src_comidas">🍴 Comidas <span class="srch">— detalles cotidianos</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_recuerdos"><label for="src_recuerdos">🕰️ Mis recuerdos <span class="srch">— tu historia de vida</span></label></div>
         </div>
 
         <label class="fld">3 · ¿Qué género?</label>
@@ -556,9 +630,52 @@
 
     <div id="historiasList"></div>
   </section>
+
+  <section class="view" id="v-historia">
+    <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="actbtn" id="subDiario2">📔 Diario</button>
+        <button class="actbtn on" id="subHistoria2">🕰️ Mi historia</button>
+      </div>
+      <span class="tag">Mi historia</span><h2 style="margin:3px 0 6px">La historia de tu vida</h2>
+      <p class="muted" style="font-size:.86rem">Guardá tus recuerdos sin importar si recordás la fecha exacta. La app los ordena solos y va armando tu línea de tiempo.</p>
+    </div>
+
+    <div class="diarystat">
+      <div class="dstat"><b id="rTotal">0</b><span>Recuerdos</span></div>
+      <div class="dstat"><b id="rSpan">—</b><span>Abarcan</span></div>
+      <div class="dstat"><b id="rPrimero">—</b><span>El más antiguo</span></div>
+    </div>
+
+    <div class="dquick" id="recForm">
+      <label class="fld" style="margin-top:0">Título (opcional)</label>
+      <input type="text" id="recTitulo" placeholder="Ej: Mi primer día de escuela">
+
+      <label class="fld">El recuerdo</label>
+      <textarea id="recTexto" placeholder="Contalo como lo recordás…" style="min-height:90px"></textarea>
+
+      <label class="fld">¿Cuándo fue?</label>
+      <div class="whenpick" id="recWhenPick">
+        <button class="whenbtn" data-w="edad">A los X años</button>
+        <button class="whenbtn on" data-w="anio">Un año</button>
+        <button class="whenbtn" data-w="mes">Mes y año</button>
+        <button class="whenbtn" data-w="exacta">Fecha exacta</button>
+        <button class="whenbtn" data-w="etapa">Etapa de vida</button>
+      </div>
+      <div class="whenfields" id="recWhenFields"></div>
+
+      <label class="fld">Categoría (opcional)</label>
+      <div class="chips" id="recCats"></div>
+
+      <button class="act" id="btnGuardarRec" style="margin-top:16px">＋ Guardar recuerdo</button>
+    </div>
+
+    <div id="recuerdosList"></div>
+  </section>
 </main>
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="repov" id="repOv"><div id="repContent"></div></div>
 <div class="tourov" id="tourOv"><div class="tourcard" id="tourCard"></div></div>
 <div class="tipov" id="tipOv"><div class="tipcard" id="tipCard"></div></div>
 <div class="toast" id="toast"></div>
@@ -582,6 +699,7 @@ let sb=null,user=null,perfil=null;
 let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[];
 let rutinas=[],rutinaEj={};  // rutinas[] = {id,nombre}; rutinaEj[rutina_id] = [{ejercicio,series,reps,kg,orden}]
 let historias=[];  // historias generadas por el narrador
+let recuerdos=[];  // «Mi historia»: recuerdos con fechas difusas
 let viewY,viewM;
 
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -643,7 +761,7 @@ async function onSession(session){
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
-    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi]=await Promise.all([
+    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
       sb.from("actividad").select("*"),
@@ -655,15 +773,17 @@ async function onSession(session){
       sb.from("medidas").select("*").order("fecha"),
       sb.from("rutinas").select("*").order("nombre"),
       sb.from("rutina_ejercicios").select("*").order("orden"),
-      sb.from("historias").select("*").order("creada",{ascending:false})
+      sb.from("historias").select("*").order("creada",{ascending:false}),
+      sb.from("recuerdos").select("*").order("orden_fecha")
     ]);
-    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi].find(r=>r.error&&r.error.code!=="42P01");
+    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec].find(r=>r.error&&r.error.code!=="42P01");
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
     plan={};(rpl.data||[]).forEach(r=>plan[r.dia_semana]={tipo:r.tipo,detalle:r.detalle||"",rutina_id:r.rutina_id||null});
     rutinas=(rru.data||[]).map(r=>({id:r.id,nombre:r.nombre}));
     historias=(rhi&&rhi.data)?rhi.data:[];
+    recuerdos=(rrec&&rrec.data)?rrec.data:[];
     rutinaEj={};(rre.data||[]).forEach(r=>{if(!rutinaEj[r.rutina_id])rutinaEj[r.rutina_id]=[];rutinaEj[r.rutina_id].push({ejercicio:r.ejercicio,series:r.series,reps:r.reps,kg:r.kg,orden:r.orden});});
     act={};(ra.data||[]).forEach(r=>act[r.fecha]={estado:r.estado,extra_gym:r.extra_gym,extra_deporte:r.extra_deporte});
     loads={};(rc.data||[]).forEach(r=>{if(!loads[r.fecha])loads[r.fecha]=[];loads[r.fecha].push({ejercicio:r.ejercicio,kg:r.kg,reps:r.reps,series:r.series});});
@@ -684,7 +804,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();renderHistorias();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();renderHistorias();renderRecuerdos();}
 function renderLegend(){
   const conocerme=perfil.objetivo==="conocerme";
   let h='';
@@ -1422,11 +1542,393 @@ function initOnboardingState(){
   tipsSesion=new Set();
 }
 
+
+
+/* ---------- REPORTE MENSUAL ---------- */
+let repY,repM;
+function pad2(n){return String(n).padStart(2,"0");}
+function diasDelMes(y,m){return new Date(y,m+1,0).getDate();}
+function promedio(arr){if(!arr.length)return null;return arr.reduce((a,b)=>a+b,0)/arr.length;}
+function ultimaMedidaAntes(fechaISO,campo){
+  const previas=medidas.filter(x=>x[campo]!=null&&x.fecha<fechaISO).sort((a,b)=>a.fecha<b.fecha?-1:1);
+  return previas.length?Number(previas[previas.length-1][campo]):null;
+}
+// Calcula todos los indicadores de un mes
+function mesStats(y,m){
+  const hoy=todayStr(),nd=diasDelMes(y,m),mp=y+"-"+pad2(m+1);
+  const s={mp:mp,dias:0,planificados:0,cumplidos:0,noFui:0,extras:0,gymDias:0,depDias:0,
+    kcalDias:[],enObjetivo:0,alcoholDias:0,
+    energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
+    sesionesGym:0,ejercicios:new Set(),maxKg:{},
+    diarioEntradas:0,diarioDias:0};
+  for(let d=1;d<=nd;d++){
+    const k=y+"-"+pad2(m+1)+"-"+pad2(d);
+    if(k>hoy)continue;
+    s.dias++;
+    const p=planFor(new Date(y,m,d).getDay()),a=act[k]||{};
+    if(p.tipo!=="descanso")s.planificados++;
+    if(achieved(k))s.cumplidos++;
+    if(a.estado==="no_fui"&&!achieved(k))s.noFui++;
+    if((a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte"))s.extras++;
+    if((p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym)s.gymDias++;
+    if((p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte)s.depDias++;
+    const c=consumedFor(k);
+    if(c!=null){s.kcalDias.push(c);if(balanceInfo(c,calorieTarget()).ok)s.enObjetivo++;}
+    if(alim[k]&&alim[k].alcohol)s.alcoholDias++;
+    const b=bien[k];
+    if(b){let algo=false;
+      if(b.energia){s.energia.push(b.energia);algo=true;}
+      if(b.animo){s.animo.push(b.animo);algo=true;}
+      if(b.sueno){s.sueno.push(b.sueno);algo=true;}
+      if(b.horas_dormidas!=null){s.horas.push(Number(b.horas_dormidas));algo=true;}
+      if(algo)s.bienDias++;
+      if(b.fumo)s.fumoDias++;}
+    if(loads[k]&&loads[k].length){s.sesionesGym++;
+      loads[k].forEach(it=>{s.ejercicios.add(it.ejercicio);
+        if(it.kg!=null){const kg=Number(it.kg);if(s.maxKg[it.ejercicio]==null||kg>s.maxKg[it.ejercicio])s.maxKg[it.ejercicio]=kg;}});}
+    if(dia[k]&&dia[k].length){s.diarioEntradas+=dia[k].length;s.diarioDias++;}
+  }
+  // cuerpo: primera y última medida del mes, y la previa al mes
+  const enMes=medidas.filter(x=>x.fecha.startsWith(mp));
+  const pesos=enMes.filter(x=>x.peso_kg!=null);
+  const cints=enMes.filter(x=>x.cintura_cm!=null);
+  s.pesoIni=pesos.length?Number(pesos[0].peso_kg):null;
+  s.pesoFin=pesos.length?Number(pesos[pesos.length-1].peso_kg):null;
+  s.pesoPrevio=ultimaMedidaAntes(mp+"-01","peso_kg");
+  s.cintIni=cints.length?Number(cints[0].cintura_cm):null;
+  s.cintFin=cints.length?Number(cints[cints.length-1].cintura_cm):null;
+  s.cintPrevio=ultimaMedidaAntes(mp+"-01","cintura_cm");
+  // historias y recuerdos creados en el mes
+  s.historiasMes=(historias||[]).filter(h=>String(h.creada||"").startsWith(mp)).length;
+  s.recuerdosMes=(recuerdos||[]).filter(r=>String(r.creado||"").startsWith(mp)).length;
+  return s;
+}
+function delta(actual,previo,inverso){
+  if(actual==null||previo==null)return "";
+  const d=actual-previo;
+  if(Math.abs(d)<0.05)return '<span class="d flat">= igual que el mes anterior</span>';
+  const mejor=inverso?(d<0):(d>0);
+  const signo=d>0?"+":"";
+  const num=Math.abs(d)<10?d.toFixed(1):Math.round(d);
+  return '<span class="d '+(mejor?"up":"down")+'">'+(d>0?"▲":"▼")+" "+signo+num+" vs mes anterior</span>";
+}
+function kpi(label,valor,extra){
+  return '<div class="repkpi"><span class="k">'+label+'</span><span class="v">'+valor+'</span>'+(extra||"")+'</div>';
+}
+function renderReporte(){
+  const s=mesStats(repY,repM);
+  // mes anterior para comparar
+  let pY=repY,pM=repM-1;if(pM<0){pM=11;pY--;}
+  const pv=mesStats(pY,pM);
+  const nombreMes=MONTHS[repM]+" "+repY;
+  const pctCumpl=s.planificados?Math.round(s.cumplidos/s.planificados*100):0;
+  const pctPrev=pv.planificados?Math.round(pv.cumplidos/pv.planificados*100):null;
+  const objetivoNeutral=perfil.objetivo==="conocerme";
+
+  let h='<div class="rephead"><div class="inner"><div class="eyebrow">Reporte mensual · Entreno</div><h2>'+nombreMes+'</h2><div class="who">'+esc(perfil.nombre||"")+'</div></div></div><div class="repbody">';
+
+  h+='<div class="repnav"><button id="repPrev">‹</button><span class="lbl">Cambiar de mes</span><button id="repNext">›</button></div>';
+
+  // ACTIVIDAD
+  h+='<div class="repsec"><h3>🏃 Actividad</h3>';
+  if(s.planificados===0&&s.cumplidos===0){h+='<p class="repempty">Sin actividad registrada este mes.</p>';}
+  else{
+    h+='<div class="repbar"><span style="width:'+Math.min(100,pctCumpl)+'%"></span></div>';
+    h+='<div class="repgrid">';
+    h+=kpi("Cumplimiento",pctCumpl+"%",pctPrev!=null?delta(pctCumpl,pctPrev):"");
+    h+=kpi("Días activos",s.cumplidos+" / "+s.planificados,delta(s.cumplidos,pv.cumplidos));
+    h+=kpi("Gimnasio",s.gymDias+(s.gymDias===1?" día":" días"),delta(s.gymDias,pv.gymDias));
+    h+=kpi("Deporte",s.depDias+(s.depDias===1?" día":" días"),delta(s.depDias,pv.depDias));
+    h+='</div>';
+    if(s.extras||s.noFui){h+='<div style="margin-top:10px">';
+      if(s.extras)h+='<div class="repline"><span class="rl">Actividades extra</span><span class="rv">'+s.extras+'</span></div>';
+      if(s.noFui)h+='<div class="repline"><span class="rl">Días que no fuiste</span><span class="rv">'+s.noFui+'</span></div>';
+      h+='</div>';}
+  }
+  h+='</div>';
+
+  // CUERPO
+  h+='<div class="repsec"><h3>⚖️ Cuerpo</h3>';
+  const refPeso=s.pesoIni!=null?s.pesoIni:s.pesoPrevio;
+  if(s.pesoFin==null&&s.pesoPrevio==null){h+='<p class="repempty">Sin registros de peso este mes.</p>';}
+  else{
+    h+='<div class="repgrid">';
+    h+=kpi("Peso al cierre",(s.pesoFin!=null?s.pesoFin+" kg":"—"),
+      (s.pesoFin!=null&&refPeso!=null)?delta(s.pesoFin,refPeso,perfil.objetivo==="bajar"):"");
+    if(s.pesoIni!=null&&s.pesoFin!=null)h+=kpi("Variación del mes",((s.pesoFin-s.pesoIni)>0?"+":"")+(s.pesoFin-s.pesoIni).toFixed(1)+" kg","");
+    if(perfil.objetivo==="bajar"&&(s.cintFin!=null||s.cintPrevio!=null)){
+      const refC=s.cintIni!=null?s.cintIni:s.cintPrevio;
+      h+=kpi("Cintura al cierre",(s.cintFin!=null?s.cintFin+" cm":"—"),
+        (s.cintFin!=null&&refC!=null)?delta(s.cintFin,refC,true):"");
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // ALIMENTACIÓN
+  h+='<div class="repsec"><h3>🍽️ Alimentación</h3>';
+  if(s.kcalDias.length===0){h+='<p class="repempty">Sin comidas registradas este mes.</p>';}
+  else{
+    const prom=Math.round(promedio(s.kcalDias));
+    const promPrev=pv.kcalDias.length?Math.round(promedio(pv.kcalDias)):null;
+    h+='<div class="repgrid">';
+    h+=kpi("Promedio diario",prom+" kcal",promPrev!=null?delta(prom,promPrev,perfil.objetivo==="bajar"):"");
+    h+=kpi("Días registrados",s.kcalDias.length+" / "+s.dias,delta(s.kcalDias.length,pv.kcalDias.length));
+    if(!objetivoNeutral)h+=kpi("Días en objetivo",s.enObjetivo+" / "+s.kcalDias.length,delta(s.enObjetivo,pv.enObjetivo));
+    if(permiteAlcohol())h+=kpi("Días con alcohol",String(s.alcoholDias),delta(s.alcoholDias,pv.alcoholDias,true));
+    h+='</div>';
+    if(!objetivoNeutral){
+      const target=calorieTarget();
+      const balance=s.kcalDias.reduce((a,c)=>a+(c-target),0);
+      h+='<div style="margin-top:10px"><div class="repline"><span class="rl">Balance acumulado del mes</span><span class="rv" style="color:'+((perfil.objetivo==="musculo"?balance>=0:balance<=0)?"var(--green)":"var(--accent)")+'">'+(balance>0?"+":"")+balance.toLocaleString("es-AR")+' kcal</span></div></div>';
+    }
+  }
+  h+='</div>';
+
+  // BIENESTAR
+  h+='<div class="repsec"><h3>🌙 Bienestar</h3>';
+  if(s.bienDias===0){h+='<p class="repempty">Sin registros de bienestar este mes.</p>';}
+  else{
+    const pe=promedio(s.energia),pa=promedio(s.animo),ps=promedio(s.sueno),ph=promedio(s.horas);
+    h+='<div class="repgrid">';
+    if(pa!=null)h+=kpi("Ánimo promedio",EMO.animo[Math.round(pa)-1]+" "+pa.toFixed(1)+"/5",delta(pa,promedio(pv.animo)));
+    if(pe!=null)h+=kpi("Energía promedio",EMO.energia[Math.round(pe)-1]+" "+pe.toFixed(1)+"/5",delta(pe,promedio(pv.energia)));
+    if(ps!=null)h+=kpi("Sueño promedio",EMO.sueno[Math.round(ps)-1]+" "+ps.toFixed(1)+"/5",delta(ps,promedio(pv.sueno)));
+    if(ph!=null)h+=kpi("Horas dormidas",ph.toFixed(1)+" h",delta(ph,promedio(pv.horas)));
+    h+='</div>';
+    h+='<div style="margin-top:10px"><div class="repline"><span class="rl">Días con registro</span><span class="rv">'+s.bienDias+" / "+s.dias+'</span></div>';
+    if(permiteFumar())h+='<div class="repline"><span class="rl">Días sin fumar</span><span class="rv">'+(s.dias-s.fumoDias)+" / "+s.dias+'</span></div>';
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // ENTRENAMIENTO
+  h+='<div class="repsec"><h3>🏋️ Entrenamiento</h3>';
+  if(s.sesionesGym===0){h+='<p class="repempty">Sin cargas registradas este mes.</p>';}
+  else{
+    h+='<div class="repgrid">';
+    h+=kpi("Sesiones de gym",String(s.sesionesGym),delta(s.sesionesGym,pv.sesionesGym));
+    h+=kpi("Ejercicios distintos",String(s.ejercicios.size),delta(s.ejercicios.size,pv.ejercicios.size));
+    h+='</div>';
+    // progresión respecto al mes anterior
+    const mejoras=[];
+    Object.keys(s.maxKg).forEach(ex=>{const prev=pv.maxKg[ex];if(prev!=null&&s.maxKg[ex]>prev)mejoras.push({ex:ex,de:prev,a:s.maxKg[ex]});});
+    mejoras.sort((a,b)=>(b.a-b.de)-(a.a-a.de));
+    if(mejoras.length){
+      h+='<div style="margin-top:12px"><div class="repline" style="border-top:none"><span class="rl" style="font-weight:600;color:var(--green)">📈 Progresaste en '+mejoras.length+(mejoras.length===1?" ejercicio":" ejercicios")+'</span></div>';
+      mejoras.slice(0,5).forEach(x=>{h+='<div class="repline"><span class="rl">'+esc(x.ex)+'</span><span class="rv">'+x.de+' → '+x.a+' kg</span></div>';});
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+
+  // DIARIO E HISTORIA
+  if(perfil.registra_diario){
+    h+='<div class="repsec"><h3>📖 Diario e historia</h3>';
+    if(s.diarioEntradas===0&&s.historiasMes===0&&s.recuerdosMes===0){h+='<p class="repempty">Sin anotaciones este mes.</p>';}
+    else{
+      h+='<div class="repgrid">';
+      h+=kpi("Anotaciones",String(s.diarioEntradas),delta(s.diarioEntradas,pv.diarioEntradas));
+      h+=kpi("Días escritos",s.diarioDias+" / "+s.dias,delta(s.diarioDias,pv.diarioDias));
+      if(s.historiasMes)h+=kpi("Historias generadas",String(s.historiasMes),"");
+      if(s.recuerdosMes)h+=kpi("Recuerdos sumados",String(s.recuerdosMes),"");
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+
+  h+='<div class="repactions"><button class="pdf" id="repPdf">📄 Descargar PDF</button><button class="close" id="repClose">Cerrar</button></div>';
+  h+='<div class="repfoot">Generado por Entreno · '+new Date().toLocaleDateString("es-AR")+'</div>';
+  h+='</div>';
+
+  el("repContent").innerHTML=h;
+  el("repPrev").onclick=()=>{repM--;if(repM<0){repM=11;repY--;}renderReporte();};
+  el("repNext").onclick=()=>{const hoy=new Date();if(repY>hoy.getFullYear()||(repY===hoy.getFullYear()&&repM>=hoy.getMonth()))return;repM++;if(repM>11){repM=0;repY++;}renderReporte();};
+  el("repClose").onclick=cerrarReporte;
+  el("repPdf").onclick=()=>window.print();
+}
+function abrirReporte(){
+  repY=viewY;repM=viewM;
+  const hoy=new Date();
+  if(repY>hoy.getFullYear()||(repY===hoy.getFullYear()&&repM>hoy.getMonth())){repY=hoy.getFullYear();repM=hoy.getMonth();}
+  renderReporte();
+  el("repOv").classList.add("show");
+  window.scrollTo(0,0);
+}
+function cerrarReporte(){el("repOv").classList.remove("show");}
+
+/* ---------- MI HISTORIA (recuerdos con fechas difusas) ---------- */
+const ETAPAS=[["infancia","Infancia",7],["adolescencia","Adolescencia",15],["juventud","Juventud",22],["adultez","Adultez",35],["madurez","Madurez",55]];
+const REC_CATS=["Familia","Amistades","Amor","Viajes","Trabajo","Estudio","Logros","Deporte","Otros"];
+let recTipo="anio",recCat="";
+
+function anioNacimiento(){const b=perfil&&perfil.nacimiento?parse(perfil.nacimiento):null;return b?b.getFullYear():null;}
+// Calcula la fecha interna que se usa SOLO para ordenar la línea de tiempo
+function recCalcOrden(tipo,d){
+  const nac=perfil&&perfil.nacimiento?parse(perfil.nacimiento):null;
+  if(tipo==="exacta"&&d.fecha)return d.fecha;
+  if(tipo==="mes"&&d.anio&&d.mes)return d.anio+"-"+String(d.mes).padStart(2,"0")+"-15";
+  if(tipo==="anio"&&d.anio)return d.anio+"-07-01";
+  if(tipo==="edad"&&d.edad!=null&&nac){const y=nac.getFullYear()+parseInt(d.edad);return y+"-"+String(nac.getMonth()+1).padStart(2,"0")+"-"+String(nac.getDate()).padStart(2,"0");}
+  if(tipo==="etapa"&&d.etapa&&nac){const e=ETAPAS.find(x=>x[0]===d.etapa);const y=nac.getFullYear()+(e?e[2]:20);return y+"-07-01";}
+  return todayStr();
+}
+// Texto que ve el usuario, respetando cómo lo cargó
+function recLabel(r){
+  if(r.tipo_fecha==="exacta"&&r.fecha){const d=parse(r.fecha);return d.getDate()+" de "+MONTHS[d.getMonth()]+" de "+d.getFullYear();}
+  if(r.tipo_fecha==="mes"&&r.anio&&r.mes)return MONTHS[r.mes-1]+" de "+r.anio;
+  if(r.tipo_fecha==="anio"&&r.anio)return String(r.anio);
+  if(r.tipo_fecha==="edad"&&r.edad!=null)return "A los "+r.edad+(r.edad===1?" año":" años");
+  if(r.tipo_fecha==="etapa"&&r.etapa){const e=ETAPAS.find(x=>x[0]===r.etapa);return e?e[1]:r.etapa;}
+  return "";
+}
+// Edad aproximada en ese recuerdo (para el subtítulo)
+function recEdadTxt(r){
+  const nac=perfil&&perfil.nacimiento?parse(perfil.nacimiento):null;if(!nac)return "";
+  if(r.tipo_fecha==="edad")return "≈ "+parse(r.orden_fecha).getFullYear();
+  const y=parse(r.orden_fecha).getFullYear()-nac.getFullYear();
+  if(y<0)return "";
+  return "≈ "+y+" años";
+}
+function decadaLabel(y){
+  const d=Math.floor(y/10)*10;
+  if(d<2000)return "Años "+String(d).slice(2);
+  return "Años "+d;
+}
+function renderRecWhenFields(){
+  const box=el("recWhenFields");if(!box)return;
+  const nac=anioNacimiento();
+  let h="";
+  if(recTipo==="edad"){
+    h='<input type="number" id="recEdad" inputmode="numeric" placeholder="Edad que tenías (ej: 12)" min="0" max="120">';
+    if(!nac)h+='<p class="muted" style="font-size:.76rem;margin-top:5px">⚠️ Para ubicarlo en el tiempo necesitamos tu fecha de nacimiento (cargala en Perfil).</p>';
+  }else if(recTipo==="anio"){
+    h='<input type="number" id="recAnio" inputmode="numeric" placeholder="Año (ej: 1995)" min="1900" max="2100">';
+  }else if(recTipo==="mes"){
+    h='<div class="frow"><div><label class="fld" style="margin-top:0">Mes</label><select id="recMes">'+MONTHS.map((m,i)=>'<option value="'+(i+1)+'">'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>').join("")+'</select></div><div><label class="fld" style="margin-top:0">Año</label><input type="number" id="recAnio" inputmode="numeric" placeholder="1995"></div></div>';
+  }else if(recTipo==="exacta"){
+    h='<input type="date" id="recFecha">';
+  }else if(recTipo==="etapa"){
+    h='<div class="chips" id="recEtapas">'+ETAPAS.map(e=>'<span class="chip" data-e="'+e[0]+'">'+e[1]+'</span>').join("")+'</div>';
+    if(!nac)h+='<p class="muted" style="font-size:.76rem;margin-top:5px">⚠️ Necesitamos tu fecha de nacimiento (cargala en Perfil).</p>';
+  }
+  box.innerHTML=h;
+  if(recTipo==="etapa"){
+    box.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+      box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));
+    });
+  }
+}
+function renderRecCats(){
+  const box=el("recCats");if(!box)return;
+  box.innerHTML=REC_CATS.map(c=>'<span class="chip'+(recCat===c?" on":"")+'" data-c="'+c+'">'+c+'</span>').join("");
+  box.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{recCat=(recCat===c.dataset.c)?"":c.dataset.c;renderRecCats();});
+}
+function initRecuerdosForm(){
+  const pick=el("recWhenPick");if(!pick)return;
+  pick.querySelectorAll(".whenbtn").forEach(b=>b.onclick=()=>{
+    recTipo=b.dataset.w;
+    pick.querySelectorAll(".whenbtn").forEach(x=>x.classList.toggle("on",x===b));
+    renderRecWhenFields();
+  });
+  renderRecWhenFields();renderRecCats();
+  el("btnGuardarRec").onclick=()=>conBoton("btnGuardarRec",guardarRecuerdo);
+}
+async function guardarRecuerdo(){
+  const texto=(el("recTexto").value||"").trim();
+  if(!texto){toast("Escribí el recuerdo");el("recTexto").focus();return;}
+  const d={};let falta="";
+  if(recTipo==="exacta"){d.fecha=el("recFecha").value;if(!d.fecha)falta="Elegí la fecha";}
+  else if(recTipo==="anio"){d.anio=parseInt(el("recAnio").value);if(!d.anio)falta="Escribí el año";}
+  else if(recTipo==="mes"){d.anio=parseInt(el("recAnio").value);d.mes=parseInt(el("recMes").value);if(!d.anio)falta="Escribí el año";}
+  else if(recTipo==="edad"){d.edad=parseInt(el("recEdad").value);if(isNaN(d.edad))falta="Escribí la edad que tenías";if(!perfil.nacimiento)falta="Cargá tu fecha de nacimiento en Perfil";}
+  else if(recTipo==="etapa"){const sel=document.querySelector("#recEtapas .chip.on");d.etapa=sel?sel.dataset.e:"";if(!d.etapa)falta="Elegí una etapa";if(!perfil.nacimiento)falta="Cargá tu fecha de nacimiento en Perfil";}
+  if(falta){toast(falta);return;}
+  const fila={user_id:user.id,titulo:(el("recTitulo").value||"").trim()||null,texto:texto,
+    categoria:recCat||null,tipo_fecha:recTipo,
+    fecha:d.fecha||null,anio:d.anio||null,mes:d.mes||null,
+    edad:(d.edad!=null&&!isNaN(d.edad))?d.edad:null,etapa:d.etapa||null,
+    orden_fecha:recCalcOrden(recTipo,d)};
+  try{
+    const r=await sb.from("recuerdos").insert(fila).select().single();
+    if(r.error)throw r.error;
+    recuerdos.push(r.data);
+    recuerdos.sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1);
+    el("recTitulo").value="";el("recTexto").value="";recCat="";renderRecCats();renderRecWhenFields();
+    renderRecuerdos();toast("Recuerdo guardado ✓");
+  }catch(e){toast("No se pudo guardar: "+traducir(e));}
+}
+async function borrarRecuerdo(id){
+  const r=recuerdos.find(x=>x.id===id);if(!r)return;
+  if(!confirm("¿Borrar este recuerdo? No se puede recuperar."))return;
+  try{
+    const res=await sb.from("recuerdos").delete().eq("id",id);if(res.error)throw res.error;
+    recuerdos=recuerdos.filter(x=>x.id!==id);renderRecuerdos();toast("Recuerdo borrado");
+  }catch(e){toast("No se pudo borrar");}
+}
+function renderRecuerdos(){
+  const cont=el("recuerdosList");if(!cont)return;
+  const n=recuerdos.length;
+  el("rTotal").textContent=n;
+  if(n===0){
+    el("rSpan").textContent="—";el("rPrimero").textContent="—";
+    cont.innerHTML='<div class="dempty"><div class="big">🕰️</div><p style="margin-top:8px">Tu historia está por escribirse.<br>Empezá con cualquier recuerdo: no hace falta que sepas la fecha exacta.</p></div>';
+    return;
+  }
+  const ordenados=recuerdos.slice().sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1);
+  const y0=parse(ordenados[0].orden_fecha).getFullYear();
+  const y1=parse(ordenados[n-1].orden_fecha).getFullYear();
+  el("rSpan").textContent=(y1-y0)+(y1-y0===1?" año":" años");
+  el("rPrimero").textContent=y0;
+  // agrupar por década
+  const grupos={};
+  ordenados.forEach(r=>{const y=parse(r.orden_fecha).getFullYear();const d=Math.floor(y/10)*10;if(!grupos[d])grupos[d]=[];grupos[d].push(r);});
+  const claves=Object.keys(grupos).map(Number).sort((a,b)=>a-b);
+  let h='<h2 style="font-size:1.05rem;margin:8px 0 12px;font-family:Bricolage Grotesque">📜 Tu línea de tiempo</h2><div class="tl">';
+  claves.forEach(d=>{
+    h+='<div class="tlgroup"><div class="tlgh">'+decadaLabel(d)+'</div>';
+    grupos[d].forEach(r=>{
+      const edad=recEdadTxt(r);
+      h+='<div class="rcard"><div class="rwhen">'+esc(recLabel(r))+(edad?' <span class="rage">· '+edad+'</span>':'')+'</div>';
+      if(r.titulo)h+='<div class="rtit">'+esc(r.titulo)+'</div>';
+      h+='<div class="rtxt">'+esc(r.texto)+'</div>';
+      h+='<div class="rfoot">'+(r.categoria?'<span class="rcat">'+esc(r.categoria)+'</span>':'<span></span>')+'<button class="rdel" data-rdel="'+r.id+'">✕ eliminar</button></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  cont.innerHTML=h;
+  cont.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>borrarRecuerdo(parseInt(b.dataset.rdel)));
+}
+// Sub-toggle Diario <-> Mi historia
+function showSubDiario(which){
+  const on="actbtn on",off="actbtn";
+  ["subDiario","subDiario2"].forEach(id=>{if(el(id))el(id).className=which==="diario"?on:off;});
+  ["subHistoria","subHistoria2"].forEach(id=>{if(el(id))el(id).className=which==="historia"?on:off;});
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  el(which==="historia"?"v-historia":"v-diario").classList.add("active");
+  window.scrollTo(0,0);
+}
+// Acceso rápido desde el Calendario
+function irACargarRecuerdo(){
+  document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));
+  const tb=document.querySelector('#tabbar button[data-v="v-diario"]');if(tb)tb.classList.add("on");
+  showSubDiario("historia");
+  setTimeout(()=>{const f=el("recForm");if(f){f.scrollIntoView({behavior:"smooth",block:"center"});el("recTexto").focus();}},150);
+}
+
 /* ---------- NARRADOR DEL DIARIO ---------- */
 let narrRange="semana",narrGenero="distopia";
 const GEN_LABEL={distopia:"Distopía",comedia:"Comedia",accion:"Acción",suspenso:"Suspenso",drama:"Drama",poesia:"Poesía"};
 function narrRangeFechas(){
   const hoy=new Date();
+  if(narrRange==="vida"){
+    // toda la vida: desde el recuerdo más antiguo (o el nacimiento) hasta hoy
+    let desde=perfil&&perfil.nacimiento?perfil.nacimiento:"1900-01-01";
+    if(recuerdos.length){const min=recuerdos.slice().sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1)[0].orden_fecha;if(min<desde)desde=min;}
+    return {desde:desde,hasta:ymd(hoy),vida:true};
+  }
   if(narrRange==="libre"){
     const d=el("narrDesde").value,h=el("narrHasta").value;
     return {desde:d,hasta:h};
@@ -1442,6 +1944,8 @@ function initNarrador(){
     narrRange=b.dataset.range;
     el("rangePick").querySelectorAll(".rangebtn").forEach(x=>x.classList.toggle("on",x===b));
     el("rangeLibre").style.display=(narrRange==="libre")?"block":"none";
+    // "Mi vida entera" se apoya en los recuerdos: los activa automáticamente
+    if(narrRange==="vida"){const c=el("src_recuerdos");if(c)c.checked=true;}
   });
   el("genChips").querySelectorAll(".genchip").forEach(b=>b.onclick=()=>{
     narrGenero=b.dataset.gen;
@@ -1453,22 +1957,25 @@ async function generarHistoria(){
   const {desde,hasta}=narrRangeFechas();
   if(!desde||!hasta){toast("Elegí las fechas del período");return;}
   if(desde>hasta){toast("La fecha 'desde' debe ser anterior a 'hasta'");return;}
+  const esVida=(narrRange==="vida");
   const dias=Math.round((parse(hasta)-parse(desde))/86400000)+1;
-  if(dias>31){toast("El período no puede superar un mes (31 días)");return;}
+  if(!esVida&&dias>31){toast("El período no puede superar un mes (31 días)");return;}
   const fuentes=[];
-  [["diario","src_diario"],["suenos","src_suenos"],["animo","src_animo"],["gym","src_gym"],["comidas","src_comidas"]].forEach(([k,id])=>{if(el(id)&&el(id).checked)fuentes.push(k);});
+  [["diario","src_diario"],["suenos","src_suenos"],["animo","src_animo"],["gym","src_gym"],["comidas","src_comidas"],["recuerdos","src_recuerdos"]].forEach(([k,id])=>{if(el(id)&&el(id).checked)fuentes.push(k);});
   if(fuentes.length===0){toast("Elegí al menos una fuente de datos");return;}
-  if(!fuentes.includes("diario")&&!fuentes.includes("suenos")){
-    if(!confirm("Sin diario ni sueños, la historia va a tener poco material personal. ¿Generar igual?"))return;
+  if(esVida&&recuerdos.length===0){toast("Todavía no cargaste recuerdos en «Mi historia»");return;}
+  if(!esVida&&!fuentes.includes("diario")&&!fuentes.includes("suenos")&&!fuentes.includes("recuerdos")){
+    if(!confirm("Sin diario, sueños ni recuerdos, la historia va a tener poco material personal. ¿Generar igual?"))return;
   }
   const btn=el("btnGenerar");btn.disabled=true;
   el("narrLoading").style.display="block";
   try{
-    const {data,error}=await sb.functions.invoke("narrar-diario",{body:{desde,hasta,genero:narrGenero,fuentes}});
+    const {data,error}=await sb.functions.invoke("narrar-diario",{body:{desde,hasta,genero:narrGenero,fuentes,vida:esVida}});
     if(error)throw error;
     if(data&&data.error){
       const msgs={sin_material:"No encontré datos en ese período. Probá otro rango o escribí algo en tu diario primero.",
         rango_muy_largo:"El período no puede superar un mes.",
+        sin_recuerdos:"Todavía no tenés recuerdos cargados en «Mi historia».",
         limite_diario:"Llegaste al límite de historias por hoy. Volvé mañana ✨",
         sinclave:"Falta configurar la clave de IA en el servidor.",
         sin_suscripcion:"Esta función requiere una suscripción activa."};
@@ -1722,7 +2229,7 @@ async function doLogout(){
   gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
   window.scrollTo(0,0);
 }
-document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));const target=b.dataset.v;if(target==="v-rutinas"){showSub("rutinas");}else{el(target).classList.add("active");}window.scrollTo(0,0);
+document.querySelectorAll("#tabbar button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));const target=b.dataset.v;if(target==="v-rutinas"){showSub("rutinas");}else if(target==="v-diario"){showSubDiario("diario");}else{el(target).classList.add("active");}window.scrollTo(0,0);
   // tip contextual la primera vez que entra a esta sección (si ya vio el tour)
   if(perfil&&perfil.vio_tour)setTimeout(()=>showTip(target,false),250);
 };});
@@ -1755,6 +2262,11 @@ function init(){
   el("btnDQuick").onclick=()=>conBoton("btnDQuick",addDiaryFromSection);
   el("dSearch").oninput=()=>{dQuery=el("dSearch").value;renderDiary();};
   initNarrador();
+  initRecuerdosForm();
+  el("btnQuickRec").onclick=irACargarRecuerdo;
+  el("btnReporte").onclick=abrirReporte;
+  ["subDiario","subDiario2"].forEach(id=>{if(el(id))el(id).onclick=()=>showSubDiario("diario");});
+  ["subHistoria","subHistoria2"].forEach(id=>{if(el(id))el(id).onclick=()=>showSubDiario("historia");});
   el("btnHelp").onclick=()=>showTip(currentView(),true);
   el("btnVerTour").onclick=()=>startTour();
   el("subRutinas").onclick=()=>showSub("rutinas");
