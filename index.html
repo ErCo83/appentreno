@@ -381,6 +381,15 @@
     .repsec{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
     .repkpi,.repbar>span{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
+  /* Dictado por voz */
+  .microw{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+  .micbtn{display:flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:7px 12px;font-size:.8rem;color:var(--ink);cursor:pointer;font-family:"Hanken Grotesk",sans-serif}
+  .micbtn.rec{background:#fbeae5;border-color:var(--red);color:var(--red);animation:micpulse 1.1s infinite}
+  @keyframes micpulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .michint{font-size:.74rem;color:var(--ink-soft);font-style:italic}
+  .michint.live{color:var(--accent)}
+  .rcard .redit{background:none;border:none;color:var(--ink-soft);font-size:.72rem;cursor:pointer;font-family:"Sometype Mono",monospace;text-transform:uppercase;margin-right:10px}
+  .rcard.editing{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -580,6 +589,7 @@
     <div class="dquick">
       <label class="fld" style="margin-top:0">Nueva anotación de hoy</label>
       <textarea id="dQuickTxt" placeholder="¿Qué querés registrar hoy?"></textarea>
+      <div id="micDiario"></div>
       <button class="act" id="btnDQuick" style="margin-top:10px">＋ Guardar anotación</button>
     </div>
     <div class="diaryhead">
@@ -648,11 +658,16 @@
     </div>
 
     <div class="dquick" id="recForm">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span class="tag" id="recFormTag">Nuevo recuerdo</span>
+        <button class="rdel" id="btnCancelRec" style="display:none">✕ cancelar edición</button>
+      </div>
       <label class="fld" style="margin-top:0">Título (opcional)</label>
       <input type="text" id="recTitulo" placeholder="Ej: Mi primer día de escuela">
 
       <label class="fld">El recuerdo</label>
       <textarea id="recTexto" placeholder="Contalo como lo recordás…" style="min-height:90px"></textarea>
+      <div id="micRec"></div>
 
       <label class="fld">¿Cuándo fue?</label>
       <div class="whenpick" id="recWhenPick">
@@ -1050,6 +1065,7 @@ function renderWellBody(){
     EMO[key].forEach((e,i)=>{h+='<button class="'+(cur===i+1?"on":"")+'" data-val="'+(i+1)+'">'+e+'</button>';});h+='</div>';});
   h+='<div class="seclabel">Horas dormidas</div><input type="number" step="0.5" inputmode="decimal" id="whHours" placeholder="7.5" value="'+(mHoras!==""?mHoras:"")+'">';
   h+='<div class="seclabel">¿Qué soñé?</div><input type="text" id="whDream" placeholder="Opcional…" value="'+escA(mTexto)+'">';
+  h+=micHTML("micSuenoBtn","micSuenoHint");
   if(permiteFumar()){
     h+='<div class="seclabel">¿Fumaste?</div><div class="acts"><button class="actbtn'+(mFumo?" on":"")+'" id="fumoSi">Sí</button><button class="actbtn'+(!mFumo?" on":"")+'" id="fumoNo">No</button></div>';
     if(mFumo)h+='<div class="seclabel">Tipo</div><div class="chips" data-chips="fumo">'+FUMO_TYPES.map(t=>'<span class="chip'+(mFumoTipo===t?" on":"")+'" data-v="'+t+'">'+t+'</span>').join("")+'</div>';
@@ -1091,6 +1107,7 @@ function renderDiaBody(){
   entries.forEach(e=>{const t=new Date(e.creado);const hh=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
     h+='<div class="dentry"><span class="dt">'+hh+'</span><span class="dx">'+esc(e.texto)+'</span><button class="rmv" data-drm="'+e.id+'">✕</button></div>';});
   h+='<div class="seclabel">Nueva anotación</div><textarea id="diarioTxt" placeholder="Escribí acá…"></textarea>';
+  h+=micHTML("micDiaBtn","micDiaHint");
   h+='<button class="act ghost" id="btnAddDia" style="margin-top:10px">＋ Agregar anotación</button>';
   return h;
 }
@@ -1198,6 +1215,8 @@ function attachModal(){
     const ki=el("fak"+mi);if(ki)ki.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
     markPending(mi);
   }});
+  engancharMic("micDiaBtn","diarioTxt","micDiaHint");
+  engancharMic("micSuenoBtn","whDream","micSuenoHint");
   el("saveDay").onclick=()=>conBoton("saveDay",saveDay);
   el("closeSheet").onclick=closeSheet;
 }
@@ -1207,7 +1226,7 @@ function syncModal(){
   if((x=el("whDream")))mTexto=x.value;
   if((x=el("fdTotal")))mTotalManual=x.value;
 }
-function closeSheet(){el("ov").classList.remove("show");}
+function closeSheet(){detenerDictado();el("ov").classList.remove("show");}
 el("ov").onclick=e=>{if(e.target.id==="ov")closeSheet();};
 
 async function saveDay(){
@@ -1544,6 +1563,66 @@ function initOnboardingState(){
 
 
 
+
+/* ---------- DICTADO POR VOZ (Web Speech API) ---------- */
+function vozDisponible(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+let vozRec=null,vozBtnId=null,vozTargetId=null,vozHintId=null;
+
+function micHTML(btnId,hintId){
+  if(!vozDisponible())return "";
+  return '<div class="microw"><button type="button" class="micbtn" id="'+btnId+'">🎤 Dictar</button><span class="michint" id="'+hintId+'"></span></div>';
+}
+function detenerDictado(){
+  if(vozRec){try{vozRec.stop();}catch(e){}}
+  if(vozBtnId&&el(vozBtnId)){el(vozBtnId).className="micbtn";el(vozBtnId).textContent="🎤 Dictar";}
+  if(vozHintId&&el(vozHintId)){el(vozHintId).textContent="";el(vozHintId).className="michint";}
+  vozRec=null;vozBtnId=null;vozTargetId=null;vozHintId=null;
+}
+function iniciarDictado(btnId,targetId,hintId){
+  if(!vozDisponible()){toast("Tu navegador no permite dictado por voz");return;}
+  // si ya estaba grabando (el mismo o otro campo), cortar
+  if(vozRec){const mismo=(vozBtnId===btnId);detenerDictado();if(mismo)return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rec=new SR();
+  rec.lang="es-AR";rec.continuous=true;rec.interimResults=true;
+  vozRec=rec;vozBtnId=btnId;vozTargetId=targetId;vozHintId=hintId;
+  const btn=el(btnId),hint=el(hintId);
+  if(btn){btn.className="micbtn rec";btn.textContent="⏹️ Detener";}
+  if(hint){hint.textContent="Escuchando… hablá tranquilo";hint.className="michint live";}
+  rec.onresult=e=>{
+    let fin="",parcial="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal)fin+=t;else parcial+=t;
+    }
+    if(fin.trim()){
+      const t=el(vozTargetId);
+      if(t){
+        const sep=(t.value&&!/\s$/.test(t.value))?" ":"";
+        t.value=t.value+sep+fin.trim();
+        t.dispatchEvent(new Event("input",{bubbles:true}));
+      }
+    }
+    const h=el(vozHintId);
+    if(h)h.textContent=parcial.trim()?("… "+parcial.trim()):"Escuchando… hablá tranquilo";
+  };
+  rec.onerror=ev=>{
+    const msgs={"not-allowed":"Necesitamos permiso para usar el micrófono",
+      "service-not-allowed":"El navegador bloqueó el micrófono",
+      "no-speech":"No te escuché, probá de nuevo",
+      "audio-capture":"No encontré un micrófono disponible",
+      "network":"El dictado necesita conexión a internet"};
+    if(ev.error!=="aborted")toast(msgs[ev.error]||"No se pudo dictar");
+    detenerDictado();
+  };
+  rec.onend=()=>{if(vozBtnId===btnId)detenerDictado();};
+  try{rec.start();}catch(e){toast("No se pudo iniciar el dictado");detenerDictado();}
+}
+function engancharMic(btnId,targetId,hintId){
+  const b=el(btnId);if(!b)return;
+  b.onclick=()=>iniciarDictado(btnId,targetId,hintId);
+}
+
 /* ---------- REPORTE MENSUAL ---------- */
 let repY,repM;
 function pad2(n){return String(n).padStart(2,"0");}
@@ -1760,7 +1839,7 @@ function cerrarReporte(){el("repOv").classList.remove("show");}
 /* ---------- MI HISTORIA (recuerdos con fechas difusas) ---------- */
 const ETAPAS=[["infancia","Infancia",7],["adolescencia","Adolescencia",15],["juventud","Juventud",22],["adultez","Adultez",35],["madurez","Madurez",55]];
 const REC_CATS=["Familia","Amistades","Amor","Viajes","Trabajo","Estudio","Logros","Deporte","Otros"];
-let recTipo="anio",recCat="";
+let recTipo="anio",recCat="",recEditId=null;
 
 function anioNacimiento(){const b=perfil&&perfil.nacimiento?parse(perfil.nacimiento):null;return b?b.getFullYear():null;}
 // Calcula la fecha interna que se usa SOLO para ordenar la línea de tiempo
@@ -1833,6 +1912,35 @@ function initRecuerdosForm(){
   });
   renderRecWhenFields();renderRecCats();
   el("btnGuardarRec").onclick=()=>conBoton("btnGuardarRec",guardarRecuerdo);
+  el("btnCancelRec").onclick=cancelarEdicionRec;
+}
+function modoFormRecuerdo(editando){
+  el("recFormTag").textContent=editando?"Editando recuerdo":"Nuevo recuerdo";
+  el("btnGuardarRec").textContent=editando?"✓ Guardar cambios":"＋ Guardar recuerdo";
+  el("btnCancelRec").style.display=editando?"":"none";
+}
+function editarRecuerdo(id){
+  const r=recuerdos.find(x=>x.id===id);if(!r)return;
+  recEditId=id;
+  el("recTitulo").value=r.titulo||"";
+  el("recTexto").value=r.texto||"";
+  recCat=r.categoria||"";renderRecCats();
+  recTipo=r.tipo_fecha;
+  el("recWhenPick").querySelectorAll(".whenbtn").forEach(b=>b.classList.toggle("on",b.dataset.w===recTipo));
+  renderRecWhenFields();
+  // completar los campos según el tipo
+  if(recTipo==="exacta"&&el("recFecha"))el("recFecha").value=r.fecha||"";
+  if(recTipo==="anio"&&el("recAnio"))el("recAnio").value=r.anio||"";
+  if(recTipo==="mes"){if(el("recAnio"))el("recAnio").value=r.anio||"";if(el("recMes"))el("recMes").value=r.mes||1;}
+  if(recTipo==="edad"&&el("recEdad"))el("recEdad").value=(r.edad!=null?r.edad:"");
+  if(recTipo==="etapa"&&el("recEtapas"))el("recEtapas").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.e===r.etapa));
+  modoFormRecuerdo(true);renderRecuerdos();
+  el("recForm").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function cancelarEdicionRec(){
+  recEditId=null;
+  el("recTitulo").value="";el("recTexto").value="";recCat="";renderRecCats();
+  renderRecWhenFields();modoFormRecuerdo(false);renderRecuerdos();
 }
 async function guardarRecuerdo(){
   const texto=(el("recTexto").value||"").trim();
@@ -1850,12 +1958,24 @@ async function guardarRecuerdo(){
     edad:(d.edad!=null&&!isNaN(d.edad))?d.edad:null,etapa:d.etapa||null,
     orden_fecha:recCalcOrden(recTipo,d)};
   try{
-    const r=await sb.from("recuerdos").insert(fila).select().single();
-    if(r.error)throw r.error;
-    recuerdos.push(r.data);
-    recuerdos.sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1);
-    el("recTitulo").value="";el("recTexto").value="";recCat="";renderRecCats();renderRecWhenFields();
-    renderRecuerdos();toast("Recuerdo guardado ✓");
+    if(recEditId){
+      const upd=Object.assign({},fila);delete upd.user_id;
+      const r=await sb.from("recuerdos").update(upd).eq("id",recEditId).select().single();
+      if(r.error)throw r.error;
+      const i=recuerdos.findIndex(x=>x.id===recEditId);
+      if(i>=0)recuerdos[i]=r.data;
+      recuerdos.sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1);
+      recEditId=null;
+      el("recTitulo").value="";el("recTexto").value="";recCat="";renderRecCats();renderRecWhenFields();
+      modoFormRecuerdo(false);renderRecuerdos();toast("Cambios guardados ✓");
+    }else{
+      const r=await sb.from("recuerdos").insert(fila).select().single();
+      if(r.error)throw r.error;
+      recuerdos.push(r.data);
+      recuerdos.sort((a,b)=>a.orden_fecha<b.orden_fecha?-1:1);
+      el("recTitulo").value="";el("recTexto").value="";recCat="";renderRecCats();renderRecWhenFields();
+      renderRecuerdos();toast("Recuerdo guardado ✓");
+    }
   }catch(e){toast("No se pudo guardar: "+traducir(e));}
 }
 async function borrarRecuerdo(id){
@@ -1863,7 +1983,9 @@ async function borrarRecuerdo(id){
   if(!confirm("¿Borrar este recuerdo? No se puede recuperar."))return;
   try{
     const res=await sb.from("recuerdos").delete().eq("id",id);if(res.error)throw res.error;
-    recuerdos=recuerdos.filter(x=>x.id!==id);renderRecuerdos();toast("Recuerdo borrado");
+    recuerdos=recuerdos.filter(x=>x.id!==id);
+    if(recEditId===id){recEditId=null;el("recTitulo").value="";el("recTexto").value="";modoFormRecuerdo(false);}
+    renderRecuerdos();toast("Recuerdo borrado");
   }catch(e){toast("No se pudo borrar");}
 }
 function renderRecuerdos(){
@@ -1889,10 +2011,10 @@ function renderRecuerdos(){
     h+='<div class="tlgroup"><div class="tlgh">'+decadaLabel(d)+'</div>';
     grupos[d].forEach(r=>{
       const edad=recEdadTxt(r);
-      h+='<div class="rcard"><div class="rwhen">'+esc(recLabel(r))+(edad?' <span class="rage">· '+edad+'</span>':'')+'</div>';
+      h+='<div class="rcard'+(recEditId===r.id?" editing":"")+'"><div class="rwhen">'+esc(recLabel(r))+(edad?' <span class="rage">· '+edad+'</span>':'')+'</div>';
       if(r.titulo)h+='<div class="rtit">'+esc(r.titulo)+'</div>';
       h+='<div class="rtxt">'+esc(r.texto)+'</div>';
-      h+='<div class="rfoot">'+(r.categoria?'<span class="rcat">'+esc(r.categoria)+'</span>':'<span></span>')+'<button class="rdel" data-rdel="'+r.id+'">✕ eliminar</button></div>';
+      h+='<div class="rfoot">'+(r.categoria?'<span class="rcat">'+esc(r.categoria)+'</span>':'<span></span>')+'<span><button class="redit" data-redit="'+r.id+'">✎ editar</button><button class="rdel" data-rdel="'+r.id+'">✕ eliminar</button></span></div>';
       h+='</div>';
     });
     h+='</div>';
@@ -1900,6 +2022,7 @@ function renderRecuerdos(){
   h+='</div>';
   cont.innerHTML=h;
   cont.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>borrarRecuerdo(parseInt(b.dataset.rdel)));
+  cont.querySelectorAll("[data-redit]").forEach(b=>b.onclick=()=>editarRecuerdo(parseInt(b.dataset.redit)));
 }
 // Sub-toggle Diario <-> Mi historia
 function showSubDiario(which){
@@ -2265,6 +2388,10 @@ function init(){
   initRecuerdosForm();
   el("btnQuickRec").onclick=irACargarRecuerdo;
   el("btnReporte").onclick=abrirReporte;
+  if(el("micRec"))el("micRec").innerHTML=micHTML("micRecBtn","micRecHint");
+  if(el("micDiario"))el("micDiario").innerHTML=micHTML("micDiaSecBtn","micDiaSecHint");
+  engancharMic("micRecBtn","recTexto","micRecHint");
+  engancharMic("micDiaSecBtn","dQuickTxt","micDiaSecHint");
   ["subDiario","subDiario2"].forEach(id=>{if(el(id))el(id).onclick=()=>showSubDiario("diario");});
   ["subHistoria","subHistoria2"].forEach(id=>{if(el(id))el(id).onclick=()=>showSubDiario("historia");});
   el("btnHelp").onclick=()=>showTip(currentView(),true);
