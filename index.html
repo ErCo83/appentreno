@@ -417,6 +417,21 @@
   .sugcard .sk{font-family:"Sometype Mono",monospace;font-size:.72rem;color:var(--accent);white-space:nowrap}
   .sugcard .sp{font-size:.78rem;color:var(--ink-soft);margin-top:3px}
   .sugload{font-size:.8rem;color:var(--ink-soft);font-style:italic;padding:6px 0}
+  .matebtn{flex:1;min-width:74px;background:#f4f0e3;border:1px solid #d9cfa9;color:#7a6420;border-radius:11px;padding:10px 6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:"Hanken Grotesk",sans-serif}
+  .matebtn:active{background:#ebe4cf}
+  .mateops{display:none;gap:6px;margin-top:6px}
+  .mateops.show{display:flex;flex-wrap:wrap}
+  .mateop{flex:1;min-width:96px;background:#fff;border:1px solid #d9cfa9;color:#7a6420;border-radius:10px;padding:9px 6px;font-size:.78rem;cursor:pointer;font-family:"Hanken Grotesk",sans-serif;text-align:center}
+  .mateop b{display:block;font-family:"Sometype Mono",monospace;font-size:.66rem;opacity:.75;font-weight:400;margin-top:2px}
+  .mateop:active{background:#f7f4e9}
+  /* Panel rápido de hidratación desde el calendario */
+  .quickrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .quickrow .rquickbtn{flex:0 1 auto}
+  .aguaov{position:fixed;inset:0;background:rgba(20,40,30,.5);display:none;align-items:flex-end;justify-content:center;z-index:55;backdrop-filter:blur(2px)}
+  .aguaov.show{display:flex}
+  .aguasheet{background:var(--bg);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:8px 16px 26px;animation:up .3s cubic-bezier(.2,.8,.2,1)}
+  .aguasheet h3{font-size:1.2rem;font-weight:800;margin-bottom:2px}
+  .aguasheet .when{font-family:"Sometype Mono",monospace;font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -488,7 +503,7 @@
       <div class="dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
       <div class="grid" id="calGrid"></div>
       <div class="legend" id="calLegend"></div>
-      <div class="rquick"><button class="rquickbtn" id="btnQuickRec">🕰️ Cargar un recuerdo</button></div>
+      <div class="quickrow"><button class="rquickbtn" id="btnQuickAgua">💧 Cargar agua</button><button class="rquickbtn" id="btnQuickRec">🕰️ Cargar un recuerdo</button></div>
     </div>
   </section>
 
@@ -724,6 +739,7 @@
 </main>
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="aguaov" id="aguaOv"><div class="aguasheet" id="aguaSheet"></div></div>
 <div class="repov" id="repOv"><div id="repContent"></div></div>
 <div class="tourov" id="tourOv"><div class="tourcard" id="tourCard"></div></div>
 <div class="tipov" id="tipOv"><div class="tipcard" id="tipCard"></div></div>
@@ -787,6 +803,9 @@ function latestWeight(){const p=medidas.filter(m=>m.peso_kg!=null);if(p.length)r
 function calorieTarget(){const w=latestWeight(),h=perfil.altura_cm,a=age();const bmr=10*w+6.25*h-5*a+(perfil.sexo==="M"?5:-161);return Math.round((bmr*Number(perfil.factor_actividad)+Number(perfil.ajuste_kcal||0))/10)*10;}
 // Referencia general de hidratación: ~35 ml por kg, +500 ml los días de actividad.
 // Es orientativo, no una indicación médica.
+// Opciones de mate. Los ml son lo efectivamente ingerido: se descuenta
+// aproximadamente lo que queda retenido en la yerba (~10%).
+const MATE_OPS=[["Unos mates",300],["Medio termo",450],["Termo entero",900]];
 function metaAguaDia(k){
   const w=latestWeight();
   let base=Math.round((w*35)/100)*100;
@@ -879,7 +898,7 @@ function renderLegend(){
   h+='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="lgbox rest"></i> Libre</span>';
   h+='</div>';
   // Indicadores (íconos mini)
-  let mini='<span>🙂 Ánimo</span><span>🍴 Comida</span>';
+  let mini='<span>🙂 Ánimo</span><span>🍴 Comida</span><span>💧 Agua</span>';
   if(permiteAlcohol())mini+='<span>🍷 Alcohol</span>';
   if(perfil.registra_diario)mini+='<span>✍️ Nota</span>';
   h+='<div class="legrow"><span class="legcap">Registros</span>'+mini+'</div>';
@@ -923,6 +942,7 @@ function makeCell(d,otroMes){
     let ind="";
     const b=bien[k];if(b&&b.animo)ind+='<span class="mi">'+EMO.animo[b.animo-1]+'</span>';
     if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+='<span class="mi">🍴</span>';
+    if(aguaDe(k)>0)ind+='<span class="mi">💧</span>';
     if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+='<span class="mi">🍷</span>';
     if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+='<span class="mi">✍️</span>';
     const inds=ind?'<div class="inds">'+ind+'</div>':"";
@@ -1149,7 +1169,8 @@ function renderFoodBody(){
   const vasos=Math.round(mAgua/250);
   h+='<div class="agua"><div class="ah"><span><span class="av">'+mAgua+' ml</span> <span class="am">· '+vasos+(vasos===1?" vaso":" vasos")+'</span></span><span class="am">meta ~'+meta+' ml</span></div>';
   h+='<div class="aguabar"><span style="width:'+pctA+'%"></span></div>';
-  h+='<div class="aguabtns"><button class="aguabtn menos" id="aguaMenos" title="Quitar un vaso">−</button><button class="aguabtn" data-agua="250">🥤 +1 vaso</button><button class="aguabtn" data-agua="500">🍶 +500 ml</button><button class="aguabtn" data-agua="1000">💧 +1 litro</button></div>';
+  h+='<div class="aguabtns"><button class="aguabtn menos" id="aguaMenos" title="Quitar un vaso">−</button><button class="aguabtn" data-agua="250">🥤 +1 vaso</button><button class="aguabtn" data-agua="500">🍶 +500 ml</button><button class="matebtn" id="mateToggle">🧉 Mate</button></div>';
+  h+='<div class="mateops" id="mateOps">'+MATE_OPS.map(o=>'<button class="mateop" data-agua="'+o[1]+'">'+o[0]+'<b>'+o[1]+' ml</b></button>').join("")+'</div>';
   h+='<div class="aguacustom"><input type="number" id="aguaCustom" inputmode="numeric" placeholder="otra cantidad en ml"><button id="aguaAdd">＋</button></div>';
   h+='</div>';
 
@@ -1310,6 +1331,56 @@ async function estimateFood(mi){
   }catch(e){toast("No pude estimar: revisá que la función esté desplegada");}
   btn.disabled=false;btn.textContent=old;
 }
+/* --- Panel rápido de hidratación (desde el Calendario, para HOY) --- */
+let qAgua=0;
+function abrirAguaRapida(){
+  const k=todayStr();
+  qAgua=aguaDe(k);
+  renderAguaRapida();
+  el("aguaOv").classList.add("show");
+}
+function cerrarAguaRapida(){el("aguaOv").classList.remove("show");}
+function renderAguaRapida(){
+  const k=todayStr(),meta=metaAguaDia(k);
+  const pct=Math.min(100,Math.round((qAgua/meta)*100))||0;
+  const vasos=Math.round(qAgua/250);
+  const d=new Date();
+  let h='<div class="grab"></div><h3>💧 Hidratación de hoy</h3>';
+  h+='<div class="when">'+DIAS[d.getDay()]+' '+d.getDate()+' de '+MONTHS[d.getMonth()]+'</div>';
+  h+='<div class="agua" style="margin-top:4px"><div class="ah"><span><span class="av">'+qAgua+' ml</span> <span class="am">· '+vasos+(vasos===1?" vaso":" vasos")+'</span></span><span class="am">meta ~'+meta+' ml</span></div>';
+  h+='<div class="aguabar"><span style="width:'+pct+'%"></span></div>';
+  h+='<div class="aguabtns"><button class="aguabtn menos" data-qagua="-250" title="Quitar un vaso">−</button><button class="aguabtn" data-qagua="250">🥤 +1 vaso</button><button class="aguabtn" data-qagua="500">🍶 +500 ml</button><button class="matebtn" id="qMateToggle">🧉 Mate</button></div>';
+  h+='<div class="mateops" id="qMateOps">'+MATE_OPS.map(o=>'<button class="mateop" data-qagua="'+o[1]+'">'+o[0]+'<b>'+o[1]+' ml</b></button>').join("")+'</div>';
+  h+='<div class="aguacustom"><input type="number" id="qAguaCustom" inputmode="numeric" placeholder="otra cantidad en ml"><button id="qAguaAdd">＋</button></div>';
+  h+='</div>';
+  h+='<button class="act ghost" id="qAguaClose" style="margin-top:14px">Listo</button>';
+  el("aguaSheet").innerHTML=h;
+  el("aguaSheet").querySelectorAll("[data-qagua]").forEach(b=>b.onclick=()=>sumarAguaRapida(parseInt(b.dataset.qagua)));
+  const mt=el("qMateToggle");if(mt)mt.onclick=()=>{const o=el("qMateOps");if(o)o.classList.toggle("show");};
+  const ad=el("qAguaAdd");if(ad)ad.onclick=()=>{const i=el("qAguaCustom");const v=parseInt(i.value);if(!v||v<=0){i.focus();return;}sumarAguaRapida(v);i.value="";};
+  el("qAguaClose").onclick=cerrarAguaRapida;
+}
+async function sumarAguaRapida(delta){
+  const k=todayStr();
+  const nuevo=Math.max(0,qAgua+delta);
+  const prev=qAgua;
+  qAgua=nuevo;renderAguaRapida();
+  try{
+    const base=alim[k]||{};
+    const fila={user_id:user.id,fecha:k,
+      total_manual:base.total_manual!=null?base.total_manual:null,
+      alcohol:!!base.alcohol,alcohol_tipo:base.alcohol_tipo||null,
+      agua_ml:nuevo>0?nuevo:null};
+    const r=await sb.from("alimentacion_dia").upsert(fila);
+    if(r.error)throw r.error;
+    alim[k]=fila;
+    if(mKey===k)mAgua=nuevo;   // mantener sincronizado el modal si está abierto
+    renderCalendar();renderProgress();
+  }catch(e){
+    qAgua=prev;renderAguaRapida();toast("No se pudo guardar el agua");
+  }
+}
+
 // El agua se guarda apenas se toca el botón: es el registro más frecuente del día.
 async function guardarAgua(nuevo){
   const ml=Math.max(0,Math.round(nuevo));
@@ -1391,6 +1462,7 @@ function attachModal(){
   document.querySelectorAll("[data-agua]").forEach(b=>b.onclick=()=>guardarAgua(mAgua+parseInt(b.dataset.agua)));
   if((b=el("aguaMenos")))b.onclick=()=>guardarAgua(Math.max(0,mAgua-250));
   if((b=el("aguaAdd")))b.onclick=()=>{const i=el("aguaCustom");const v=parseInt(i.value);if(!v||v<=0){i.focus();return;}guardarAgua(mAgua+v);i.value="";};
+  if((b=el("mateToggle")))b.onclick=()=>{const o=el("mateOps");if(o)o.classList.toggle("show");};
   engancharMic("micDiaBtn","diarioTxt","micDiaHint");
   engancharMic("micSuenoBtn","whDream","micSuenoHint");
   el("saveDay").onclick=()=>conBoton("saveDay",saveDay);
@@ -2604,6 +2676,8 @@ function init(){
   initNarrador();
   initRecuerdosForm();
   el("btnQuickRec").onclick=irACargarRecuerdo;
+  el("btnQuickAgua").onclick=abrirAguaRapida;
+  el("aguaOv").onclick=e=>{if(e.target.id==="aguaOv")cerrarAguaRapida();};
   el("btnReporte").onclick=abrirReporte;
   if(el("micRec"))el("micRec").innerHTML=micHTML("micRecBtn","micRecHint");
   if(el("micDiario"))el("micDiario").innerHTML=micHTML("micDiaSecBtn","micDiaSecHint");
