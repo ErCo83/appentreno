@@ -390,6 +390,33 @@
   .michint.live{color:var(--accent)}
   .rcard .redit{background:none;border:none;color:var(--ink-soft);font-size:.72rem;cursor:pointer;font-family:"Sometype Mono",monospace;text-transform:uppercase;margin-right:10px}
   .rcard.editing{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .logrow .lastv{font-family:"Sometype Mono",monospace;font-size:.62rem;color:var(--ink-faint);margin-top:5px}
+  .logrow .lastv b{color:var(--accent);font-weight:600}
+  .suggest .prev{font-family:"Sometype Mono",monospace;font-size:.7rem;color:var(--accent)}
+  /* Hidratación */
+  .agua{margin-top:16px;background:#eef4f8;border:1px solid #c6dced;border-radius:13px;padding:13px}
+  .agua .ah{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .agua .av{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.3rem;color:#2b6a97}
+  .agua .am{font-family:"Sometype Mono",monospace;font-size:.68rem;color:var(--ink-soft)}
+  .aguabar{height:10px;border-radius:99px;background:#d8e6f0;overflow:hidden;margin:9px 0 10px}
+  .aguabar>span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4a95c9,#2b6a97);transition:width .3s}
+  .aguabtns{display:flex;gap:6px;flex-wrap:wrap}
+  .aguabtn{flex:1;min-width:74px;background:#fff;border:1px solid #c6dced;color:#2b6a97;border-radius:11px;padding:10px 6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:"Hanken Grotesk",sans-serif}
+  .aguabtn:active{background:#e3eef6}
+  .aguabtn.menos{flex:0 0 46px;min-width:46px;color:var(--ink-soft);font-weight:400}
+  .aguacustom{display:flex;gap:6px;margin-top:6px}
+  .aguacustom input{flex:1;padding:9px;text-align:center;font-family:"Sometype Mono",monospace}
+  .aguacustom button{width:52px;background:#2b6a97;border:none;color:#fff;border-radius:10px;font-size:1.05rem;cursor:pointer}
+  /* Sugerencias de comida */
+  .sugbtn{background:none;border:1px solid var(--accent-soft);color:var(--accent);border-radius:9px;padding:4px 9px;font-size:.68rem;font-family:"Sometype Mono",monospace;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+  .sugbox{margin-top:8px;display:none}
+  .sugbox.show{display:block}
+  .sugcard{background:#fdf6f1;border:1px solid var(--accent-soft);border-radius:11px;padding:10px 12px;margin-bottom:6px;cursor:pointer}
+  .sugcard:active{background:#f8e9de}
+  .sugcard .sn{font-weight:600;font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
+  .sugcard .sk{font-family:"Sometype Mono",monospace;font-size:.72rem;color:var(--accent);white-space:nowrap}
+  .sugcard .sp{font-size:.78rem;color:var(--ink-soft);margin-top:3px}
+  .sugload{font-size:.8rem;color:var(--ink-soft);font-style:italic;padding:6px 0}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -532,6 +559,10 @@
       <span class="tag">Bienestar</span><h2 style="margin:3px 0 12px">Energía, ánimo y sueño</h2>
       <div class="wcards" id="wellCards"></div>
     </div>
+    <div class="card" id="aguaCard">
+      <span class="tag">Hidratación</span><h2 style="margin:3px 0 8px">Agua</h2>
+      <div id="aguaProg"></div>
+    </div>
     <div class="card" id="habitsCard">
       <span class="tag">Hábitos · últimos 14 días</span><h2 style="margin:3px 0 6px">Seguimiento</h2>
       <div id="habits"></div>
@@ -553,6 +584,9 @@
       <label class="fld">Nivel de actividad</label><div class="chips" id="pFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="pObjetivo"></div>
       <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="pAjuste" inputmode="numeric">
+      <label class="fld">Gustos y restricciones (para las sugerencias de comida)</label>
+      <textarea id="pPrefComida" placeholder="Ej: no como pescado, me gusta la comida picante, evito frituras…"></textarea>
+      <p class="muted" style="font-size:.78rem;margin-top:4px">Lo usa el asistente que te sugiere comidas. Escribí lo que quieras que tenga en cuenta.</p>
       <p class="muted" style="font-size:.78rem;margin-top:4px">Negativo = déficit (bajar grasa) · positivo = superávit (ganar músculo). Se sugiere solo al cambiar el objetivo.</p>
       <div class="note" id="targetPreview" style="margin-top:14px"></div>
       <button class="act" id="btnSavePerfil">Guardar perfil</button>
@@ -751,6 +785,17 @@ function permiteAlcohol(){return perfil.registra_alcohol && !esMenor();}
 function permiteFumar(){return perfil.registra_fumar && !esMenor();}
 function latestWeight(){const p=medidas.filter(m=>m.peso_kg!=null);if(p.length)return Number(p[p.length-1].peso_kg);return perfil.peso_inicial_kg?Number(perfil.peso_inicial_kg):70;}
 function calorieTarget(){const w=latestWeight(),h=perfil.altura_cm,a=age();const bmr=10*w+6.25*h-5*a+(perfil.sexo==="M"?5:-161);return Math.round((bmr*Number(perfil.factor_actividad)+Number(perfil.ajuste_kcal||0))/10)*10;}
+// Referencia general de hidratación: ~35 ml por kg, +500 ml los días de actividad.
+// Es orientativo, no una indicación médica.
+function metaAguaDia(k){
+  const w=latestWeight();
+  let base=Math.round((w*35)/100)*100;
+  if(!base||isNaN(base))base=2000;
+  base=Math.max(1500,Math.min(4000,base));
+  if(k&&achieved(k))base+=500;
+  return base;
+}
+function aguaDe(k){const a=alim[k];return (a&&a.agua_ml!=null)?Number(a.agua_ml):0;}
 function consumedFor(k){const ad=alim[k];if(ad&&ad.total_manual!=null)return ad.total_manual;const its=comi[k]||[];let s=0,any=false;its.forEach(it=>{if(it.kcal!=null){s+=Number(it.kcal);any=true;}});return any?s:null;}
 function balanceInfo(total,target){const diff=total-target;const obj=perfil.objetivo;
   if(obj==="conocerme")return{ok:true,neutral:true,txt:total+" kcal registradas",diff};
@@ -993,7 +1038,7 @@ async function saveOnboard(){
 /* ---------- MODAL DEL DÍA ---------- */
 let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false;
 let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo;
-let mFood,mTotalManual,mAlcohol,mAlcTipo;
+let mFood,mTotalManual,mAlcohol,mAlcTipo,mAgua=0;
 let openSec={act:true,well:false,food:false,dia:false};
 function openDay(key){
   mKey=key;const a=act[key]||{};
@@ -1004,7 +1049,13 @@ function openDay(key){
   if(logRows.length===0){
     const p=planFor(parse(key).getDay());
     if(p.tipo==="gym"&&p.rutina_id&&rutinaEj[p.rutina_id]){
-      logRows=rutinaEj[p.rutina_id].map(e=>({ex:e.ejercicio,series:e.series!=null?e.series:"",reps:e.reps!=null?e.reps:"",kg:e.kg!=null?e.kg:""}));
+      logRows=rutinaEj[p.rutina_id].map(e=>{
+        const u=ultimaCarga(e.ejercicio,key);
+        return {ex:e.ejercicio,
+          series:e.series!=null?e.series:((u&&u.series!=null)?u.series:""),
+          reps:e.reps!=null?e.reps:((u&&u.reps!=null)?u.reps:""),
+          kg:e.kg!=null?e.kg:((u&&u.kg!=null)?u.kg:"")};
+      });
       mRutinaPrecargada=logRows.length>0;
     }
   }
@@ -1016,7 +1067,9 @@ function openDay(key){
   (comi[key]||[]).forEach(it=>{const mm=MOMENTS.includes(it.momento)?it.momento:"Colaciones";mFood[mm].push({desc:it.descripcion,kcal:it.kcal});});
   const ad=alim[key]||{};
   mTotalManual=ad.total_manual!=null?ad.total_manual:"";mAlcohol=!!ad.alcohol;mAlcTipo=ad.alcohol_tipo||"";
+  mAgua=ad.agua_ml!=null?Number(ad.agua_ml):0;
   openSec={act:true,well:false,food:false,dia:false};
+  sugCache={};sugAbierta=null;sugCargando=false;
   renderModal();el("ov").classList.add("show");
 }
 function gymActive(){const p=planFor(parse(mKey).getDay());return (p.tipo==="gym"&&mEstado==="cumpli")||mExtraGym;}
@@ -1054,7 +1107,11 @@ function renderLoggerHTML(){
   let h='<div class="seclabel">Ejercicios realizados</div>';
   if(mRutinaPrecargada)h+='<div class="fhint" style="background:#e9f2ec;border-color:#a9d4bc;color:#20603c">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
   if(logRows.length===0)h+='<p class="muted" style="font-size:.86rem;margin-bottom:4px">Buscá y agregá los ejercicios que hiciste.</p>';
-  logRows.forEach((r,i)=>{h+='<div class="logrow"><div class="top"><span class="lname">'+esc(r.ex)+'</span><button class="rmv" data-rm="'+i+'">✕</button></div><div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div></div>';});
+  logRows.forEach((r,i)=>{
+    const u=ultimaCarga(r.ex,mKey);
+    h+='<div class="logrow"><div class="top"><span class="lname">'+esc(r.ex)+'</span><button class="rmv" data-rm="'+i+'">✕</button></div><div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div>';
+    if(u)h+='<div class="lastv">Última vez ('+dShort(u.fecha)+'): <b>'+esc(cargaTxt(u))+'</b></div>';
+    h+='</div>';});
   h+='<div class="searchwrap"><input type="text" id="exSearch" placeholder="Buscar o agregar ejercicio…" autocomplete="off"><div class="suggest" id="exSuggest"></div></div>';
   return h;
 }
@@ -1076,7 +1133,8 @@ function renderFoodBody(){
   let h='<div class="fhint">Escribí el alimento, poné las kcal (o tocá ✨) y sumalo con <b>＋</b> o <b>Enter</b>. Si te lo olvidás, al guardar lo agregamos igual.</div>';
   MOMENTS.forEach((m,mi)=>{
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
-    h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span class="mk">'+(sub>0?sub+" kcal":"")+'</span></div>';
+    h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span style="display:flex;align-items:center;gap:8px"><span class="mk">'+(sub>0?sub+" kcal":"")+'</span><button class="sugbtn" data-sug="'+mi+'">✨ ideas</button></span></div>';
+    h+='<div class="sugbox'+(sugAbierta===mi?" show":"")+'" id="sugbox'+mi+'">'+renderSugerenciasHTML(mi)+'</div>';
     mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><span class="fk">'+(it.kcal!=null?it.kcal+" kcal":"—")+'</span><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal"><button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button><button class="add" data-fadd="'+mi+'">＋</button></div></div>';
@@ -1085,6 +1143,16 @@ function renderFoodBody(){
     h+='<div class="seclabel">¿Tomaste alcohol?</div><div class="acts"><button class="actbtn'+(mAlcohol?" on":"")+'" id="alcSi">Sí</button><button class="actbtn'+(!mAlcohol?" on":"")+'" id="alcNo">No</button></div>';
     if(mAlcohol)h+='<div class="seclabel">¿Qué tomaste?</div><div class="chips" data-chips="alc">'+ALC_TYPES.map(t=>'<span class="chip'+(mAlcTipo===t?" on":"")+'" data-v="'+t+'">'+t+'</span>').join("")+'</div>';
   }
+  // --- Hidratación (se guarda al instante, sin esperar «Guardar día») ---
+  const meta=metaAguaDia(mKey);
+  const pctA=Math.min(100,Math.round((mAgua/meta)*100))||0;
+  const vasos=Math.round(mAgua/250);
+  h+='<div class="agua"><div class="ah"><span><span class="av">'+mAgua+' ml</span> <span class="am">· '+vasos+(vasos===1?" vaso":" vasos")+'</span></span><span class="am">meta ~'+meta+' ml</span></div>';
+  h+='<div class="aguabar"><span style="width:'+pctA+'%"></span></div>';
+  h+='<div class="aguabtns"><button class="aguabtn menos" id="aguaMenos" title="Quitar un vaso">−</button><button class="aguabtn" data-agua="250">🥤 +1 vaso</button><button class="aguabtn" data-agua="500">🍶 +500 ml</button><button class="aguabtn" data-agua="1000">💧 +1 litro</button></div>';
+  h+='<div class="aguacustom"><input type="number" id="aguaCustom" inputmode="numeric" placeholder="otra cantidad en ml"><button id="aguaAdd">＋</button></div>';
+  h+='</div>';
+
   const sum=foodSum(),target=calorieTarget();const total=mTotalManual!==""?Number(mTotalManual):sum;
   const bal=balanceInfo(total,target);
   h+='<div class="kcalbox"><div class="seclabel" style="margin-top:0">'+(bal.neutral?"Registro del día":"Balance del día")+'</div>';
@@ -1113,15 +1181,43 @@ function renderDiaBody(){
 }
 
 /* ---------- Buscadores ---------- */
+// Busca el último registro de un ejercicio en días anteriores
+function ultimaCarga(ejercicio,excluirFecha){
+  const nombre=String(ejercicio||"").toLowerCase();
+  const fechas=Object.keys(loads).filter(f=>f!==excluirFecha).sort();
+  for(let i=fechas.length-1;i>=0;i--){
+    const it=(loads[fechas[i]]||[]).find(x=>String(x.ejercicio).toLowerCase()===nombre);
+    if(it)return{fecha:fechas[i],series:it.series,reps:it.reps,kg:it.kg};
+  }
+  return null;
+}
+function cargaTxt(c){
+  if(!c)return "";
+  const p=[];
+  if(c.series!=null||c.reps!=null)p.push((c.series!=null?c.series:"?")+"×"+(c.reps!=null?c.reps:"?"));
+  if(c.kg!=null)p.push(c.kg+" kg");
+  return p.join(" · ");
+}
 function exFreq(){const f={};Object.values(loads).forEach(a=>a.forEach(it=>{f[it.ejercicio]=(f[it.ejercicio]||0)+1;}));return f;}
 function exCatalog(){const f=exFreq();return Object.keys(f).sort((a,b)=>{const d=f[b]-f[a];return d!==0?d:a.localeCompare(b,"es");});}
 function renderExSuggest(qRaw){
   const q=(qRaw||"").trim(),box=el("exSuggest");if(!box)return;
   let list=exCatalog();if(q)list=list.filter(n=>n.toLowerCase().includes(q.toLowerCase()));list=list.slice(0,7);
-  let h=list.map(n=>{const dup=logRows.some(r=>r.ex.toLowerCase()===n.toLowerCase());return '<div data-add="'+escA(n)+'"><span>'+esc(n)+'</span>'+(dup?'<span class="k">ya hoy</span>':'')+'</div>';}).join("");
+  let h=list.map(n=>{const dup=logRows.some(r=>r.ex.toLowerCase()===n.toLowerCase());
+    const u=ultimaCarga(n,mKey);const prev=u?cargaTxt(u):"";
+    return '<div data-add="'+escA(n)+'"><span>'+esc(n)+'</span>'+(dup?'<span class="k">ya hoy</span>':(prev?'<span class="prev">'+esc(prev)+'</span>':''))+'</div>';}).join("");
   if(q&&!exCatalog().some(n=>n.toLowerCase()===q.toLowerCase()))h+='<div class="add" data-add="'+escA(q)+'">➕ Agregar «'+esc(q)+'»</div>';
   box.innerHTML=h;box.className="suggest"+(h?" show":"");
-  box.querySelectorAll("div[data-add]").forEach(dv=>dv.onclick=()=>{syncModal();const nm=dv.getAttribute("data-add");if(logRows.some(r=>r.ex.toLowerCase()===nm.toLowerCase()))toast("Ya cargaste «"+nm+"» hoy, lo sumo igual");logRows.push({ex:nm,series:"",reps:"",kg:""});renderModal();});
+  box.querySelectorAll("div[data-add]").forEach(dv=>dv.onclick=()=>{syncModal();const nm=dv.getAttribute("data-add");
+    if(logRows.some(r=>r.ex.toLowerCase()===nm.toLowerCase()))toast("Ya cargaste «"+nm+"» hoy, lo sumo igual");
+    // precargar con lo último que hiciste de ese ejercicio
+    const u=ultimaCarga(nm,mKey);
+    logRows.push({ex:nm,
+      series:(u&&u.series!=null)?u.series:"",
+      reps:(u&&u.reps!=null)?u.reps:"",
+      kg:(u&&u.kg!=null)?u.kg:""});
+    if(u)toast("Traje tus últimos valores: "+cargaTxt(u));
+    renderModal();});
 }
 function foodCatalog(){const f={},kc={};Object.keys(comi).sort().forEach(date=>{(comi[date]||[]).forEach(it=>{const k=(it.descripcion||"").trim();if(!k)return;const key=k.toLowerCase();f[key]=(f[key]||0)+1;kc[key]={desc:k,kcal:it.kcal};});});return Object.keys(kc).sort((a,b)=>{const d=f[b]-f[a];return d!==0?d:kc[a].desc.localeCompare(kc[b].desc,"es");}).map(k=>kc[k]);}
 function renderFoodSuggest(mi,qRaw){
@@ -1156,6 +1252,51 @@ function markPending(mi){
   if(!di||!w)return;
   w.className="pend"+((di.value||"").trim()?" show":"");
 }
+/* --- Sugerencias de comida con IA --- */
+let sugCache={},sugAbierta=null,sugCargando=false;
+function renderSugerenciasHTML(mi){
+  if(sugAbierta!==mi)return "";
+  if(sugCargando)return '<div class="sugload">Pensando ideas para vos…</div>';
+  const list=sugCache[mi];
+  if(!list||!list.length)return "";
+  return list.map((s,i)=>'<div class="sugcard" data-sugadd="'+mi+'_'+i+'"><div class="sn"><span>'+esc(s.nombre)+'</span>'+(s.kcal!=null?'<span class="sk">~'+s.kcal+' kcal</span>':'')+'</div>'+(s.por_que?'<div class="sp">'+esc(s.por_que)+'</div>':'')+'<div class="sp" style="color:var(--accent);margin-top:5px">Tocá para agregarlo</div></div>').join("");
+}
+async function pedirSugerencias(mi){
+  // segundo toque: cerrar
+  if(sugAbierta===mi&&!sugCargando){sugAbierta=null;syncModal();renderModal();return;}
+  sugAbierta=mi;sugCargando=true;syncModal();renderModal();
+  try{
+    const target=calorieTarget();
+    const total=mTotalManual!==""?Number(mTotalManual):foodSum();
+    const restantes=(perfil.objetivo==="conocerme")?null:(target-total);
+    const {data,error}=await sb.functions.invoke("sugerir-comida",{
+      body:{momento:MOMENTS[mi],restantes:restantes,objetivo:perfil.objetivo}});
+    if(error)throw error;
+    if(data&&data.error){
+      const msgs={sinclave:"Falta configurar la clave de IA en el servidor.",
+        parse:"No pude interpretar las sugerencias, probá de nuevo.",
+        vacio:"No se me ocurrió nada esta vez, probá de nuevo."};
+      toast(msgs[data.error]||"No pude sugerir comidas");
+      sugAbierta=null;
+    }else{
+      sugCache[mi]=(data&&data.sugerencias)||[];
+      if(!sugCache[mi].length){toast("No se me ocurrió nada esta vez");sugAbierta=null;}
+    }
+  }catch(e){
+    toast("No pude sugerir: revisá que la función sugerir-comida esté desplegada");
+    sugAbierta=null;
+  }finally{
+    sugCargando=false;syncModal();renderModal();
+  }
+}
+function agregarSugerencia(mi,idx){
+  const s=(sugCache[mi]||[])[idx];if(!s)return;
+  syncModal();
+  mFood[MOMENTS[mi]].push({desc:s.nombre,kcal:s.kcal!=null?s.kcal:null});
+  sugAbierta=null;
+  renderModal();
+  toast("Agregado a "+MOMENTS[mi]);
+}
 async function estimateFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi),btn=el("fest"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
@@ -1168,6 +1309,36 @@ async function estimateFood(mi){
     else toast("No pude estimar, probá de nuevo");
   }catch(e){toast("No pude estimar: revisá que la función esté desplegada");}
   btn.disabled=false;btn.textContent=old;
+}
+// El agua se guarda apenas se toca el botón: es el registro más frecuente del día.
+async function guardarAgua(nuevo){
+  const ml=Math.max(0,Math.round(nuevo));
+  const prev=mAgua;
+  mAgua=ml;
+  // refresco inmediato de la barra sin re-renderizar todo el modal
+  const box=document.querySelector(".agua");
+  if(box){
+    const meta=metaAguaDia(mKey);
+    const pct=Math.min(100,Math.round((ml/meta)*100))||0;
+    const av=box.querySelector(".av"),bar=box.querySelector(".aguabar>span"),am=box.querySelector(".am");
+    if(av)av.textContent=ml+" ml";
+    if(bar)bar.style.width=pct+"%";
+    const vs=Math.round(ml/250);
+    if(am)am.textContent="· "+vs+(vs===1?" vaso":" vasos");
+  }
+  try{
+    const base=alim[mKey]||{};
+    const fila={user_id:user.id,fecha:mKey,
+      total_manual:base.total_manual!=null?base.total_manual:(mTotalManual!==""?parseInt(mTotalManual):null),
+      alcohol:!!mAlcohol,alcohol_tipo:mAlcohol?(mAlcTipo||null):null,
+      agua_ml:ml>0?ml:null};
+    const r=await sb.from("alimentacion_dia").upsert(fila);
+    if(r.error)throw r.error;
+    alim[mKey]=fila;
+    renderProgress();
+  }catch(e){
+    mAgua=prev;toast("No se pudo guardar el agua");renderModal();
+  }
 }
 async function addDiario(){
   const ta=el("diarioTxt");const t=(ta.value||"").trim();if(!t){ta.focus();return;}
@@ -1215,6 +1386,11 @@ function attachModal(){
     const ki=el("fak"+mi);if(ki)ki.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
     markPending(mi);
   }});
+  document.querySelectorAll("[data-sug]").forEach(x=>x.onclick=()=>pedirSugerencias(parseInt(x.dataset.sug)));
+  document.querySelectorAll("[data-sugadd]").forEach(x=>x.onclick=()=>{const p=x.dataset.sugadd.split("_");agregarSugerencia(+p[0],+p[1]);});
+  document.querySelectorAll("[data-agua]").forEach(b=>b.onclick=()=>guardarAgua(mAgua+parseInt(b.dataset.agua)));
+  if((b=el("aguaMenos")))b.onclick=()=>guardarAgua(Math.max(0,mAgua-250));
+  if((b=el("aguaAdd")))b.onclick=()=>{const i=el("aguaCustom");const v=parseInt(i.value);if(!v||v<=0){i.focus();return;}guardarAgua(mAgua+v);i.value="";};
   engancharMic("micDiaBtn","diarioTxt","micDiaHint");
   engancharMic("micSuenoBtn","whDream","micSuenoHint");
   el("saveDay").onclick=()=>conBoton("saveDay",saveDay);
@@ -1257,10 +1433,11 @@ async function saveDay(){
     }
     // --- alimentación (cabecera) ---
     const tm=mTotalManual!==""?parseInt(mTotalManual):null;
-    if(tm==null&&!mAlcohol){
+    const aguaVal=(mAgua&&mAgua>0)?mAgua:null;
+    if(tm==null&&!mAlcohol&&aguaVal==null){
       const r=await sb.from("alimentacion_dia").delete().match({user_id:user.id,fecha:mKey});if(r.error)throw r.error;delete alim[mKey];
     }else{
-      const fila={user_id:user.id,fecha:mKey,total_manual:tm,alcohol:mAlcohol,alcohol_tipo:mAlcohol?(mAlcTipo||null):null};
+      const fila={user_id:user.id,fecha:mKey,total_manual:tm,alcohol:mAlcohol,alcohol_tipo:mAlcohol?(mAlcTipo||null):null,agua_ml:aguaVal};
       const r=await sb.from("alimentacion_dia").upsert(fila);if(r.error)throw r.error;
       alim[mKey]=fila;
     }
@@ -1358,6 +1535,7 @@ function renderProgress(){
   if(medidas.length===0)mt.innerHTML="";
   else{const rows=medidas.slice(-6).reverse().map(m=>'<tr><td>'+m.fecha+'</td><td>'+(m.peso_kg!=null?m.peso_kg+" kg":"—")+'</td><td>'+(m.cintura_cm!=null?m.cintura_cm+" cm":"—")+'</td></tr>').join("");mt.innerHTML='<table><tr><th>Fecha</th><th>Peso</th><th>Cintura</th></tr>'+rows+'</table>';}
   renderBalance(target);
+  renderAguaProg();
   renderWaist();
   renderWeekBalance(target);
   const dates=Object.keys(bien).sort();
@@ -1409,6 +1587,25 @@ function renderWeekBalance(target){
   box.style.color=bueno?"var(--green)":"var(--accent)";
   if(lbl){const p=parse(primer),u=parse(ultimo);
     lbl.textContent="Balance del "+p.getDate()+"/"+(p.getMonth()+1)+" al "+u.getDate()+"/"+(u.getMonth()+1)+" ("+dias+(dias===1?" día":" días")+", sin contar hoy)";}
+}
+function renderAguaProg(){
+  const cont=el("aguaProg");if(!cont)return;
+  const hoy=todayStr(),hoyMl=aguaDe(hoy),meta=metaAguaDia(hoy);
+  const pct=Math.min(100,Math.round((hoyMl/meta)*100))||0;
+  const dias=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dias.push(ymd(d));}
+  const conDato=dias.filter(k=>aguaDe(k)>0);
+  const prom=conDato.length?Math.round(conDato.reduce((a,k)=>a+aguaDe(k),0)/conDato.length):0;
+  let h='<div class="repgrid" style="margin-bottom:10px">';
+  h+='<div class="repkpi"><span class="k">Hoy</span><span class="v">'+hoyMl+' ml</span><span class="d flat">meta ~'+meta+' ml</span></div>';
+  h+='<div class="repkpi"><span class="k">Promedio 14 días</span><span class="v">'+(prom?prom+" ml":"—")+'</span><span class="d flat">'+conDato.length+' días con registro</span></div>';
+  h+='</div>';
+  h+='<div class="aguabar"><span style="width:'+pct+'%"></span></div>';
+  const sq=dias.map(k=>{const ml=aguaDe(k);const ok=ml>=metaAguaDia(k);
+    return '<div class="sq'+(ml>0?" on":"")+'" style="'+(ml>0?("background:"+(ok?"#2b6a97":"#a8cbe3")):"")+'" title="'+k+': '+ml+' ml"></div>';}).join("");
+  const ini=dias.map(k=>'<span>'+DAYL[parse(k).getDay()]+'</span>').join("");
+  h+='<div class="strip" style="margin-top:10px">'+sq+'</div><div class="stripdays">'+ini+'</div>';
+  h+='<div class="striplbl"><span>💧 Últimos 14 días</span><span>'+dias.filter(k=>aguaDe(k)>=metaAguaDia(k)).length+'/14 en meta</span></div>';
+  cont.innerHTML=h;
 }
 function renderBalance(target){
   const svg=el("defChart");
@@ -1462,6 +1659,7 @@ function renderPerfil(){
   el("pAlt").value=perfil.altura_cm||"";
   el("pPesoIni").value=perfil.peso_inicial_kg!=null?perfil.peso_inicial_kg:"";
   el("pAjuste").value=perfil.ajuste_kcal!=null?perfil.ajuste_kcal:0;
+  el("pPrefComida").value=perfil.preferencias_comida||"";
   refreshPerfilChips();
   el("targetPreview").innerHTML="🎯 Objetivo calórico actual: <b>~"+calorieTarget()+" kcal/día</b>";
   el("btnSavePerfil").onclick=()=>conBoton("btnSavePerfil",savePerfil);
@@ -1483,7 +1681,8 @@ async function savePerfil(){
     peso_inicial_kg:el("pPesoIni").value!==""?parseFloat(el("pPesoIni").value):null,
     factor_actividad:parseFloat(pfFactor),objetivo:pfObjetivo,
     ajuste_kcal:el("pAjuste").value!==""?parseInt(el("pAjuste").value):0,
-    registra_alcohol:pfAlc,registra_fumar:pfFum,registra_diario:pfDia};
+    registra_alcohol:pfAlc,registra_fumar:pfFum,registra_diario:pfDia,
+    preferencias_comida:(el("pPrefComida").value||"").trim()||null};
   try{
     const r=await sb.from("perfiles").update(payload).eq("user_id",user.id);
     if(r.error)throw r.error;
@@ -1638,6 +1837,7 @@ function mesStats(y,m){
   const s={mp:mp,dias:0,planificados:0,cumplidos:0,noFui:0,extras:0,gymDias:0,depDias:0,
     kcalDias:[],enObjetivo:0,alcoholDias:0,
     energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
+    aguaDias:[],aguaMeta:0,
     sesionesGym:0,ejercicios:new Set(),maxKg:{},
     diarioEntradas:0,diarioDias:0};
   for(let d=1;d<=nd;d++){
@@ -1654,6 +1854,8 @@ function mesStats(y,m){
     const c=consumedFor(k);
     if(c!=null){s.kcalDias.push(c);if(balanceInfo(c,calorieTarget()).ok)s.enObjetivo++;}
     if(alim[k]&&alim[k].alcohol)s.alcoholDias++;
+    const ag=aguaDe(k);
+    if(ag>0){s.aguaDias.push(ag);if(ag>=metaAguaDia(k))s.aguaMeta++;}
     const b=bien[k];
     if(b){let algo=false;
       if(b.energia){s.energia.push(b.energia);algo=true;}
@@ -1761,6 +1963,21 @@ function renderReporte(){
       const balance=s.kcalDias.reduce((a,c)=>a+(c-target),0);
       h+='<div style="margin-top:10px"><div class="repline"><span class="rl">Balance acumulado del mes</span><span class="rv" style="color:'+((perfil.objetivo==="musculo"?balance>=0:balance<=0)?"var(--green)":"var(--accent)")+'">'+(balance>0?"+":"")+balance.toLocaleString("es-AR")+' kcal</span></div></div>';
     }
+  }
+  h+='</div>';
+
+  // HIDRATACIÓN
+  h+='<div class="repsec"><h3>💧 Hidratación</h3>';
+  if(s.aguaDias.length===0){h+='<p class="repempty">Sin registros de agua este mes.</p>';}
+  else{
+    const promA=Math.round(promedio(s.aguaDias));
+    const promPrevA=pv.aguaDias.length?Math.round(promedio(pv.aguaDias)):null;
+    h+='<div class="repgrid">';
+    h+=kpi("Promedio diario",promA+" ml",promPrevA!=null?delta(promA,promPrevA):"");
+    h+=kpi("Días registrados",s.aguaDias.length+" / "+s.dias,delta(s.aguaDias.length,pv.aguaDias.length));
+    h+=kpi("Días en meta",s.aguaMeta+" / "+s.aguaDias.length,delta(s.aguaMeta,pv.aguaMeta));
+    h+=kpi("Equivale a",Math.round(promA/250)+" vasos/día","");
+    h+='</div>';
   }
   h+='</div>';
 
