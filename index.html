@@ -472,6 +472,17 @@
   .infload{text-align:center;padding:26px 16px;color:var(--ink-soft);font-size:.9rem}
   .infload .dots{font-size:1.5rem;letter-spacing:3px;animation:pulse 1.2s infinite}
   .infdis{font-size:.74rem;color:var(--ink-faint);text-align:center;margin-top:14px;line-height:1.5;font-style:italic}
+  .kgrid{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px}
+  .kgrid th{font-family:"Sometype Mono",monospace;font-size:.55rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line-2)}
+  .kgrid th:first-child{text-align:left}
+  .kgrid td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;font-family:"Sometype Mono",monospace;font-size:.76rem}
+  .kgrid td:first-child{text-align:left;color:var(--ink-soft)}
+  .kgrid td.ok{color:var(--green);font-weight:600}
+  .kgrid td.no{color:var(--accent);font-weight:600}
+  .kgrid tr.sindato td{color:var(--ink-faint);font-style:italic}
+  .kgrid tfoot td{border-top:2px solid var(--line-2);border-bottom:none;padding-top:9px;font-weight:700;font-size:.82rem}
+  .kgrid .dw{color:var(--ink-faint);font-size:.68rem}
+  .kacum{font-family:"Sometype Mono",monospace}
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:13px;font-size:.85rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 </style>
@@ -668,6 +679,8 @@
         <div class="nrow"><span><span class="nl">🏋️ Día de actividad</span><br><span class="ns">Aviso los días de gimnasio o deporte</span></span><div class="acts"><button class="actbtn" id="nActSi">Sí</button><button class="actbtn" id="nActNo">No</button></div></div>
         <div class="horas"><div><label class="fld" style="margin-top:0">Hora del aviso de actividad</label><input type="time" id="nHoraAct"></div></div>
         <button class="act ghost" id="btnNotifTest" style="margin-top:14px">Probar una notificación</button>
+        <button class="act ghost" id="btnNotifDiag" style="margin-top:10px">🔎 Probar el envío del servidor</button>
+        <div id="notifDiag" style="display:none;margin-top:10px;font-family:'Sometype Mono',monospace;font-size:.68rem;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto"></div>
         <button class="act ghost" id="btnNotifOff" style="margin-top:10px">Desactivar en este dispositivo</button>
       </div>
     </div>
@@ -2065,6 +2078,45 @@ async function borrarInforme(){
     delete informes[periodo];renderReporte();toast("Informe borrado");
   }catch(e){toast("No se pudo borrar");}
 }
+// Grilla de balance calórico día por día del mes
+function renderGrillaKcal(y,m,target){
+  const nd=diasDelMes(y,m),hoy=todayStr();
+  const filas=[];let acum=0,conDato=0,cumplidos=0;
+  for(let d=1;d<=nd;d++){
+    const k=y+"-"+pad2(m+1)+"-"+pad2(d);
+    if(k>hoy)continue;
+    const c=consumedFor(k);
+    const dw=DAYL[parse(k).getDay()];
+    if(c==null){filas.push({d:d,dw:dw,sin:true});continue;}
+    const bal=balanceInfo(c,target);
+    const dif=c-target;
+    acum+=dif;conDato++;if(bal.ok)cumplidos++;
+    filas.push({d:d,dw:dw,kcal:c,dif:dif,ok:bal.ok});
+  }
+  if(!conDato)return '<p class="repempty">Sin comidas registradas este mes.</p>';
+  let h='<p class="muted" style="font-size:.8rem;margin-bottom:2px">Objetivo diario: <b>'+target+' kcal</b></p>';
+  h+='<table class="kgrid"><thead><tr><th>Día</th><th>Consumido</th><th>Dif.</th><th>✓</th></tr></thead><tbody>';
+  filas.forEach(f=>{
+    if(f.sin){
+      h+='<tr class="sindato"><td>'+f.d+' <span class="dw">'+f.dw+'</span></td><td>—</td><td>—</td><td>—</td></tr>';
+      return;
+    }
+    const signo=f.dif>0?"+":"";
+    h+='<tr><td>'+f.d+' <span class="dw">'+f.dw+'</span></td><td>'+f.kcal+'</td>'+
+       '<td class="'+(f.ok?"ok":"no")+'">'+signo+f.dif+'</td>'+
+       '<td class="'+(f.ok?"ok":"no")+'">'+(f.ok?"✓":"✗")+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr><td>Balance del mes</td><td>'+conDato+' días</td>'+
+     '<td class="kacum" style="color:'+((perfil.objetivo==="musculo"?acum>=0:perfil.objetivo==="mantener"?Math.abs(acum)<=3000:acum<=0)?"var(--green)":"var(--accent)")+'">'+
+     (acum>0?"+":"")+acum.toLocaleString("es-AR")+'</td><td>'+cumplidos+'/'+conDato+'</td></tr></tfoot></table>';
+  const equiv=Math.abs(acum)/7700;
+  if(conDato>=5&&equiv>=0.1){
+    h+='<p class="muted" style="font-size:.76rem;margin-top:8px">Como referencia general, un balance acumulado de '+
+      (acum>0?"+":"")+acum.toLocaleString("es-AR")+' kcal equivale a unos '+equiv.toFixed(1)+
+      ' kg de tejido graso. Es una estimación teórica: el peso real depende de muchos otros factores.</p>';
+  }
+  return h;
+}
 function renderInformeHTML(){
   const periodo=repY+"-"+pad2(repM+1);
   const guardado=informes[periodo];
@@ -2278,6 +2330,13 @@ function renderReporte(){
     h+='</div>';
   }
   h+='</div>';
+
+  // DETALLE DIARIO DE CALORÍAS
+  if(!objetivoNeutral&&s.kcalDias.length){
+    h+='<div class="repsec"><h3>📊 Balance día por día</h3>';
+    h+=renderGrillaKcal(repY,repM,target);
+    h+='</div>';
+  }
 
   // BIENESTAR
   h+='<div class="repsec"><h3>🌙 Bienestar</h3>';
@@ -2992,6 +3051,37 @@ async function guardarNotifHoras(){
   try{await sb.from("perfiles").update(payload).eq("user_id",user.id);toast("Horarios guardados ✓");}
   catch(e){toast("No se pudieron guardar los horarios");}
 }
+// Llama a la Edge Function en modo prueba: fuerza los avisos y muestra qué pasó.
+async function diagnosticarPush(){
+  const box=el("notifDiag");
+  box.style.display="block";
+  box.textContent="Consultando al servidor…";
+  try{
+    const {data,error}=await sb.functions.invoke("enviar-notificaciones",{body:{}});
+    if(error)throw error;
+    let t="";
+    if(data.aviso)t+="⚠️ "+data.aviso+"\n\n";
+    t+="Modo: "+(data.modo||"?")+"\n";
+    t+="Enviados: "+(data.enviados!=null?data.enviados:"?")+"\n";
+    (data.pasos||[]).forEach(p=>{t+="· "+p+"\n";});
+    (data.usuarios||[]).forEach(u=>{
+      t+="\nHora local detectada: "+(u.horaLocal||"?")+" ("+(u.fechaLocal||"?")+", UTC"+(u.tzOffset>=0?"+":"")+u.tzOffset+")\n";
+      t+="Dispositivos suscriptos: "+u.subs+"\n";
+      if(u.aviso)t+="⚠️ "+u.aviso+"\n";
+      t+="Avisos evaluados: "+((u.avisos&&u.avisos.length)?u.avisos.join(", "):"ninguno")+"\n";
+    });
+    if(data.errores&&data.errores.length){
+      t+="\n❌ ERRORES:\n";
+      data.errores.forEach(e=>{t+="· "+e+"\n";});
+    }else if(data.enviados>0){
+      t+="\n✅ Envío correcto. Deberías recibir las notificaciones en unos segundos.";
+    }
+    box.textContent=t;
+  }catch(e){
+    box.textContent="No se pudo consultar: "+(e&&e.message?e.message:String(e))+
+      "\n\nRevisá que la función enviar-notificaciones esté desplegada con la versión nueva.";
+  }
+}
 async function probarNotif(){
   if(!swReg)swReg=await navigator.serviceWorker.getRegistration()||null;
   if(!swReg||Notification.permission!=="granted"){toast("Activá las notificaciones primero");return;}
@@ -3073,6 +3163,7 @@ function init(){
   el("btnNotifOn").onclick=()=>conBoton("btnNotifOn",activarPush);
   el("btnNotifOff").onclick=()=>conBoton("btnNotifOff",desactivarPush);
   el("btnNotifTest").onclick=probarNotif;
+  el("btnNotifDiag").onclick=()=>conBoton("btnNotifDiag",diagnosticarPush);
   ["nHoraAm","nHoraPm","nHoraAct"].forEach(id=>{const i=el(id);if(i)i.onchange=guardarNotifHoras;});
   registrarSW();
   navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",e=>{
