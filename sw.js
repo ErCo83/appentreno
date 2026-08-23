@@ -14,6 +14,7 @@ const ESENCIALES = [
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
+  "./badge-96.png",
 ];
 
 // --- Instalación: guardar lo esencial en caché ---
@@ -66,7 +67,7 @@ self.addEventListener("push", (e) => {
   const opciones = {
     body: d.cuerpo || "",
     icon: "./icon-192.png",
-    badge: "./icon-192.png",
+    badge: "./badge-96.png",
     tag: d.tag || "entreno",
     renotify: false,
     data: { url: d.url || "./" },
