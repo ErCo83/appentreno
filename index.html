@@ -629,6 +629,10 @@
       <span class="tag">Hidratación</span><h2 style="margin:3px 0 8px">Agua</h2>
       <div id="aguaProg"></div>
     </div>
+    <div class="card" id="cicloCard" style="display:none">
+      <span class="tag">Ciclo</span><h2 style="margin:3px 0 8px">Período</h2>
+      <div id="cicloProg"></div>
+    </div>
     <div class="card" id="habitsCard">
       <span class="tag">Hábitos · últimos 14 días</span><h2 style="margin:3px 0 6px">Seguimiento</h2>
       <div id="habits"></div>
@@ -662,6 +666,7 @@
       <div class="fnrow"><span><span class="fl">🍷 Alcohol</span><br><span class="fs">Check diario y seguimiento</span></span><div class="acts"><button class="actbtn" id="fAlcSi">Sí</button><button class="actbtn" id="fAlcNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl">🌿 Fumar</span><br><span class="fs">Tabaco, THC o CBD</span></span><div class="acts"><button class="actbtn" id="fFumSi">Sí</button><button class="actbtn" id="fFumNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl">✍️ Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
+      <div class="fnrow" id="fnrowPeriodo" style="display:none"><span><span class="fl">🩸 Período</span><br><span class="fs">Días de flujo y estimación del ciclo</span></span><div class="acts"><button class="actbtn" id="fPerSi">Sí</button><button class="actbtn" id="fPerNo">No</button></div></div>
       <p class="muted" style="font-size:.78rem;margin-top:12px">Al desactivar, la sección se oculta; lo ya registrado no se borra.</p>
     </div>
     <div class="card notifcard" id="notifCard">
@@ -835,7 +840,7 @@ const CONFIG = {
 /* ============================================================= */
 
 let sb=null,user=null,perfil=null;
-let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[];
+let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[],ciclo={};
 let rutinas=[],rutinaEj={};  // rutinas[] = {id,nombre}; rutinaEj[rutina_id] = [{ejercicio,series,reps,kg,orden}]
 let historias=[];  // historias generadas por el narrador
 let recuerdos=[];  // «Mi historia»: recuerdos con fechas difusas
@@ -849,6 +854,7 @@ const EMO={energia:["😵","🥱","😐","🙂","⚡"],animo:["😞","😕","�
 const EMOLBL={energia:"Energía",animo:"Ánimo",sueno:"Sueño"};
 const ALC_TYPES=["Vino","Cerveza","Fernet","Otro"];
 const FUMO_TYPES=["Tabaco","THC","CBD"];
+const FLUJO_TYPES=["Manchado","Leve","Moderado","Abundante"];
 
 function el(id){return document.getElementById(id);}
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -915,7 +921,7 @@ async function onSession(session){
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
-    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf]=await Promise.all([
+    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
       sb.from("actividad").select("*"),
@@ -929,9 +935,10 @@ async function onSession(session){
       sb.from("rutina_ejercicios").select("*").order("orden"),
       sb.from("historias").select("*").order("creada",{ascending:false}),
       sb.from("recuerdos").select("*").order("orden_fecha"),
-      sb.from("informes").select("*").order("periodo",{ascending:false})
+      sb.from("informes").select("*").order("periodo",{ascending:false}),
+      sb.from("ciclo").select("*")
     ]);
-    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf].find(r=>r.error&&r.error.code!=="42P01");
+    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic].find(r=>r.error&&r.error.code!=="42P01");
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
@@ -948,6 +955,7 @@ async function onSession(session){
     comi={};(rco.data||[]).forEach(r=>{if(!comi[r.fecha])comi[r.fecha]=[];comi[r.fecha].push({momento:r.momento,descripcion:r.descripcion,kcal:r.kcal});});
     dia={};(rdi.data||[]).forEach(r=>{if(!dia[r.fecha])dia[r.fecha]=[];dia[r.fecha].push({id:r.id,creado:r.creado,texto:r.texto});});
     medidas=(rme.data||[]);
+    ciclo={};(rcic&&rcic.data||[]).forEach(r=>ciclo[r.fecha]=r);
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
     setConn("ok","Sincronizado");showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
     initOnboardingState();
@@ -1024,6 +1032,7 @@ function makeCell(d,otroMes){
     if(aguaDe(k)>0)ind+='<span class="mi">💧</span>';
     if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+='<span class="mi">🍷</span>';
     if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+='<span class="mi">✍️</span>';
+    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+='<span class="mi">🩸</span>';
     const inds=ind?'<div class="inds">'+ind+'</div>':"";
     const plus=hasExtra?'<span class="extra">＋</span>':"";
     const dbl=(hizoGym&&hizoDep);
@@ -1121,7 +1130,7 @@ async function saveOnboard(){
     peso_inicial_kg:el("oPeso").value!==""?parseFloat(el("oPeso").value):null,
     factor_actividad:parseFloat(obFactor),objetivo:obObjetivo,
     ajuste_kcal:el("oAjuste").value!==""?parseInt(el("oAjuste").value):0,
-    registra_alcohol:true,registra_fumar:false,registra_diario:true};
+    registra_alcohol:true,registra_fumar:false,registra_diario:true,registra_periodo:(obSexo==="F")};
   const rows=[];for(let dw=0;dw<7;dw++){const s=obPlan[dw];rows.push({user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)});}
   try{
     let r=await sb.from("perfiles").insert(pf);if(r.error)throw r.error;
@@ -1136,7 +1145,7 @@ async function saveOnboard(){
 
 /* ---------- MODAL DEL DÍA ---------- */
 let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false;
-let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo;
+let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo,mPeriodo,mFlujoTipo;
 let mFood,mTotalManual,mAlcohol,mAlcTipo,mAgua=0;
 let openSec={act:true,well:false,food:false,dia:false};
 function openDay(key){
@@ -1162,6 +1171,7 @@ function openDay(key){
   mEnergia=b.energia||null;mAnimo=b.animo||null;mSueno=b.sueno||null;
   mHoras=b.horas_dormidas!=null?b.horas_dormidas:"";mTexto=b.sueno_texto||"";
   mFumo=!!b.fumo;mFumoTipo=b.fumo_tipo||"";
+  const c=ciclo[key]||{};mPeriodo=!!c.flujo;mFlujoTipo=c.flujo||"";
   mFood={};MOMENTS.forEach(m=>mFood[m]=[]);
   (comi[key]||[]).forEach(it=>{const mm=MOMENTS.includes(it.momento)?it.momento:"Colaciones";mFood[mm].push({desc:it.descripcion,kcal:it.kcal});});
   const ad=alim[key]||{};
@@ -1175,7 +1185,7 @@ function gymActive(){const p=planFor(parse(mKey).getDay());return (p.tipo==="gym
 function foodSum(){let s=0;MOMENTS.forEach(m=>mFood[m].forEach(it=>{if(it.kcal!=null)s+=Number(it.kcal);}));return s;}
 function acc(id,title,summary,body){return '<div class="acc'+(openSec[id]?" open":"")+'"><div class="h" data-toggle="'+id+'"><span>'+title+'</span><span class="summary">'+summary+' <span class="chev">▸</span></span></div><div class="b">'+body+'</div></div>';}
 function actSummary(){const a=[];if(gymActive())a.push("Gym");if((planFor(parse(mKey).getDay()).tipo==="deporte"&&mEstado==="cumpli")||mExtraDep)a.push(sportLabel());if(mEstado==="no_fui"&&!(mEstado==="cumpli"||mExtraGym||mExtraDep))a.push("No fui");return a.length?a.join(" · "):"—";}
-function wellSummary(){const a=[];if(mEnergia)a.push(EMO.energia[mEnergia-1]);if(mAnimo)a.push(EMO.animo[mAnimo-1]);if(mSueno)a.push(EMO.sueno[mSueno-1]);if(mHoras!=="")a.push(mHoras+"h");if(mFumo)a.push("🌿");return a.length?a.join(" "):"—";}
+function wellSummary(){const a=[];if(mEnergia)a.push(EMO.energia[mEnergia-1]);if(mAnimo)a.push(EMO.animo[mAnimo-1]);if(mSueno)a.push(EMO.sueno[mSueno-1]);if(mHoras!=="")a.push(mHoras+"h");if(mFumo)a.push("🌿");if(mPeriodo)a.push("🩸");return a.length?a.join(" "):"—";}
 function foodSummary(){const s=foodSum();const t=mTotalManual!==""?Number(mTotalManual):s;let str=t>0?(t+"/"+calorieTarget()+" kcal"):"—";if(mAlcohol)str+=" 🍷";return str;}
 function diaSummary(){const n=(dia[mKey]||[]).length;return n?n+(n===1?" nota":" notas"):"—";}
 
@@ -1225,6 +1235,10 @@ function renderWellBody(){
   if(permiteFumar()){
     h+='<div class="seclabel">¿Fumaste?</div><div class="acts"><button class="actbtn'+(mFumo?" on":"")+'" id="fumoSi">Sí</button><button class="actbtn'+(!mFumo?" on":"")+'" id="fumoNo">No</button></div>';
     if(mFumo)h+='<div class="seclabel">Tipo</div><div class="chips" data-chips="fumo">'+FUMO_TYPES.map(t=>'<span class="chip'+(mFumoTipo===t?" on":"")+'" data-v="'+t+'">'+t+'</span>').join("")+'</div>';
+  }
+  if(perfil.registra_periodo){
+    h+='<div class="seclabel">🩸 ¿Tuviste período hoy?</div><div class="acts"><button class="actbtn'+(mPeriodo?" on":"")+'" id="perSi">Sí</button><button class="actbtn'+(!mPeriodo?" on":"")+'" id="perNo">No</button></div>';
+    if(mPeriodo)h+='<div class="seclabel">Flujo</div><div class="chips" data-chips="flujo">'+FLUJO_TYPES.map(t=>'<span class="chip'+(mFlujoTipo===t?" on":"")+'" data-v="'+t+'">'+t+'</span>').join("")+'</div>';
   }
   return h;
 }
@@ -1520,8 +1534,10 @@ function attachModal(){
   if((b=el("fumoNo")))b.onclick=()=>{syncModal();mFumo=false;renderModal();};
   if((b=el("alcSi")))b.onclick=()=>{syncModal();mAlcohol=true;if(!mAlcTipo)mAlcTipo="Vino";renderModal();};
   if((b=el("alcNo")))b.onclick=()=>{syncModal();mAlcohol=false;renderModal();};
+  if((b=el("perSi")))b.onclick=()=>{syncModal();mPeriodo=true;if(!mFlujoTipo)mFlujoTipo="Leve";renderModal();};
+  if((b=el("perNo")))b.onclick=()=>{syncModal();mPeriodo=false;renderModal();};
   if((b=el("btnAddDia")))b.onclick=()=>conBoton("btnAddDia",addDiario);
-  document.querySelectorAll("[data-chips]").forEach(box=>{const which=box.dataset.chips;box.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncModal();if(which==="alc")mAlcTipo=c.dataset.v;else mFumoTipo=c.dataset.v;renderModal();});});
+  document.querySelectorAll("[data-chips]").forEach(box=>{const which=box.dataset.chips;box.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncModal();if(which==="alc")mAlcTipo=c.dataset.v;else if(which==="flujo")mFlujoTipo=c.dataset.v;else mFumoTipo=c.dataset.v;renderModal();});});
   document.querySelectorAll("[data-emo]").forEach(box=>{const key=box.dataset.emo;box.querySelectorAll("button").forEach(bb=>bb.onclick=()=>{syncModal();const v=parseInt(bb.dataset.val);if(key==="energia")mEnergia=mEnergia===v?null:v;else if(key==="animo")mAnimo=mAnimo===v?null:v;else mSueno=mSueno===v?null:v;renderModal();});});
   document.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{syncModal();logRows.splice(parseInt(x.dataset.rm),1);renderModal();});
   document.querySelectorAll("[data-frm]").forEach(x=>x.onclick=()=>{syncModal();const p=x.dataset.frm.split("_");mFood[MOMENTS[+p[0]]].splice(+p[1],1);renderModal();});
@@ -1581,6 +1597,16 @@ async function saveDay(){
       const fila={user_id:user.id,fecha:mKey,energia:mEnergia,animo:mAnimo,sueno:mSueno,horas_dormidas:mHoras!==""?parseFloat(mHoras):null,sueno_texto:mTexto||null,fumo:mFumo,fumo_tipo:mFumo?(mFumoTipo||"Tabaco"):null};
       const r=await sb.from("bienestar").upsert(fila);if(r.error)throw r.error;
       bien[mKey]=fila;
+    }
+    // --- ciclo (período) ---
+    if(perfil.registra_periodo){
+      if(!mPeriodo){
+        const r=await sb.from("ciclo").delete().match({user_id:user.id,fecha:mKey});if(r.error&&r.error.code!=="42P01")throw r.error;delete ciclo[mKey];
+      }else{
+        const fila={user_id:user.id,fecha:mKey,flujo:mFlujoTipo||"Leve"};
+        const r=await sb.from("ciclo").upsert(fila);if(r.error&&r.error.code!=="42P01")throw r.error;
+        ciclo[mKey]=fila;
+      }
     }
     // --- alimentación (cabecera) ---
     const tm=mTotalManual!==""?parseInt(mTotalManual):null;
@@ -1687,6 +1713,7 @@ function renderProgress(){
   else{const rows=medidas.slice(-6).reverse().map(m=>'<tr><td>'+m.fecha+'</td><td>'+(m.peso_kg!=null?m.peso_kg+" kg":"—")+'</td><td>'+(m.cintura_cm!=null?m.cintura_cm+" cm":"—")+'</td></tr>').join("");mt.innerHTML='<table><tr><th>Fecha</th><th>Peso</th><th>Cintura</th></tr>'+rows+'</table>';}
   renderBalance(target);
   renderAguaProg();
+  renderCicloProg();
   renderWaist();
   renderWeekBalance(target);
   const dates=Object.keys(bien).sort();
@@ -1758,6 +1785,63 @@ function renderAguaProg(){
   h+='<div class="striplbl"><span>💧 Últimos 14 días</span><span>'+dias.filter(k=>aguaDe(k)>=metaAguaDia(k)).length+'/14 en meta</span></div>';
   cont.innerHTML=h;
 }
+/* ---------- CICLO (predicción simple, cálculo local sin IA) ---------- */
+function diffDias(a,b){return Math.round((parse(b)-parse(a))/86400000);}
+function addDias(f,n){const d=parse(f);d.setDate(d.getDate()+n);return ymd(d);}
+function cicloPeriodos(){
+  // agrupa las fechas con flujo en "períodos": un hueco de más de 2 días arranca uno nuevo
+  const fechas=Object.keys(ciclo).filter(k=>ciclo[k]&&ciclo[k].flujo).sort();
+  const grupos=[];
+  fechas.forEach(f=>{
+    const g=grupos.length?grupos[grupos.length-1]:null;
+    if(g&&diffDias(g[g.length-1],f)<=2)g.push(f);else grupos.push([f]);
+  });
+  return grupos;
+}
+function cicloEstado(){
+  const grupos=cicloPeriodos();
+  if(grupos.length===0)return {sinDatos:true};
+  const inicios=grupos.map(g=>g[0]);
+  let cycleLen=28,generico=true;
+  if(inicios.length>=2){
+    const ult=inicios.slice(-6);const lens=[];
+    for(let i=1;i<ult.length;i++)lens.push(diffDias(ult[i-1],ult[i]));
+    cycleLen=Math.round(lens.reduce((a,b)=>a+b,0)/lens.length);
+    generico=false;
+  }
+  const ultimoGrupo=grupos[grupos.length-1],ultimoInicio=ultimoGrupo[0];
+  const duracionPeriodo=ultimoGrupo.length;
+  const hoy=todayStr();
+  const diaCiclo=diffDias(ultimoInicio,hoy)+1;
+  const proxima=addDias(ultimoInicio,cycleLen);
+  const diasRestantes=diffDias(hoy,proxima);
+  let fase;
+  if(diaCiclo<=duracionPeriodo)fase="Menstrual";
+  else if(diaCiclo>cycleLen)fase="Atrasado";
+  else if(diaCiclo<=cycleLen-16)fase="Folicular";
+  else if(diaCiclo<=cycleLen-12)fase="Ovulación";
+  else fase="Lútea";
+  return {sinDatos:false,generico,cycleLen,diaCiclo,diasRestantes,fase,periodos:inicios.length};
+}
+function renderCicloProg(){
+  const card=el("cicloCard");if(!card)return;
+  if(!perfil.registra_periodo){card.style.display="none";return;}
+  card.style.display="";
+  const cont=el("cicloProg"),e=cicloEstado();
+  if(e.sinDatos){cont.innerHTML='<p class="muted" style="font-size:.84rem">Registrá tu período desde el día (sección 🌙 Bienestar) para empezar a ver tu ciclo acá.</p>';return;}
+  let h='<div class="repgrid" style="margin-bottom:10px">';
+  h+='<div class="repkpi"><span class="k">Fase actual</span><span class="v">'+e.fase+'</span><span class="d flat">día '+e.diaCiclo+' del ciclo</span></div>';
+  if(e.fase==="Atrasado"){
+    const atraso=Math.abs(e.diasRestantes);
+    h+='<div class="repkpi"><span class="k">Próximo período</span><span class="v">atrasado</span><span class="d flat">'+atraso+' día'+(atraso===1?"":"s")+' después de lo esperado</span></div>';
+  }else{
+    h+='<div class="repkpi"><span class="k">Próximo período</span><span class="v">'+(e.diasRestantes<=0?"hoy o mañana":"en ~"+e.diasRestantes+" día"+(e.diasRestantes===1?"":"s"))+'</span><span class="d flat">ciclo de ~'+e.cycleLen+' días'+(e.generico?" (estimación genérica)":"")+'</span></div>';
+  }
+  h+='</div>';
+  if(e.generico)h+='<p class="muted" style="font-size:.78rem">Con un segundo período registrado, la estimación se ajusta a tu ciclo real.</p>';
+  h+='<p class="muted" style="font-size:.74rem;margin-top:6px">Estimación orientativa en base a tu historial. No es un método anticonceptivo ni un diagnóstico médico.</p>';
+  cont.innerHTML=h;
+}
 function renderBalance(target){
   const svg=el("defChart");
   const fechas=new Set([...Object.keys(alim),...Object.keys(comi)]);
@@ -1793,7 +1877,7 @@ async function saveMetric(){
 const FACTORES=[["1.2","Sedentario"],["1.375","Ligero"],["1.55","Moderado"],["1.725","Alto"],["1.9","Muy alto"]];
 const OBJETIVOS=[["bajar","Bajar grasa"],["mantener","Mantener"],["musculo","Ganar músculo"],["conocerme","Solo registrar para conocerme"]];
 const SUGERIDO={bajar:-350,mantener:0,musculo:200,conocerme:0};
-let pfSexo,pfFactor,pfObjetivo,pfAlc,pfFum,pfDia;
+let pfSexo,pfFactor,pfObjetivo,pfAlc,pfFum,pfDia,pfPer;
 function chipGroup(id,opts,cur,onSel){
   el(id).innerHTML=opts.map(o=>'<span class="chip'+(String(cur)===String(o[0])?" on":"")+'" data-v="'+o[0]+'">'+o[1]+'</span>').join("");
   el(id).querySelectorAll(".chip").forEach(c=>c.onclick=()=>{onSel(c.dataset.v);});
@@ -1804,7 +1888,7 @@ function flagPair(siId,noId,val,onSet){
 }
 function renderPerfil(){
   pfSexo=perfil.sexo;pfFactor=String(perfil.factor_actividad);pfObjetivo=perfil.objetivo;
-  pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;pfDia=!!perfil.registra_diario;
+  pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;pfDia=!!perfil.registra_diario;pfPer=!!perfil.registra_periodo;
   el("pNombre").value=perfil.nombre||"";
   buildDateSelects("pNac");setDateSelects("pNac",perfil.nacimiento);
   el("pAlt").value=perfil.altura_cm||"";
@@ -1822,6 +1906,8 @@ function refreshPerfilChips(){
   flagPair("fAlcSi","fAlcNo",pfAlc,v=>{pfAlc=v;refreshPerfilChips();});
   flagPair("fFumSi","fFumNo",pfFum,v=>{pfFum=v;refreshPerfilChips();});
   flagPair("fDiaSi","fDiaNo",pfDia,v=>{pfDia=v;refreshPerfilChips();});
+  el("fnrowPeriodo").style.display=(pfSexo==="F")?"":"none";
+  if(pfSexo==="F")flagPair("fPerSi","fPerNo",pfPer,v=>{pfPer=v;refreshPerfilChips();});
 }
 async function savePerfil(){
   const nac=readDateSelects("pNac"),alt=parseInt(el("pAlt").value);
@@ -1832,7 +1918,7 @@ async function savePerfil(){
     peso_inicial_kg:el("pPesoIni").value!==""?parseFloat(el("pPesoIni").value):null,
     factor_actividad:parseFloat(pfFactor),objetivo:pfObjetivo,
     ajuste_kcal:el("pAjuste").value!==""?parseInt(el("pAjuste").value):0,
-    registra_alcohol:pfAlc,registra_fumar:pfFum,registra_diario:pfDia,
+    registra_alcohol:pfAlc,registra_fumar:pfFum,registra_diario:pfDia,registra_periodo:(pfSexo==="F"&&pfPer),
     preferencias_comida:(el("pPrefComida").value||"").trim()||null};
   try{
     const r=await sb.from("perfiles").update(payload).eq("user_id",user.id);
