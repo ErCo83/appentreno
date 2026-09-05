@@ -56,6 +56,7 @@
   .stat span{font-family:"Sometype Mono",monospace;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint)}
   .stat b.good{color:var(--green)}
   .stat b.bad{color:var(--red)}
+  .stat i{display:block;font-style:normal;font-family:"Sometype Mono",monospace;font-size:.58rem;line-height:1.35;color:var(--ink-faint);margin-top:5px;min-height:1.35em}
   .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .calhead button{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;width:38px;height:38px;font-size:1.1rem;color:var(--ink);cursor:pointer}
   .calhead h2{font-size:1.15rem;text-transform:capitalize}
@@ -76,7 +77,18 @@
   .cell .inds{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:2px;line-height:1}
   .cell .inds .st{width:6px;height:6px;border-radius:50%}
   .cell .inds .st.done{background:var(--green)}.cell .inds .st.miss{background:var(--red)}
-  .cell .inds .mi{font-size:8.5px;line-height:1}
+  .cell .inds .dt{width:5px;height:5px;border-radius:50%;flex:none}
+  .cell .inds .dt.comida{background:var(--accent)}
+  .cell .inds .dt.agua{background:var(--blue)}
+  .cell .inds .dt.alcohol{background:#9c3357}
+  .cell .inds .dt.diario{background:#7b5ea7}
+  .cell .inds .dt.periodo{background:#d6336c}
+  /* el ánimo es un valor, no una categoría: va en escala y con anillo para distinguirse */
+  .cell .inds .dt.animo{box-shadow:0 0 0 1.5px var(--surface-2)}
+  .cell .inds .dt.a1{background:#c2452e}.cell .inds .dt.a2{background:#dd8452}
+  .cell .inds .dt.a3{background:#d9a441}.cell .inds .dt.a4{background:#7fb069}
+  .cell .inds .dt.a5{background:#2f8f5b}
+  .cell.done .inds .dt.animo,.cell.miss .inds .dt.animo{box-shadow:0 0 0 1.5px rgba(255,255,255,.8)}
   .legend{margin-top:14px;font-size:.74rem;color:var(--ink-soft)}
   .legrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
   .legrow:first-child{border-top:none}
@@ -86,6 +98,12 @@
   .lgbox.done{background:#e4f0e9;border-color:#a9d4bc}
   .lgbox.miss{background:#fbeae5;border-color:#efb9a6}
   .lgbox.rest{background:#e7e9e4}
+  .lgdot{width:9px;height:9px;border-radius:50%;flex:none}
+  .lgdot.comida{background:var(--accent)}.lgdot.agua{background:var(--blue)}
+  .lgdot.alcohol{background:#9c3357}.lgdot.diario{background:#7b5ea7}
+  .lgdot.periodo{background:#d6336c}
+  .lgdot.animo{background:linear-gradient(135deg,#c2452e,#d9a441,#2f8f5b)}
+  .legnote{font-size:.68rem;color:var(--ink-faint);padding:6px 0 0;line-height:1.4}
   .dotg{width:8px;height:8px;border-radius:50%;background:var(--green)}.dotr{width:8px;height:8px;border-radius:50%;background:var(--red)}
   .swg{width:10px;height:10px;border-radius:3px;border-top:2.5px solid var(--accent);background:var(--surface-2)}
   .swf{width:10px;height:10px;border-radius:3px;border-top:2.5px solid var(--pitch);background:var(--surface-2)}
@@ -566,9 +584,9 @@
 
   <section class="view" id="v-cal">
     <div class="stats-row">
-      <div class="stat" id="statBal"><b id="stBal">—</b><span>Balance calórico</span></div>
-      <div class="stat" id="statStreak"><b id="stStreak">0</b><span>Racha días</span></div>
-      <div class="stat" id="statMonth"><b id="stMonth">0</b><span>Activos / mes</span></div>
+      <div class="stat" id="statBal"><b id="stBal">—</b><span>Balance calórico</span><i id="stBalSub"></i></div>
+      <div class="stat" id="statStreak"><b id="stStreak">0</b><span>Racha días</span><i id="stStreakSub"></i></div>
+      <div class="stat" id="statMonth"><b id="stMonth">0</b><span>Activos / Mes</span><i id="stMonthSub"></i></div>
     </div>
     <div class="card">
       <div class="calhead"><button id="prevM">‹</button><h2 id="calTitle">—</h2><button id="nextM">›</button></div>
@@ -880,6 +898,7 @@ const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"
 const MOMENTS=["Desayuno","Almuerzo","Merienda","Cena","Colaciones"];
 const EMO={energia:["😵","🥱","😐","🙂","⚡"],animo:["😞","😕","😐","🙂","😄"],sueno:["😩","😪","😐","🙂","😴"]};
 const EMOLBL={energia:"Energía",animo:"Ánimo",sueno:"Sueño"};
+const EMOTXT=["muy mal","mal","normal","bien","muy bien"];
 const ALC_TYPES=["Vino","Cerveza","Fernet","Otro"];
 const FUMO_TYPES=["Tabaco","THC","CBD"];
 const FLUJO_TYPES=["Manchado","Leve","Moderado","Abundante"];
@@ -1092,11 +1111,13 @@ function renderLegend(){
   h+='<div class="legrow"><span class="legcap">Plan</span>';
   h+='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="lgbox rest"></i> Libre</span>';
   h+='</div>';
-  // Indicadores (íconos mini)
-  let mini='<span>🙂 Ánimo</span><span>🍴 Comida</span><span>💧 Agua</span>';
-  if(permiteAlcohol())mini+='<span>🍷 Alcohol</span>';
-  if(perfil.registra_diario)mini+='<span>✍️ Nota</span>';
+  // Indicadores (puntos de color, en el mismo orden en que aparecen en la celda)
+  let mini='<span><i class="lgdot animo a4"></i> Ánimo</span><span><i class="lgdot comida"></i> Comida</span><span><i class="lgdot agua"></i> Agua</span>';
+  if(permiteAlcohol())mini+='<span><i class="lgdot alcohol"></i> Alcohol</span>';
+  if(perfil.registra_diario)mini+='<span><i class="lgdot diario"></i> Nota</span>';
+  if(perfil.registra_periodo)mini+='<span><i class="lgdot periodo"></i> Período</span>';
   h+='<div class="legrow"><span class="legcap">Registros</span>'+mini+'</div>';
+  h+='<div class="legnote">El punto de ánimo va del rojo al verde según cómo te sentiste.</div>';
   el("calLegend").innerHTML=h;
 }
 function renderWeekbar(){
@@ -1141,13 +1162,17 @@ function makeCell(d,otroMes){
     else if(hizoGym)center="🏋️";
     else if(hizoDep)center=(p.tipo==="deporte"?iconFor(p):"🏃");
     else center=(p.tipo!=="descanso"?iconFor(p):"");
+    // Indicadores del día: puntos de color en vez de emoji. A 44px de ancho,
+    // seis emoji de 8,5px son ilegibles; el color + la leyenda se leen de un vistazo.
     let ind="";
-    const b=bien[k];if(b&&b.animo)ind+='<span class="mi">'+EMO.animo[b.animo-1]+'</span>';
-    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+='<span class="mi">🍴</span>';
-    if(aguaDe(k)>0)ind+='<span class="mi">💧</span>';
-    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+='<span class="mi">🍷</span>';
-    if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+='<span class="mi">✍️</span>';
-    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+='<span class="mi">🩸</span>';
+    const punto=(cls,tit)=>'<span class="dt '+cls+'" title="'+escA(tit)+'"></span>';
+    const b=bien[k];
+    if(b&&b.animo)ind+=punto("animo a"+b.animo,"Ánimo: "+EMOTXT[b.animo-1]);
+    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+=punto("comida","Comida registrada");
+    if(aguaDe(k)>0)ind+=punto("agua","Agua: "+aguaDe(k)+" ml");
+    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+=punto("alcohol","Alcohol");
+    if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+=punto("diario","Nota en el diario");
+    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+=punto("periodo","Período: "+ciclo[k].flujo);
     const inds=ind?'<div class="inds">'+ind+'</div>':"";
     const plus=hasExtra?'<span class="extra">＋</span>':"";
     const dbl=(hizoGym&&hizoDep);
@@ -1187,29 +1212,52 @@ function rachaVista(){
     cur=0;}
   return {n:mejor,actual:false};
 }
+/* Días con actividad planificada en el mes visible, hasta hoy (para la adherencia) */
+function planificadosMes(){
+  const nd=new Date(viewY,viewM+1,0).getDate(),hoy=todayStr();let n=0;
+  for(let dn=1;dn<=nd;dn++){const d=new Date(viewY,viewM,dn);
+    if(ymd(d)>hoy)break;
+    if(planFor(d).tipo!=="descanso")n++;}
+  return n;
+}
 function renderStats(){
   const mp=viewY+"-"+String(viewM+1).padStart(2,"0");
   const nombreMes=MONTHS[viewM]+" "+viewY;
   // 1) Balance calórico acumulado del mes visible
   const b=balanceMes(),eb=el("stBal");
   if(!b.dias){eb.textContent="—";eb.className="";
+    el("stBalSub").textContent="sin registros";
     el("statBal").title="Sin comidas registradas en "+nombreMes+".";}
   else{
     const prom=Math.round(b.suma/b.dias),info=balanceInfo(b.target+prom,b.target);
     eb.textContent=fmtBal(Math.round(b.suma));
     eb.className=info.neutral?"":(info.ok?"good":"bad");
+    el("stBalSub").textContent=b.dias+(b.dias===1?" día":" días")+" · "+fmtBal(prom)+"/día";
     el("statBal").title=nombreMes+": "+fmtBal(Math.round(b.suma))+" kcal acumuladas sobre tu objetivo, en "+
       b.dias+(b.dias===1?" día":" días")+" registrados ("+fmtBal(prom)+" kcal por día). Objetivo ~"+b.target+" kcal/día.";
   }
   // 2) Racha de días
   const r=rachaVista();
   el("stStreak").textContent=r.n;
+  el("stStreakSub").textContent=r.actual?"hasta hoy":"mejor del mes";
   el("statStreak").title=r.actual?"Días seguidos cumpliendo, hasta hoy. Los días libres del plan no cortan la racha."
     :"Mejor racha de "+nombreMes+". Los días libres del plan no cortan la racha.";
-  // 3) Días activos del mes visible
+  // 3) Días activos del mes visible, con la adherencia al plan como contexto
   let md=0;Object.keys(act).forEach(k=>{if(k.startsWith(mp)&&achieved(k))md++;});
   el("stMonth").textContent=md;
-  el("statMonth").title="Días con gimnasio, deporte o actividad extra en "+nombreMes+".";
+  const prev=planificadosMes();
+  const em=el("stMonth");
+  if(perfil.objetivo==="conocerme"||prev===0){
+    el("stMonthSub").textContent=prev===0?"sin plan":"";
+    em.className="";
+    el("statMonth").title="Días con gimnasio, deporte o actividad extra en "+nombreMes+".";
+  }else{
+    const pct=Math.round((Math.min(md,prev)/prev)*100);
+    el("stMonthSub").textContent="de "+prev+" previstos · "+pct+"%";
+    em.className=pct>=80?"good":(pct<50?"bad":"");
+    el("statMonth").title="Cumpliste "+md+" de los "+prev+" días con actividad planificada en "+nombreMes+
+      " ("+pct+"% de adherencia). Cuenta gimnasio, deporte y actividad extra.";
+  }
 }
 /* ---------- PLAN EDITABLE + ONBOARDING ---------- */
 const PLAN_TPL={
