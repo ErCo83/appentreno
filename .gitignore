@@ -1,0 +1,8 @@
+# Configuración local de herramientas (no va al repo público)
+.mcp.json
+.agents/
+.frida/
+
+# Sistema operativo / editores
+Thumbs.db
+.DS_Store
