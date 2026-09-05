@@ -30,9 +30,12 @@
   .conn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7d8a82;margin-right:5px;vertical-align:middle}
   .conn.ok .dot{background:#62d39a}.conn.bad .dot{background:#ef9b85}
   .weekbar{display:flex;gap:5px;margin-top:14px;position:relative;z-index:2}
-  .wb{flex:1;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 2px}
-  .wb .d{font-family:"Sometype Mono",monospace;font-size:9px;letter-spacing:.05em;color:var(--accent-soft);text-transform:uppercase}
-  .wb .m{font-size:1.05rem;margin-top:3px}
+  .wb{flex:1;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 2px;font:inherit;color:inherit;cursor:pointer;display:block;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
+  .wb:active{transform:scale(.94)}
+  .wb:hover{background:rgba(255,255,255,.14)}
+  .wb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .wb .d{display:block;font-family:"Sometype Mono",monospace;font-size:9px;letter-spacing:.05em;color:var(--accent-soft);text-transform:uppercase}
+  .wb .m{display:block;font-size:1.05rem;margin-top:3px}
   .wb.done{background:rgba(98,211,154,.26);border-color:rgba(98,211,154,.5)}
   .wb.miss{background:rgba(239,155,133,.24);border-color:rgba(239,155,133,.5)}
   .wb.today{box-shadow:0 0 0 2px var(--accent)}
@@ -976,6 +979,32 @@ function balanceInfo(total,target){const diff=total-target;const obj=perfil.obje
   if(obj==="mantener")return{ok:Math.abs(diff)<=150,txt:Math.abs(diff)<=150?"En equilibrio ✓":(diff>0?("Exceso de "+diff+" kcal"):("Déficit de "+Math.abs(diff)+" kcal")),diff};
   return{ok:diff<=0,txt:diff<=0?("Déficit de "+Math.abs(diff)+" kcal ✓"):("Exceso de "+diff+" kcal"),diff};}
 
+/* ---------- LECTURA COMPLETA Y PAGINADA ----------
+   PostgREST corta las respuestas en un tope de filas (db-max-rows) y no avisa:
+   devuelve las primeras N sin error. Con años de historial eso significa leer
+   datos incompletos en silencio. fetchAll() pide de a páginas hasta que el
+   servidor devuelve menos de lo pedido, así que trae todo sin importar el tope.
+   `campos` permite dejar afuera las columnas pesadas (textos, jsonb). */
+const PAGINA=1000;
+async function fetchAll(tabla,{campos="*",orden=null,asc=true}={}){
+  let desde=0,todo=[],cols=campos;
+  for(;;){
+    let q=sb.from(tabla).select(cols);
+    if(orden)q=q.order(orden,{ascending:asc});
+    const {data,error}=await q.range(desde,desde+PAGINA-1);
+    if(error){
+      // Si alguna columna de la lista no existe (42703), reintentar con `*`:
+      // los nombres salen de la reconstruccion del esquema, no de una consulta real.
+      if(error.code==="42703"&&cols!=="*"){cols="*";desde=0;todo=[];continue;}
+      return {data:null,error:error};
+    }
+    const lote=data||[];
+    todo=todo.concat(lote);
+    if(lote.length<PAGINA)return {data:todo,error:null};
+    desde+=PAGINA;
+    if(desde>200000)return {data:todo,error:null}; // cinturón de seguridad
+  }
+}
 /* ---------- AUTH + CARGA ---------- */
 function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id));
   const inApp=(id==="app");
@@ -997,19 +1026,21 @@ async function onSession(session){
     const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
-      sb.from("actividad").select("*"),
-      sb.from("cargas").select("*").order("fecha"),
-      sb.from("bienestar").select("*"),
-      sb.from("alimentacion_dia").select("*"),
-      sb.from("comidas").select("*").order("id"),
-      sb.from("diario").select("*").order("creado"),
-      sb.from("medidas").select("*").order("fecha"),
+      fetchAll("actividad"),
+      fetchAll("cargas",{orden:"fecha"}),
+      fetchAll("bienestar"),
+      fetchAll("alimentacion_dia"),
+      fetchAll("comidas",{orden:"id"}),
+      fetchAll("diario",{orden:"creado"}),
+      fetchAll("medidas",{orden:"fecha"}),
       sb.from("rutinas").select("*").order("nombre"),
-      sb.from("rutina_ejercicios").select("*").order("orden"),
-      sb.from("historias").select("*").order("creada",{ascending:false}),
-      sb.from("recuerdos").select("*").order("orden_fecha"),
-      sb.from("informes").select("*").order("periodo",{ascending:false}),
-      sb.from("ciclo").select("*")
+      fetchAll("rutina_ejercicios",{orden:"orden"}),
+      // sin `texto`: los relatos son largos y se leen de a uno (ver abrirHistoria)
+      fetchAll("historias",{campos:"id,titulo,genero,desde,hasta,fuentes,continua_de,creada",orden:"creada",asc:false}),
+      fetchAll("recuerdos",{orden:"orden_fecha"}),
+      // sin `datos`: el jsonb del informe se trae al abrir el reporte de ese mes
+      fetchAll("informes",{campos:"periodo,actualizado,creado",orden:"periodo",asc:false}),
+      fetchAll("ciclo")
     ]);
     const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic].find(r=>r.error&&r.error.code!=="42P01");
     if(err)throw err.error;
@@ -1074,8 +1105,15 @@ function renderWeekbar(){
   const names=["L","M","M","J","V","S","D"];
   for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=ymd(d);const p=planFor(d);
     const a=act[k];const cls=achieved(k)?" done":(a&&a.estado==="no_fui"?" miss":"");
-    const e=document.createElement("div");e.className="wb"+cls+(k===todayStr()?" today":"");
-    e.innerHTML='<div class="d">'+names[i]+'</div><div class="m">'+(iconFor(p)||"·")+'</div>';wb.appendChild(e);}
+    const e=document.createElement("button");e.type="button";
+    e.className="wb"+cls+(k===todayStr()?" today":"");
+    const plan=p.tipo==="gym"?"gimnasio":(p.tipo==="deporte"?(depDe(p.detalle)||"deporte"):"día libre");
+    const estado=achieved(k)?", cumplido":((a&&a.estado==="no_fui")?", no fui":"");
+    e.setAttribute("aria-label",DIAS[d.getDay()]+" "+d.getDate()+" de "+MONTHS[d.getMonth()]+": "+plan+estado);
+    e.title=DIAS[d.getDay()]+" "+d.getDate()+" · "+plan;
+    e.innerHTML='<span class="d">'+names[i]+'</span><span class="m">'+(iconFor(p)||"·")+'</span>';
+    e.onclick=()=>openDay(k);
+    wb.appendChild(e);}
 }
 function renderCalendar(){
   el("calTitle").textContent=MONTHS[viewM]+" "+viewY;
@@ -2421,7 +2459,7 @@ async function generarInforme(){
     const fila={user_id:user.id,periodo:periodo,datos:data.informe};
     const ins=await sb.from("informes").upsert(fila,{onConflict:"user_id,periodo"}).select().single();
     if(ins.error)throw ins.error;
-    informes[periodo]=ins.data;
+    informes[periodo]=ins.data; // la fila devuelta ya incluye `datos`
     toast("Informe listo ✨");
   }catch(e){
     toast("No se pudo generar: revisá que la función informe-mensual esté desplegada");
@@ -2491,6 +2529,10 @@ function renderInformeHTML(){
     h+='<div class="infsec"><div class="infh">Análisis con IA</div>';
     h+='<p style="font-size:.89rem;color:var(--ink-soft);line-height:1.55">Un análisis integral de tu mes: patrones de conducta, qué se repite, qué fue un caso aislado y en qué conviene poner el foco.</p>';
     h+='<button class="infbtn" id="btnInforme">🧠 Generar análisis del mes</button></div>';
+    h+='</div>';return h;
+  }
+  if(guardado.datos===undefined){ // el jsonb todavia esta viajando
+    h+='<div class="infsec"><div class="infh">Analisis con IA</div><div class="infload"><div class="dots">&#10022; &#10022; &#10022;</div><p style="margin-top:10px">Trayendo el analisis de este mes...</p></div></div>';
     h+='</div>';return h;
   }
   const d=guardado.datos||{};
@@ -2760,8 +2802,8 @@ function renderReporte(){
   h+='</div>';
 
   el("repContent").innerHTML=h;
-  el("repPrev").onclick=()=>{repM--;if(repM<0){repM=11;repY--;}renderReporte();};
-  el("repNext").onclick=()=>{const hoy=new Date();if(repY>hoy.getFullYear()||(repY===hoy.getFullYear()&&repM>=hoy.getMonth()))return;repM++;if(repM>11){repM=0;repY++;}renderReporte();};
+  el("repPrev").onclick=()=>{repM--;if(repM<0){repM=11;repY--;}renderReporte();cargarInforme(repY,repM);};
+  el("repNext").onclick=()=>{const hoy=new Date();if(repY>hoy.getFullYear()||(repY===hoy.getFullYear()&&repM>=hoy.getMonth()))return;repM++;if(repM>11){repM=0;repY++;}renderReporte();cargarInforme(repY,repM);};
   el("repClose").onclick=cerrarReporte;
   el("repPdf").onclick=()=>window.print();
   if(el("btnInforme"))el("btnInforme").onclick=generarInforme;
@@ -2775,6 +2817,20 @@ function abrirReporte(){
   renderReporte();
   el("repOv").classList.add("show");
   window.scrollTo(0,0);
+  cargarInforme(repY,repM);
+}
+/* El listado de informes se carga sin el jsonb `datos`: se trae el del mes que
+   se abre, y una sola vez. */
+async function cargarInforme(y,m){
+  const periodo=y+"-"+pad2(m+1);
+  const inf=informes[periodo];
+  if(!inf||inf.datos!==undefined)return;
+  try{
+    const r=await sb.from("informes").select("datos").eq("periodo",periodo).single();
+    if(r.error)throw r.error;
+    inf.datos=(r.data&&r.data.datos)||null;
+  }catch(e){inf.datos=null;}
+  if(repY===y&&repM===m)renderReporte();
 }
 function cerrarReporte(){el("repOv").classList.remove("show");}
 
@@ -3073,17 +3129,31 @@ function renderHistorias(){
     const d=new Date(s.creada);const fch=d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
     const periodo=fmtDMY(s.desde)+" – "+fmtDMY(s.hasta);
     return '<div class="storycard"><div class="sh"><div><div class="stitle">'+esc(s.titulo||"Sin título")+'</div><div class="smeta"><span class="gengenero">'+esc(GEN_LABEL[s.genero]||s.genero)+'</span> · '+periodo+'</div></div></div>'+
-      '<div class="stext" id="story_'+s.id+'">'+esc(s.texto)+'</div>'+
+      '<div class="stext" id="story_'+s.id+'">'+(s.texto!=null?esc(s.texto):"")+'</div>'+
       '<div class="sactions"><button class="sbtn" data-story="'+s.id+'">📖 Leer</button><button class="sbtn del" data-storydel="'+s.id+'">🗑️ Borrar</button></div></div>';
   }).join("");
   cont.innerHTML=h;
-  cont.querySelectorAll("[data-story]").forEach(b=>b.onclick=()=>{
-    const t=el("story_"+b.dataset.story);const open=t.classList.toggle("show");
-    b.textContent=open?"▲ Cerrar":"📖 Leer";
-  });
+  cont.querySelectorAll("[data-story]").forEach(b=>b.onclick=()=>abrirHistoria(parseInt(b.dataset.story),b));
   cont.querySelectorAll("[data-storydel]").forEach(b=>b.onclick=()=>borrarHistoria(parseInt(b.dataset.storydel)));
 }
 function fmtDMY(iso){const p=iso.split("-");return parseInt(p[2])+"/"+parseInt(p[1]);}
+/* El listado se carga sin los textos (son largos): se traen al abrir cada uno. */
+async function abrirHistoria(id,btn){
+  const s=(historias||[]).find(x=>x.id===id);if(!s)return;
+  const t=el("story_"+id);if(!t)return;
+  if(t.classList.contains("show")){t.classList.remove("show");btn.textContent="📖 Leer";return;}
+  if(s.texto==null){
+    const previo=btn.textContent;btn.textContent="…";btn.disabled=true;
+    try{
+      const r=await sb.from("historias").select("texto").eq("id",id).single();
+      if(r.error)throw r.error;
+      s.texto=(r.data&&r.data.texto)||"";
+      t.textContent=s.texto;
+    }catch(e){toast("No se pudo abrir la historia: "+traducir(e));btn.textContent=previo;btn.disabled=false;return;}
+    btn.disabled=false;
+  }
+  t.classList.add("show");btn.textContent="▲ Cerrar";
+}
 async function borrarHistoria(id){
   const s=historias.find(x=>x.id===id);if(!s)return;
   if(!confirm('¿Borrar la historia "'+(s.titulo||"sin título")+'"? No se puede recuperar.'))return;
