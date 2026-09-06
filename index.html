@@ -162,6 +162,26 @@
   .logrow .lname{font-weight:700;font-size:var(--fs-7)}
   .logrow .rmv{background:none;border:none;color:var(--red);font-size:var(--fs-9);cursor:pointer;padding:0 4px}
   .logrow .topbtns{display:flex;align-items:center;gap:6px;flex:none}
+  .agarre{background:none;border:none;color:var(--ink-faint);font-size:var(--fs-7);line-height:1;cursor:grab;padding:2px 6px 2px 0;flex:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+  .agarre:active{cursor:grabbing;color:var(--accent)}
+  .logrow.arrastrando,.rej.arrastrando{opacity:.9;position:relative;z-index:5;box-shadow:var(--shadow);background:var(--surface);border-radius:10px}
+  .logrow,.rej{transition:transform .16s ease}
+  .logrow.arrastrando,.rej.arrastrando{transition:none}
+  @media (prefers-reduced-motion:reduce){.logrow,.rej{transition:none}}
+  .rectab{width:100%;border-collapse:collapse;font-size:var(--fs-5)}
+  .rectab th{font-family:"Sometype Mono",monospace;font-size:var(--fs-1);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line-2)}
+  .rectab th:first-child{text-align:left}
+  .rectab td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right;font-family:"Sometype Mono",monospace;font-size:var(--fs-4)}
+  .rectab td:first-child{text-align:left;font-family:"Hanken Grotesk",sans-serif;color:var(--ink)}
+  .rectab td.dw{color:var(--ink-faint)}
+  .rectab tr.fresco td{color:var(--ok-ink)}
+  .rectab tr.fresco td:first-child{font-weight:700}
+  .fasetab{width:100%;border-collapse:collapse;font-size:var(--fs-5);margin-top:8px}
+  .fasetab th{font-family:"Sometype Mono",monospace;font-size:var(--fs-1);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line-2)}
+  .fasetab th:first-child{text-align:left}
+  .fasetab td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;font-family:"Sometype Mono",monospace;font-size:var(--fs-4)}
+  .fasetab td:first-child{text-align:left;color:var(--ink-soft);font-family:"Hanken Grotesk",sans-serif}
+  .fasetab td.dw{color:var(--ink-faint)}
   .depfila{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
   .depfila:first-child{border-top:none}
   .depfila .di{font-size:var(--fs-9);line-height:1;flex:none;width:26px;text-align:center}
@@ -460,6 +480,8 @@
   .rcard.editing{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
   .logrow .lastv{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);color:var(--ink-faint);margin-top:5px}
   .logrow .lastv b{color:var(--accent);font-weight:600}
+  .logrow .lastv.rec{color:var(--ok-ink)}
+  .logrow .lastv.rec b{color:var(--ok-ink);font-weight:700}
   .suggest .prev{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);color:var(--accent)}
   /* Hidratación */
   .agua{margin-top:16px;background:var(--info-bg);border:1px solid var(--info-line);border-radius:13px;padding:13px}
@@ -775,6 +797,10 @@
     <div class="card" id="patronCard" style="display:none">
       <span class="tag">Patrones</span><h2 style="margin:3px 0 8px">Lo que dicen tus datos</h2>
       <div id="patrones"></div>
+    </div>
+    <div class="card" id="recordsCard" style="display:none">
+      <span class="tag">Récords</span><h2 style="margin:3px 0 8px">Tus mejores marcas</h2>
+      <div id="recordsList"></div>
     </div>
     <div class="card">
       <span class="tag">Cargas y actividad</span><h2 style="margin:3px 0 4px">Últimos por ejercicio</h2>
@@ -1205,7 +1231,8 @@ async function onSession(session){
     informes={};if(rinf&&rinf.data)rinf.data.forEach(x=>informes[x.periodo]=x);
     rutinaEj={};(rre.data||[]).forEach(r=>{if(!rutinaEj[r.rutina_id])rutinaEj[r.rutina_id]=[];rutinaEj[r.rutina_id].push({ejercicio:r.ejercicio,series:r.series,reps:r.reps,kg:r.kg,modo:r.modo||"peso",
       duracion_seg:r.duracion_seg!=null?r.duracion_seg:null,
-      distancia_m:r.distancia_m!=null?r.distancia_m:null,vueltas:r.vueltas!=null?r.vueltas:null,orden:r.orden});});
+      distancia_m:r.distancia_m!=null?r.distancia_m:null,vueltas:r.vueltas!=null?r.vueltas:null,
+      orden:r.orden,_id:r.id});});
     act={};(ra.data||[]).forEach(r=>act[r.fecha]={estado:r.estado,extra_gym:r.extra_gym,extra_deporte:r.extra_deporte});
     loads={};(rc.data||[]).forEach(r=>{if(!loads[r.fecha])loads[r.fecha]=[];
       loads[r.fecha].push({ejercicio:r.ejercicio,kg:r.kg,reps:r.reps,series:r.series,modo:r.modo||"peso",
@@ -1690,7 +1717,9 @@ function renderLoggerHTML(){
   logRows.forEach((r,i)=>{
     const u=ultimaCarga(r.ex,mKey),m=r.modo||"peso";
     const ico=m==="tiempo"?"⏱️ ":(m==="distancia"?"📏 ":"");
-    h+='<div class="logrow"><div class="top"><span class="lname">'+ico+esc(r.ex)+'</span>'+
+    h+='<div class="logrow"><div class="top">'+
+       (logRows.length>1?'<button class="agarre" title="Arrastrar para reordenar" aria-label="Reordenar '+escA(r.ex)+'">⠿</button>':'')+
+       '<span class="lname">'+ico+esc(r.ex)+'</span>'+
        '<span class="topbtns"><button class="modo" data-modo="'+i+'" title="Cambiar a '+esc(modoEtiqueta(modoSiguiente(m)).replace(/^\S+\s/,""))+'">'+modoEtiqueta(m)+'</button>'+
        '<button class="rmv" data-rm="'+i+'">✕</button></span></div>';
     if(m==="tiempo"){
@@ -1708,6 +1737,8 @@ function renderLoggerHTML(){
       h+='<div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div>';
     }
     if(u&&cargaTxt(u))h+='<div class="lastv">Última vez ('+dShort(u.fecha)+'): <b>'+esc(cargaTxt(u))+'</b></div>';
+    const rec=recordDe(r.ex,m,mKey);
+    if(rec)h+='<div class="lastv rec">🏆 Tu récord: <b>'+esc(txtRecord(m,rec.valor))+'</b> ('+dShort(rec.fecha)+')</div>';
     h+='</div>';});
   h+='<div class="searchwrap"><input type="text" id="exSearch" placeholder="Buscar o agregar ejercicio o actividad…" autocomplete="off"><div class="suggest" id="exSuggest"></div></div>';
   return h;
@@ -1810,6 +1841,89 @@ function cargaTxt(c){
   if(c.series!=null||c.reps!=null)p.push((c.series!=null?c.series:"?")+"×"+(c.reps!=null?c.reps:"?"));
   if(c.kg!=null)p.push(c.kg+" kg");
   return p.join(" · ");
+}
+/* ---------- RECORDS PERSONALES ----------
+   Cada modo tiene su propia idea de "mejor": mas kilos con peso, mas tiempo
+   sostenido, mas distancia recorrida. Se compara siempre contra el mismo modo,
+   porque no tiene sentido decir que 5 km superan a 60 kg. */
+function valorRecord(it){
+  const m=it.modo||"peso";
+  if(m==="peso")return (it.kg!=null&&Number(it.kg)>0)?Number(it.kg):null;
+  if(m==="tiempo")return (it.duracion_seg!=null&&Number(it.duracion_seg)>0)?Number(it.duracion_seg):null;
+  if(m==="distancia")return (it.distancia_m!=null&&Number(it.distancia_m)>0)?Number(it.distancia_m):null;
+  return null;
+}
+function txtRecord(modo,valor){
+  if(modo==="peso")return valor+" kg";
+  if(modo==="tiempo")return fmtDur(valor);
+  if(modo==="distancia")return fmtDist(valor);
+  return String(valor);
+}
+/* Mejor marca historica de un ejercicio en un modo dado, opcionalmente
+   ignorando una fecha (para poder comparar el dia que se esta guardando). */
+function recordDe(ejercicio,modo,excluirFecha){
+  const nombre=String(ejercicio||"").toLowerCase();
+  let mejor=null;
+  Object.keys(loads).forEach(fch=>{
+    if(excluirFecha&&fch===excluirFecha)return;
+    (loads[fch]||[]).forEach(it=>{
+      if(String(it.ejercicio).toLowerCase()!==nombre)return;
+      if((it.modo||"peso")!==modo)return;
+      const v=valorRecord(it);
+      if(v==null)return;
+      if(!mejor||v>mejor.valor)mejor={valor:v,fecha:fch,modo:modo};
+    });
+  });
+  return mejor;
+}
+/* Mejor marca ESTRICTAMENTE ANTERIOR a una fecha. Es una pregunta distinta de
+   la de recordDe(): esa excluye una fecha pero mira tambien hacia adelante, y
+   sirve para el "tu record" del logger. Para saber si un dia rompio un record
+   hay que mirar solo lo que ya existia. */
+function mejorAntesDe(ejercicio,modo,fecha){
+  const nombre=String(ejercicio||"").toLowerCase();
+  let mejor=null;
+  Object.keys(loads).forEach(fch=>{
+    if(fch>=fecha)return;
+    (loads[fch]||[]).forEach(it=>{
+      if(String(it.ejercicio).toLowerCase()!==nombre)return;
+      if((it.modo||"peso")!==modo)return;
+      const v=valorRecord(it);
+      if(v==null)return;
+      if(!mejor||v>mejor.valor)mejor={valor:v,fecha:fch,modo:modo};
+    });
+  });
+  return mejor;
+}
+/* Records rotos en una fecha: superan todo lo anterior y siguen vigentes.
+   Lo segundo evita anunciar un record al editar un dia viejo que despues ya
+   fue superado. */
+function recordsDeFecha(fecha){
+  const out=[];
+  (loads[fecha]||[]).forEach(it=>{
+    const modo=it.modo||"peso",v=valorRecord(it);
+    if(v==null)return;
+    const previo=mejorAntesDe(it.ejercicio,modo,fecha);
+    if(previo&&v<=previo.valor)return;         // no supera lo que ya habia
+    const vigente=recordDe(it.ejercicio,modo,fecha);
+    if(vigente&&vigente.fecha>fecha&&vigente.valor>=v)return;  // ya fue superado despues
+    out.push({ejercicio:it.ejercicio,modo:modo,valor:v,previo:previo?previo.valor:null});
+  });
+  return out;
+}
+/* Tabla de records vigentes, uno por ejercicio y modo. */
+function todosLosRecords(){
+  const mapa={};
+  Object.keys(loads).sort().forEach(fch=>{
+    (loads[fch]||[]).forEach(it=>{
+      const modo=it.modo||"peso",v=valorRecord(it);
+      if(v==null)return;
+      const clave=String(it.ejercicio).toLowerCase()+"|"+modo;
+      if(!mapa[clave]||v>mapa[clave].valor)
+        mapa[clave]={ejercicio:it.ejercicio,modo:modo,valor:v,fecha:fch};
+    });
+  });
+  return Object.values(mapa).sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.ejercicio.localeCompare(b.ejercicio,"es"));
 }
 function exFreq(){const f={};Object.values(loads).forEach(a=>a.forEach(it=>{f[it.ejercicio]=(f[it.ejercicio]||0)+1;}));return f;}
 function exCatalog(){const f=exFreq();return Object.keys(f).sort((a,b)=>{const d=f[b]-f[a];return d!==0?d:a.localeCompare(b,"es");});}
@@ -2092,6 +2206,8 @@ function attachModal(){
   document.querySelectorAll("[data-est]").forEach(x=>x.onclick=()=>estimateFood(+x.dataset.est));
   document.querySelectorAll("[data-drm]").forEach(x=>x.onclick=()=>delDiario(parseInt(x.dataset.drm)));
   const inp=el("exSearch");if(inp){inp.oninput=()=>renderExSuggest(inp.value);inp.onfocus=()=>renderExSuggest(inp.value);}
+  habilitarArrastre(el("loggerBox"),".logrow",".agarre",(desde,hasta)=>{
+    syncModal();logRows=reordenar(logRows,desde,hasta);renderModal();});
   MOMENTS.forEach((m,mi)=>{const fi=el("fad"+mi);if(fi){
     fi.oninput=()=>{renderFoodSuggest(mi,fi.value);markPending(mi);};
     fi.onfocus=()=>renderFoodSuggest(mi,fi.value);
@@ -2123,6 +2239,78 @@ function syncModal(){
 }
 /* Marca en el calendario el dia que se acaba de guardar. Es la unica
    confirmacion visual fuera del toast, que aparece lejos de la grilla. */
+/* Los records se avisan despues del toast de guardado, para que no se pisen. */
+function avisarRecords(rs){
+  if(!rs||!rs.length)return;
+  if(rs.length===1){
+    const r=rs[0];
+    toast("🏆 Récord en "+r.ejercicio+": "+txtRecord(r.modo,r.valor)+
+      (r.previo!=null?" (antes "+txtRecord(r.modo,r.previo)+")":" · primera marca"));
+  }else{
+    toast("🏆 "+rs.length+" récords nuevos: "+rs.slice(0,3).map(r=>r.ejercicio).join(", ")+
+      (rs.length>3?" y más":""));
+  }
+}
+/* ---------- REORDENAR ARRASTRANDO ----------
+   Se usa Pointer Events y no el drag-and-drop nativo de HTML5: en tactil el
+   nativo directamente no dispara. El agarre lleva touch-action:none para que
+   el gesto no se lo lleve el scroll de la pagina.
+   `onSuelta(desde,hasta)` recibe los indices; quien llama decide que hacer. */
+function habilitarArrastre(contenedor,selectorItem,selectorAgarre,onSuelta){
+  if(!contenedor)return;
+  contenedor.querySelectorAll(selectorAgarre).forEach(agarre=>{
+    agarre.onpointerdown=ev=>{
+      const item=agarre.closest(selectorItem);
+      if(!item)return;
+      ev.preventDefault();
+      const items=Array.prototype.slice.call(contenedor.querySelectorAll(selectorItem));
+      const desde=items.indexOf(item);
+      if(desde<0)return;
+      // centro vertical de cada fila, tomado antes de mover nada
+      const centros=items.map(x=>{const r=x.getBoundingClientRect();return r.top+r.height/2;});
+      const y0=ev.clientY;
+      let hasta=desde;
+      item.classList.add("arrastrando");
+      try{agarre.setPointerCapture(ev.pointerId);}catch(e){}
+      const mover=e=>{
+        const dy=e.clientY-y0;
+        item.style.transform="translateY("+dy+"px)";
+        const y=e.clientY;
+        let nuevo=0;
+        for(let i=0;i<centros.length;i++)if(y>centros[i])nuevo=i;
+        if(y<centros[0])nuevo=0;
+        if(nuevo!==hasta){
+          hasta=nuevo;
+          items.forEach((x,i)=>{
+            if(x===item)return;
+            let d=0;
+            if(desde<hasta&&i>desde&&i<=hasta)d=-1;
+            else if(desde>hasta&&i>=hasta&&i<desde)d=1;
+            x.style.transform=d?("translateY("+(d*item.offsetHeight)+"px)"):"";
+          });
+        }
+      };
+      const soltar=()=>{
+        document.removeEventListener("pointermove",mover);
+        document.removeEventListener("pointerup",soltar);
+        document.removeEventListener("pointercancel",soltar);
+        items.forEach(x=>{x.style.transform="";x.classList.remove("arrastrando");});
+        if(hasta!==desde)onSuelta(desde,hasta);
+      };
+      document.addEventListener("pointermove",mover);
+      document.addEventListener("pointerup",soltar);
+      document.addEventListener("pointercancel",soltar);
+    };
+  });
+}
+/* Mueve un elemento de un array de una posicion a otra. */
+function reordenar(arr,desde,hasta){
+  if(desde===hasta)return arr;
+  const copia=arr.slice();
+  const [x]=copia.splice(desde,1);
+  copia.splice(hasta,0,x);
+  return copia;
+}
 function destellarDia(k){
   try{
     const celdas=el("calGrid");if(!celdas)return;
@@ -2225,8 +2413,10 @@ async function saveDay(){
     if(items.length)comi[mKey]=items.map(i=>({momento:i.momento,descripcion:i.descripcion,kcal:i.kcal}));else delete comi[mKey];
 
     const guardadoKey=mKey;
+    const records=recordsDeFecha(guardadoKey);
     renderAll();closeSheet();
     destellarDia(guardadoKey);
+    if(records.length)setTimeout(()=>avisarRecords(records),900);
     toast(rescatados>0?("Día guardado ✓ (sumé "+rescatados+(rescatados===1?" alimento":" alimentos")+" que quedaban escritos)"):"Día guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
@@ -2489,6 +2679,25 @@ function renderIndicadores(){
       }).join("");
     }
   }
+  // records vigentes
+  const rc=el("recordsCard");
+  if(rc){
+    const recs=todosLosRecords();
+    if(recs.length===0)rc.style.display="none";
+    else{
+      rc.style.display="";
+      const hoy=todayStr(),hace30=addDias(hoy,-30);
+      el("recordsList").innerHTML='<table class="rectab"><tr><th>Ejercicio</th><th>Marca</th><th>Cuándo</th></tr>'+
+        recs.slice(0,12).map(r=>{
+          const nuevo=r.fecha>=hace30;
+          const ico=r.modo==="tiempo"?"⏱️ ":(r.modo==="distancia"?"📏 ":"");
+          return '<tr'+(nuevo?' class="fresco"':'')+'><td>'+ico+esc(r.ejercicio)+'</td><td>'+
+            esc(txtRecord(r.modo,r.valor))+'</td><td class="dw">'+dShort(r.fecha)+(nuevo?' 🏆':'')+'</td></tr>';
+        }).join("")+'</table>'+
+        (recs.length>12?'<p class="muted" style="font-size:var(--fs-3);margin-top:8px">Y '+(recs.length-12)+' más.</p>':'')+
+        '<p class="muted" style="font-size:var(--fs-3);margin-top:8px">🏆 marca los récords del último mes. Cada modo se compara consigo mismo: kilos con kilos, tiempo con tiempo, distancia con distancia.</p>';
+    }
+  }
   // patrones
   const card=el("patronCard"),cont=el("patrones");
   let h="";
@@ -2600,6 +2809,80 @@ function cicloEstado(){
   else fase="Lútea";
   return {sinDatos:false,generico,cycleLen,diaCiclo,diasRestantes,fase,periodos:inicios.length};
 }
+/* La fase de una fecha cualquiera, no solo la de hoy: es lo que permite cruzar
+   el ciclo con el bienestar registrado dia por dia. Se apoya en el inicio de
+   periodo inmediatamente anterior a esa fecha. */
+function faseDeFecha(k){
+  const grupos=cicloPeriodos();
+  if(grupos.length===0)return null;
+  let idx=-1;
+  for(let i=0;i<grupos.length;i++){if(grupos[i][0]<=k)idx=i;else break;}
+  if(idx<0)return null;                       // la fecha es anterior a todo registro
+  const inicio=grupos[idx][0],dur=grupos[idx].length;
+  // largo del ciclo: el real hasta el periodo siguiente, o el promedio si es el ultimo
+  let largo;
+  if(idx+1<grupos.length)largo=diffDias(inicio,grupos[idx+1][0]);
+  else{
+    const inicios=grupos.map(g=>g[0]);
+    if(inicios.length>=2){const ult=inicios.slice(-6),lens=[];
+      for(let i=1;i<ult.length;i++)lens.push(diffDias(ult[i-1],ult[i]));
+      largo=Math.round(lens.reduce((a,b)=>a+b,0)/lens.length);}
+    else largo=28;
+  }
+  const dia=diffDias(inicio,k)+1;
+  if(dia>largo+10)return null;                // demasiado lejos: no atribuir fase
+  if(dia<=dur)return "Menstrual";
+  if(dia>largo)return "Atrasado";
+  if(dia<=largo-16)return "Folicular";
+  if(dia<=largo-12)return "Ovulación";
+  return "Lútea";
+}
+const FASES=["Menstrual","Folicular","Ovulación","Lútea"];
+/* Regularidad: cuanto varian los ultimos ciclos entre si. */
+function cicloRegularidad(){
+  const inicios=cicloPeriodos().map(g=>g[0]);
+  if(inicios.length<3)return null;
+  const ult=inicios.slice(-7),lens=[];
+  for(let i=1;i<ult.length;i++)lens.push(diffDias(ult[i-1],ult[i]));
+  if(lens.length<2)return null;
+  const prom=lens.reduce((a,b)=>a+b,0)/lens.length;
+  const desvio=Math.sqrt(lens.reduce((a,b)=>a+Math.pow(b-prom,2),0)/lens.length);
+  return {prom:prom,desvio:desvio,min:Math.min.apply(null,lens),max:Math.max.apply(null,lens),
+    n:lens.length,regular:desvio<=2.5};
+}
+/* Bienestar promedio por fase del ciclo: la pregunta que dejo abierta el
+   backlog cuando se construyo el modulo. */
+function bienestarPorFase(desde,hasta){
+  const acum={};
+  FASES.forEach(f=>acum[f]={energia:[],animo:[],sueno:[],dias:0});
+  Object.keys(bien).forEach(k=>{
+    if(desde&&k<desde)return;
+    if(hasta&&k>hasta)return;
+    const b=bien[k];if(!b)return;
+    const f=faseDeFecha(k);
+    if(!f||!acum[f])return;
+    let algo=false;
+    if(b.energia){acum[f].energia.push(b.energia);algo=true;}
+    if(b.animo){acum[f].animo.push(b.animo);algo=true;}
+    if(b.sueno){acum[f].sueno.push(b.sueno);algo=true;}
+    if(algo)acum[f].dias++;
+  });
+  const prom=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const out=[];
+  FASES.forEach(f=>{
+    const d=acum[f];
+    if(d.dias<2)return;                       // con un solo dia no se promedia nada
+    out.push({fase:f,dias:d.dias,energia:prom(d.energia),animo:prom(d.animo),sueno:prom(d.sueno)});
+  });
+  return out;
+}
+/* Dias con flujo dentro de un mes, para el reporte. */
+function cicloDelMes(y,m){
+  const mp=y+"-"+pad2(m+1);
+  const dias=Object.keys(ciclo).filter(k=>k.startsWith(mp)&&ciclo[k]&&ciclo[k].flujo).sort();
+  const grupos=cicloPeriodos().filter(g=>g[0].startsWith(mp));
+  return {dias:dias.length,inicios:grupos.length,primerInicio:grupos.length?grupos[0][0]:null};
+}
 function renderCicloProg(){
   const card=el("cicloCard");if(!card)return;
   if(!perfil.registra_periodo){card.style.display="none";return;}
@@ -2616,7 +2899,35 @@ function renderCicloProg(){
   }
   h+='</div>';
   if(e.generico)h+='<p class="muted" style="font-size:var(--fs-5)">Con un segundo período registrado, la estimación se ajusta a tu ciclo real.</p>';
-  h+='<p class="muted" style="font-size:var(--fs-4);margin-top:6px">Estimación orientativa en base a tu historial. No es un método anticonceptivo ni un diagnóstico médico.</p>';
+  // regularidad de los ultimos ciclos
+  const reg=cicloRegularidad();
+  if(reg){
+    h+='<div class="seclabel" style="margin-top:14px">Regularidad</div>';
+    h+='<p class="muted" style="font-size:var(--fs-5);line-height:1.5">Tus últimos '+reg.n+' ciclos duraron entre <b>'+
+      reg.min+'</b> y <b>'+reg.max+'</b> días (promedio '+reg.prom.toFixed(1).replace(".",",")+'). '+
+      (reg.regular?"Es un ciclo <b>regular</b>.":"Hay <b>variación</b> de un ciclo a otro, así que la estimación es más gruesa.")+'</p>';
+  }
+  // bienestar por fase: lo que el backlog dejo abierto al construir el modulo
+  const bf=bienestarPorFase();
+  if(bf.length>=2){
+    h+='<div class="seclabel" style="margin-top:14px">Cómo te sentís en cada fase</div>';
+    h+='<table class="fasetab"><tr><th>Fase</th><th>Energía</th><th>Ánimo</th><th>Sueño</th><th>Días</th></tr>';
+    bf.forEach(f=>{
+      const c=v=>v==null?"—":v.toFixed(1).replace(".",",");
+      h+='<tr><td>'+esc(f.fase)+'</td><td>'+c(f.energia)+'</td><td>'+c(f.animo)+'</td><td>'+c(f.sueno)+'</td><td class="dw">'+f.dias+'</td></tr>';
+    });
+    h+='</table>';
+    // el contraste mas grande, dicho en palabras
+    const conEn=bf.filter(f=>f.energia!=null);
+    if(conEn.length>=2){
+      const alta=conEn.reduce((a,b)=>b.energia>a.energia?b:a);
+      const baja=conEn.reduce((a,b)=>b.energia<a.energia?b:a);
+      if(alta.fase!==baja.fase&&(alta.energia-baja.energia)>=0.5)
+        h+='<p class="muted" style="font-size:var(--fs-4);margin-top:8px">Tu energía es más alta en la fase <b>'+esc(alta.fase)+
+          '</b> y más baja en la <b>'+esc(baja.fase)+'</b>. Puede servirte para acomodar los días exigentes del plan.</p>';
+    }
+  }
+  h+='<p class="muted" style="font-size:var(--fs-4);margin-top:10px">Estimación orientativa en base a tu historial. No es un método anticonceptivo ni un diagnóstico médico.</p>';
   cont.innerHTML=h;
 }
 function renderBalance(target){
@@ -2911,13 +3222,26 @@ function resumenParaAgente(y,m){
     diasConBienestar:o.bienDias,diasQueFumo:o.fumoDias,
     anotacionesDiario:o.diarioEntradas,diasConDiario:o.diarioDias,
     minutosActividadPorTiempo:Math.round((o.segTiempo||0)/60),
-    kmRecorridos:+((o.metros||0)/1000).toFixed(2)
+    kmRecorridos:+((o.metros||0)/1000).toFixed(2),
+    diasConFlujo:o.ciclodias||0
   });
   // progresión de cargas
   const mejoras=[];
   Object.keys(s.maxKg).forEach(ex=>{const prev=pv.maxKg[ex];if(prev!=null&&s.maxKg[ex]>prev)mejoras.push({ejercicio:ex,de:prev,a:s.maxKg[ex]});});
-  return {mes:comp(s),mesAnterior:comp(pv),objetivoKcal:calorieTarget(),
+  const out={mes:comp(s),mesAnterior:comp(pv),objetivoKcal:calorieTarget(),
     metaAguaAprox:metaAguaDia(null),progresionCargas:mejoras};
+  if(perfil.registra_periodo){
+    const desde=y+"-"+pad2(m+1)+"-01",hasta=y+"-"+pad2(m+1)+"-"+pad2(diasDelMes(y,m));
+    const bf=bienestarPorFase(desde,hasta),reg=cicloRegularidad();
+    out.ciclo={diasConFlujo:s.ciclodias,
+      cicloPromedioDias:reg?+reg.prom.toFixed(1):null,
+      regular:reg?reg.regular:null,
+      bienestarPorFase:bf.map(f=>({fase:f.fase,dias:f.dias,
+        energia:f.energia!=null?+f.energia.toFixed(2):null,
+        animo:f.animo!=null?+f.animo.toFixed(2):null,
+        sueno:f.sueno!=null?+f.sueno.toFixed(2):null}))};
+  }
+  return out;
 }
 function perfilParaAgente(){
   return {nombre:perfil.nombre||null,sexo:perfil.sexo,edad:(()=>{try{return age();}catch(e){return null;}})(),
@@ -3082,7 +3406,7 @@ function mesStats(y,m){
     energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
     aguaDias:[],aguaMeta:0,
     sesionesGym:0,ejercicios:new Set(),maxKg:{},
-    diarioEntradas:0,diarioDias:0,segTiempo:0,metros:0};
+    diarioEntradas:0,diarioDias:0,segTiempo:0,metros:0,ciclodias:0};
   for(let d=1;d<=nd;d++){
     const k=y+"-"+pad2(m+1)+"-"+pad2(d);
     if(k>hoy)continue;
@@ -3113,6 +3437,7 @@ function mesStats(y,m){
         if(it.modo==="distancia"&&it.distancia_m!=null)s.metros+=Number(it.distancia_m);
         if(it.kg!=null){const kg=Number(it.kg);if(s.maxKg[it.ejercicio]==null||kg>s.maxKg[it.ejercicio])s.maxKg[it.ejercicio]=kg;}});}
     if(dia[k]&&dia[k].length){s.diarioEntradas+=dia[k].length;s.diarioDias++;}
+    if(ciclo[k]&&ciclo[k].flujo)s.ciclodias++;
   }
   // cuerpo: primera y última medida del mes, y la previa al mes
   const enMes=medidas.filter(x=>x.fecha.startsWith(mp));
@@ -3271,6 +3596,33 @@ function renderReporte(){
     }
   }
   h+='</div>';
+
+  // CICLO
+  if(perfil.registra_periodo){
+    const cm=cicloDelMes(repY,repM);
+    const desde=repY+"-"+pad2(repM+1)+"-01",hasta=repY+"-"+pad2(repM+1)+"-"+pad2(diasDelMes(repY,repM));
+    const bf=bienestarPorFase(desde,hasta);
+    if(cm.dias>0||bf.length){
+      h+='<div class="repsec"><h3>🩸 Ciclo</h3>';
+      h+='<div class="repgrid">';
+      h+=kpi("Días con flujo",String(cm.dias),"");
+      if(cm.inicios>0)h+=kpi("Períodos que empezaron",String(cm.inicios),"");
+      const reg=cicloRegularidad();
+      if(reg)h+=kpi("Ciclo promedio",reg.prom.toFixed(0)+" días",reg.regular?"regular":"con variación");
+      h+='</div>';
+      if(bf.length>=2){
+        h+='<div style="margin-top:12px">';
+        bf.forEach(f=>{
+          const partes=[];
+          if(f.energia!=null)partes.push("energía "+f.energia.toFixed(1).replace(".",","));
+          if(f.animo!=null)partes.push("ánimo "+f.animo.toFixed(1).replace(".",","));
+          h+='<div class="repline"><span class="rl">'+esc(f.fase)+'</span><span class="rv">'+esc(partes.join(" · ")||"—")+'</span></div>';
+        });
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+  }
 
   // DIARIO E HISTORIA
   if(perfil.registra_diario){
@@ -3756,7 +4108,8 @@ function renderRutinas(){
     ejs.forEach((e,i)=>{
       const ico=e.modo==="tiempo"?"⏱️ ":(e.modo==="distancia"?"📏 ":"");
       const det=cargaTxt(e);
-      h+='<div class="rej"><span class="rejn">'+ico+esc(e.ejercicio)+'</span><span class="rejv">'+esc(det||"—")+'</span><button class="rmv" data-delej="'+r.id+"_"+i+'">✕</button></div>';});
+      h+='<div class="rej">'+(ejs.length>1?'<button class="agarre" title="Arrastrar para reordenar" aria-label="Reordenar '+escA(e.ejercicio)+'">⠿</button>':'')+
+        '<span class="rejn">'+ico+esc(e.ejercicio)+'</span><span class="rejv">'+esc(det||"—")+'</span><button class="rmv" data-delej="'+r.id+"_"+i+'">✕</button></div>';});
     h+='<div class="rejmodo"><button class="modo" data-rutmodo="'+r.id+'">'+modoEtiqueta(md)+'</button><span class="muted" style="font-size:var(--fs-4)">tocá para cambiar</span></div>';
     h+='<div class="rejadd"><div style="flex:1 1 100%;position:relative"><input type="text" class="rname" id="rn_'+r.id+'" placeholder="'+(t?"Actividad (ej: Cinta, Plancha)":"Ejercicio (buscá o escribí uno nuevo)")+'" autocomplete="off"><div class="suggest" id="rsug_'+r.id+'"></div></div>';
     if(t)h+='<input type="number" class="rnum" id="rmn_'+r.id+'" placeholder="min" inputmode="numeric" min="0"><input type="number" class="rnum" id="rsg_'+r.id+'" placeholder="seg" inputmode="numeric" min="0" max="59">';
@@ -3769,6 +4122,12 @@ function renderRutinas(){
   cont.querySelectorAll("[data-addej]").forEach(b=>b.onclick=()=>addRutinaEj(parseInt(b.dataset.addej)));
   cont.querySelectorAll("[data-rutmodo]").forEach(b=>b.onclick=()=>{const id=parseInt(b.dataset.rutmodo);
     rutModo[id]=modoSiguiente(rutModo[id]||"peso");renderRutinas();});
+  // cada tarjeta de rutina reordena solo sus propios ejercicios
+  rutinas.forEach(r=>{
+    const tarjeta=cont.querySelectorAll(".rutcard")[rutinas.indexOf(r)];
+    if(!tarjeta)return;
+    habilitarArrastre(tarjeta,".rej",".agarre",(desde,hasta)=>reordenarRutina(r.id,desde,hasta));
+  });
   // buscador de ejercicios (autocompleta desde el historial de cargas + otras rutinas)
   rutinas.forEach(r=>{
     const inp=el("rn_"+r.id);if(!inp)return;
@@ -3868,6 +4227,26 @@ async function addRutinaEj(rutId){
       orden:orden,_id:r.data.id});
     renderRutinas();
   }catch(e){toast("No se pudo agregar: "+traducir(e));}
+}
+/* Reordena en pantalla al instante y persiste el nuevo `orden` en segundo
+   plano; si la escritura falla se vuelve al orden anterior. */
+async function reordenarRutina(rutId,desde,hasta){
+  const arr=rutinaEj[rutId];if(!arr)return;
+  const previo=arr.slice();
+  rutinaEj[rutId]=reordenar(arr,desde,hasta);
+  rutinaEj[rutId].forEach((e,i)=>{e.orden=i;});
+  renderRutinas();
+  const conId=rutinaEj[rutId].filter(e=>e._id!=null);
+  if(conId.length===0)return;                 // nada persistible (recien creados)
+  try{
+    for(const e of conId){
+      const r=await sb.from("rutina_ejercicios").update({orden:e.orden}).eq("id",e._id);
+      if(r.error)throw r.error;
+    }
+  }catch(err){
+    rutinaEj[rutId]=previo;renderRutinas();
+    toast("No se pudo guardar el orden: "+traducir(err));
+  }
 }
 async function delRutinaEj(rutId,idx){
   const arr=rutinaEj[rutId]||[];const e=arr[idx];if(!e)return;
