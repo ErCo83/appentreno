@@ -162,6 +162,15 @@
   .logrow .lname{font-weight:700;font-size:var(--fs-7)}
   .logrow .rmv{background:none;border:none;color:var(--red);font-size:var(--fs-9);cursor:pointer;padding:0 4px}
   .logrow .topbtns{display:flex;align-items:center;gap:6px;flex:none}
+  .depfila{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .depfila:first-child{border-top:none}
+  .depfila .di{font-size:var(--fs-9);line-height:1;flex:none;width:26px;text-align:center}
+  .depfila .dn{flex:1;min-width:0}
+  .depfila .dnom{font-weight:700;font-size:var(--fs-6)}
+  .depfila .dmeta{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);color:var(--ink-faint);margin-top:2px}
+  .depfila .dval{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:var(--fs-8);flex:none;text-align:right}
+  .depbar{height:4px;border-radius:3px;background:var(--line);margin-top:5px;overflow:hidden}
+  .depbar>span{display:block;height:100%;background:var(--pitch);border-radius:3px}
   .rejmodo{display:flex;align-items:center;gap:8px;margin-top:10px}
   .rejmodo .modo{background:var(--surface-2);border:1px solid var(--line-2);border-radius:999px;padding:5px 11px;font-size:var(--fs-4);font-family:"Sometype Mono",monospace;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
   .logrow .modo{background:var(--surface-2);border:1px solid var(--line-2);border-radius:999px;padding:4px 9px;font-size:var(--fs-3);font-family:"Sometype Mono",monospace;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
@@ -758,6 +767,10 @@
         <div class="stat" id="statReg"><b id="cReg">0</b><span>Racha registro</span><i id="cRegSub"></i></div>
       </div>
       <p class="muted" style="font-size:var(--fs-3);line-height:1.45;margin-top:10px">El volumen es series × reps × kg de los ejercicios con peso: distingue una sesión de 3 series de una de 6, cosa que el máximo de kg no hace.</p>
+    </div>
+    <div class="card" id="deportesCard" style="display:none">
+      <span class="tag">Deportes</span><h2 style="margin:3px 0 8px" id="deportesTit">Del mes</h2>
+      <div id="deportesList"></div>
     </div>
     <div class="card" id="patronCard" style="display:none">
       <span class="tag">Patrones</span><h2 style="margin:3px 0 8px">Lo que dicen tus datos</h2>
@@ -1561,7 +1574,7 @@ async function saveOnboard(){
 }
 
 /* ---------- MODAL DEL DÍA ---------- */
-let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false;
+let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false,mDeportePrecargado=false;
 let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo,mPeriodo,mFlujoTipo;
 let mFood,mTotalManual,mAlcohol,mAlcTipo,mAgua=0;
 let openSec={act:true,well:false,food:false,dia:false};
@@ -1576,7 +1589,7 @@ function openDay(key){
       min:conTiempo?ms.min:"",seg:conTiempo?ms.seg:"",
       dist:md==="distancia"?de.valor:"",unidad:de.unidad,
       vueltas:r.vueltas!=null?r.vueltas:""};});
-  mRutinaPrecargada=false;
+  mRutinaPrecargada=false;mDeportePrecargado=false;
   // Si es día de gym, no hay cargas guardadas todavía, y el plan tiene rutina: precargar
   if(logRows.length===0){
     const p=planFor(key);
@@ -1614,6 +1627,19 @@ function openDay(key){
   openSec={act:true,well:false,food:false,dia:false};
   sugCache={};sugAbierta=null;sugCargando=false;
   renderModal();el("ov").classList.add("show");
+}
+/* Al marcar Cumpli en un dia de deporte, el deporte planificado entra solo
+   como primer renglon en modo tiempo. Sin esto habia que buscarlo a mano en un
+   buscador que dice "ejercicio", y nadie lo iba a hacer. */
+function precargarDeporte(){
+  if(mEstado!=="cumpli")return;            // solo se registra lo que se cumplio
+  const p=planFor(mKey);
+  if(p.tipo!=="deporte")return;
+  if(logRows.length>0)return;              // ya hay algo cargado o una rutina precargada
+  const nombre=depDe(p.detalle)||sportLabel(mKey);
+  if(!nombre||nombre==="Deporte")return;
+  logRows.push(nuevaFila(nombre,modoDe(nombre)));
+  mDeportePrecargado=true;
 }
 function gymActive(){const p=planFor(mKey);return (p.tipo==="gym"&&mEstado==="cumpli")||mExtraGym;}
 /* El registro de ejercicios ya no es solo del gimnasio: un dia de deporte
@@ -1653,8 +1679,13 @@ function renderActBody(p){
   return h;
 }
 function renderLoggerHTML(){
-  let h='<div class="seclabel">Ejercicios realizados</div>';
+  const pd=planFor(mKey),esDep=(pd.tipo==="deporte");
+  const nomDep=esDep?(depDe(pd.detalle)||sportLabel(mKey)):"";
+  let h='<div class="seclabel">'+(esDep&&nomDep!=="Deporte"
+    ? esc(iconDeporte(pd.detalle)+" "+nomDep+" · ¿cuánto duró?")
+    : "Ejercicios realizados")+'</div>';
   if(mRutinaPrecargada)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
+  else if(mDeportePrecargado)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">⏱️ Poné cuánto duró y confirmá con «Guardar día». Abajo podés sumar lo que hayas hecho además.</div>';
   if(logRows.length===0)h+='<p class="muted" style="font-size:var(--fs-6);margin-bottom:4px">Buscá y agregá lo que hiciste. Cada renglón puede ir con peso, por tiempo (cinta, plancha) o por distancia (running, ciclismo, natación).</p>';
   logRows.forEach((r,i)=>{
     const u=ultimaCarga(r.ex,mKey),m=r.modo||"peso";
@@ -1788,7 +1819,9 @@ function modoDe(nombre){
   const u=ultimaCarga(nombre,null);
   if(u)return u.modo||"peso";
   if(esActDist(nombre))return "distancia";
-  return esActTiempo(nombre)?"tiempo":"peso";
+  if(esActTiempo(nombre))return "tiempo";
+  // un deporte del catalogo (futbol, handball, tenis...) se mide en tiempo
+  return buscarDeporte(nombre)?"tiempo":"peso";
 }
 const MODOS=[["peso","🏋️ Peso"],["tiempo","⏱️ Tiempo"],["distancia","📏 Distancia"]];
 function modoSiguiente(m){const i=MODOS.findIndex(x=>x[0]===m);return MODOS[(i+1)%MODOS.length][0];}
@@ -2029,7 +2062,10 @@ async function delDiario(id){
 function attachModal(){
   document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{syncModal();const id=x.dataset.toggle;openSec[id]=!openSec[id];renderModal();});
   let b;
-  if((b=el("bDone")))b.onclick=()=>{syncModal();mEstado=mEstado==="cumpli"?null:"cumpli";renderModal();};
+  if((b=el("bDone")))b.onclick=()=>{syncModal();
+    mEstado=mEstado==="cumpli"?null:"cumpli";
+    if(mEstado==="cumpli")precargarDeporte();
+    renderModal();};
   if((b=el("bMiss")))b.onclick=()=>{syncModal();mEstado=mEstado==="no_fui"?null:"no_fui";renderModal();};
   if((b=el("bClear")))b.onclick=()=>{syncModal();mEstado=null;renderModal();};
   if((b=el("tGym")))b.onclick=()=>{syncModal();mExtraGym=!mExtraGym;renderModal();};
@@ -2294,6 +2330,41 @@ function rachaRegistro(){
   }
   return n;
 }
+/* Deportes practicados en el mes visible. Se leen de `cargas`: desde que el
+   deporte planificado se precarga como renglon al marcar Cumpli, cada partido
+   deja una fila con su nombre, y eso lo vuelve agregable. Tambien cuenta los
+   dias de deporte cumplidos que no tienen renglon, para no subreportar. */
+function deportesMes(){
+  const mp=viewY+"-"+pad2(viewM+1),porDep={};
+  const anota=(nombre,seg,metros)=>{
+    const d=buscarDeporte(nombre);
+    const clave=d?d[0]:nombre;
+    if(!porDep[clave])porDep[clave]={nombre:clave,icono:d?d[1]:"🏃",sesiones:0,seg:0,metros:0};
+    porDep[clave].sesiones++;
+    porDep[clave].seg+=seg||0;
+    porDep[clave].metros+=metros||0;
+  };
+  Object.keys(loads).forEach(k=>{
+    if(!k.startsWith(mp))return;
+    (loads[k]||[]).forEach(it=>{
+      if(!buscarDeporte(it.ejercicio))return;      // solo lo que es un deporte
+      anota(it.ejercicio,Number(it.duracion_seg||0),Number(it.distancia_m||0));
+    });
+  });
+  // dias de deporte cumplidos sin ningun renglon: cuentan como sesion sin tiempo
+  Object.keys(act).forEach(k=>{
+    if(!k.startsWith(mp))return;
+    const a=act[k]||{},p=planFor(k);
+    const hizo=(p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte;
+    if(!hizo)return;
+    const yaTiene=(loads[k]||[]).some(it=>buscarDeporte(it.ejercicio));
+    if(yaTiene)return;
+    const nombre=(p.tipo==="deporte"&&depDe(p.detalle))||sportLabel(k);
+    if(!nombre||nombre==="Deporte")return;
+    anota(nombre,0,0);
+  });
+  return Object.values(porDep).sort((a,b)=>(b.seg-a.seg)||(b.sesiones-a.sesiones));
+}
 /* Relacion entre lo que dormiste y como te sentiste al dia siguiente.
    Promedio condicionado, no una correlacion estadistica: con pocos datos
    una correlacion enganaria mas de lo que explica. */
@@ -2397,6 +2468,27 @@ function renderIndicadores(){
   el("cReg").textContent=r;
   el("cRegSub").textContent=r===0?"empezá hoy":(r===1?"día seguido":"días seguidos");
   el("statReg").title="Días seguidos en los que anotaste algo: actividad, bienestar, comida, agua o diario. Es distinta de la racha de entrenamiento del calendario.";
+  // deportes del mes visible
+  const deps=deportesMes(),dcard=el("deportesCard");
+  if(dcard){
+    if(deps.length===0)dcard.style.display="none";
+    else{
+      dcard.style.display="";
+      el("deportesTit").textContent=MONTHS[viewM].charAt(0).toUpperCase()+MONTHS[viewM].slice(1)+" "+viewY;
+      const maxSeg=Math.max.apply(null,deps.map(d=>d.seg).concat([1]));
+      el("deportesList").innerHTML=deps.map(d=>{
+        const meta=[d.sesiones+(d.sesiones===1?" vez":" veces")];
+        if(d.metros>0)meta.push(fmtDist(d.metros));
+        if(d.seg>0&&d.sesiones>1)meta.push("~"+fmtDur(Math.round(d.seg/d.sesiones))+" c/u");
+        const pct=d.seg>0?Math.round((d.seg/maxSeg)*100):0;
+        return '<div class="depfila"><span class="di">'+d.icono+'</span>'+
+          '<span class="dn"><span class="dnom">'+esc(d.nombre)+'</span>'+
+          '<span class="dmeta">'+esc(meta.join(" · "))+'</span>'+
+          (pct>0?'<span class="depbar"><span style="width:'+pct+'%"></span></span>':'')+
+          '</span><span class="dval">'+(d.seg>0?fmtHoras(d.seg):"—")+'</span></div>';
+      }).join("");
+    }
+  }
   // patrones
   const card=el("patronCard"),cont=el("patrones");
   let h="";
