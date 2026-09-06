@@ -1246,7 +1246,8 @@ async function onSession(session){
     medidas=(rme.data||[]);
     ciclo={};(rcic&&rcic.data||[]).forEach(r=>ciclo[r.fecha]=r);
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
-    setConn("ok","Sincronizado");showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
+    showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
+    pintarPendientes();subirPendientes(false);
     initOnboardingState();
     pintarNotif();
     setTimeout(()=>procesarDestinoNotif(location.search),300);
@@ -1654,6 +1655,7 @@ function openDay(key){
   openSec={act:true,well:false,food:false,dia:false};
   sugCache={};sugAbierta=null;sugCargando=false;
   renderModal();el("ov").classList.add("show");
+  mFirmaInicial=firmaModal();
 }
 /* Al marcar Cumpli en un dia de deporte, el deporte planificado entra solo
    como primer renglon en modo tiempo. Sin esto habia que buscarlo a mano en un
@@ -2224,7 +2226,7 @@ function attachModal(){
   engancharMic("micDiaBtn","diarioTxt","micDiaHint");
   engancharMic("micSuenoBtn","whDream","micSuenoHint");
   el("saveDay").onclick=()=>conBoton("saveDay",saveDay);
-  el("closeSheet").onclick=closeSheet;
+  el("closeSheet").onclick=cerrarConAviso;
 }
 function syncModal(){
   logRows.forEach((r,i)=>{
@@ -2321,104 +2323,213 @@ function destellarDia(k){
     setTimeout(()=>c.classList.remove("recien"),800);
   }catch(e){}
 }
-function closeSheet(){detenerDictado();el("ov").classList.remove("show");}
-el("ov").onclick=e=>{if(e.target.id==="ov")closeSheet();};
+/* Firma del estado editable del dia. Comparar la firma de apertura con la
+   actual dice si hay cambios sin guardar, sin tener que rastrear cada campo. */
+function firmaModal(){
+  try{
+    return JSON.stringify([mEstado,mExtraGym,mExtraDep,
+      logRows.map(r=>[r.ex,r.modo,r.series,r.reps,r.kg,r.min,r.seg,r.dist,r.unidad,r.vueltas]),
+      mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo,mPeriodo,mFlujoTipo,
+      mTotalManual,mAlcohol,mAlcTipo,
+      MOMENTS.map(m=>(mFood[m]||[]).map(it=>[it.desc,it.kcal])),
+      MOMENTS.map((m,mi)=>{const d=el("fad"+mi),k=el("fak"+mi);
+        return [(d&&d.value)||"",(k&&k.value)||""];})]);
+  }catch(e){return "";}
+}
+let mFirmaInicial="";
+function hayCambiosSinGuardar(){
+  if(!mFirmaInicial)return false;
+  syncModal();
+  return firmaModal()!==mFirmaInicial;
+}
+/* Cerrar tocando el fondo o el boton Cerrar: si hay cambios, se avisa. Antes se
+   perdia todo con un toque accidental en el borde, que en el celular es facil. */
+function cerrarConAviso(){
+  if(hayCambiosSinGuardar()&&!confirm("Tenés cambios sin guardar en este día. ¿Salir igual y perderlos?"))return;
+  closeSheet();
+}
+function closeSheet(){mFirmaInicial="";detenerDictado();el("ov").classList.remove("show");}
+el("ov").onclick=e=>{if(e.target.id==="ov")cerrarConAviso();};
 
+/* ---------- GUARDADO DEL DÍA ----------
+   Se separa en tres pasos: armar los datos, aplicarlos en memoria y escribirlos.
+   Esa separación es lo que permite reintentar más tarde: si la escritura falla
+   por falta de conexión, el día queda en una cola en este dispositivo y se
+   vuelve a intentar solo. Sin esto, una sesión cargada en el gimnasio sin señal
+   se perdía al cerrar la app. */
+function armarDiaPayload(){
+  const fecha=mKey,uid=user.id;
+  const filaCarga=r=>{
+    const base={user_id:uid,fecha:fecha,ejercicio:r.ex};
+    const m=r.modo||"peso";
+    if(m==="tiempo"){base.series=null;base.reps=null;base.kg=null;
+      base.modo="tiempo";base.duracion_seg=durDe(r.min,r.seg);
+      base.distancia_m=null;base.vueltas=null;}
+    else if(m==="distancia"){base.series=null;base.reps=null;base.kg=null;
+      base.modo="distancia";base.duracion_seg=durDe(r.min,r.seg);
+      base.distancia_m=distDe(r.dist,r.unidad);
+      base.vueltas=r.vueltas!==""?parseInt(r.vueltas):null;}
+    else{base.series=r.series!==""?parseFloat(r.series):null;
+      base.reps=r.reps!==""?parseInt(r.reps):null;
+      base.kg=r.kg!==""?parseFloat(r.kg):null;
+      base.modo="peso";base.duracion_seg=null;
+      base.distancia_m=null;base.vueltas=null;}
+    return base;};
+  const conDato=r=>{
+    if(!r.ex)return false;
+    const m=r.modo||"peso";
+    if(m==="tiempo")return durDe(r.min,r.seg)!=null;
+    if(m==="distancia")return distDe(r.dist,r.unidad)!=null||durDe(r.min,r.seg)!=null;
+    return r.series!==""||r.reps!==""||r.kg!=="";};
+  const vacioAct=!mEstado&&!mExtraGym&&!mExtraDep;
+  const wbEmpty=!mEnergia&&!mAnimo&&!mSueno&&mHoras===""&&!mTexto&&!mFumo;
+  const tm=mTotalManual!==""?parseInt(mTotalManual):null;
+  const aguaVal=(mAgua&&mAgua>0)?mAgua:null;
+  const items=[];MOMENTS.forEach(m=>mFood[m].forEach(it=>items.push({user_id:uid,fecha:fecha,momento:m,descripcion:it.desc,kcal:it.kcal})));
+  return {
+    v:1,user_id:uid,fecha:fecha,creado:Date.now(),
+    actividad:vacioAct?null:{user_id:uid,fecha:fecha,estado:mEstado,extra_gym:mExtraGym,extra_deporte:mExtraDep},
+    cargas:(loggerActivo()?logRows.filter(conDato):[]).map(filaCarga),
+    bienestar:wbEmpty?null:{user_id:uid,fecha:fecha,energia:mEnergia,animo:mAnimo,sueno:mSueno,
+      horas_dormidas:mHoras!==""?parseFloat(mHoras):null,sueno_texto:mTexto||null,
+      fumo:mFumo,fumo_tipo:mFumo?(mFumoTipo||"Tabaco"):null},
+    ciclo:perfil.registra_periodo?(mPeriodo?{user_id:uid,fecha:fecha,flujo:mFlujoTipo||"Leve"}:null):undefined,
+    alimentacion:(tm==null&&!mAlcohol&&aguaVal==null)?null:{user_id:uid,fecha:fecha,total_manual:tm,
+      alcohol:mAlcohol,alcohol_tipo:mAlcohol?(mAlcTipo||null):null,agua_ml:aguaVal},
+    comidas:items
+  };
+}
+/* Deja la memoria como quedaría tras escribir: la app se ve correcta aunque la
+   escritura todavía no haya salido. */
+function aplicarDiaEnMemoria(p){
+  const k=p.fecha;
+  if(p.actividad)act[k]={estado:p.actividad.estado,extra_gym:p.actividad.extra_gym,extra_deporte:p.actividad.extra_deporte};
+  else delete act[k];
+  if(p.cargas&&p.cargas.length)loads[k]=p.cargas.map(c=>({ejercicio:c.ejercicio,kg:c.kg,reps:c.reps,series:c.series,
+    modo:c.modo||"peso",duracion_seg:c.duracion_seg!=null?c.duracion_seg:null,
+    distancia_m:c.distancia_m!=null?c.distancia_m:null,vueltas:c.vueltas!=null?c.vueltas:null}));
+  else delete loads[k];
+  if(p.bienestar)bien[k]=p.bienestar; else delete bien[k];
+  if(p.ciclo!==undefined){ if(p.ciclo)ciclo[k]=p.ciclo; else delete ciclo[k]; }
+  if(p.alimentacion)alim[k]=p.alimentacion; else delete alim[k];
+  if(p.comidas&&p.comidas.length)comi[k]=p.comidas.map(i=>({momento:i.momento,descripcion:i.descripcion,kcal:i.kcal}));
+  else delete comi[k];
+}
+/* Quita las columnas que la base todavía no tiene (migraciones sin correr). */
+function podarCarga(c){
+  const o=Object.assign({},c);
+  if(!capTiempo){delete o.modo;delete o.duracion_seg;}
+  if(!capDistancia){delete o.distancia_m;delete o.vueltas;}
+  return o;
+}
+/* Escribe un día completo. Es idempotente: borra y reinserta lo que es lista,
+   y hace upsert de lo que es una fila por día. Por eso reintentarlo es seguro. */
+async function escribirDia(p){
+  const uid=p.user_id,k=p.fecha;
+  const chk=r=>{if(r.error)throw r.error;return r;};
+  const chkTabla=r=>{if(r.error&&r.error.code!=="42P01")throw r.error;return r;};
+  if(p.actividad)chk(await sb.from("actividad").upsert(p.actividad));
+  else chk(await sb.from("actividad").delete().match({user_id:uid,fecha:k}));
+  chk(await sb.from("cargas").delete().match({user_id:uid,fecha:k}));
+  if(p.cargas&&p.cargas.length){
+    let ins=await sb.from("cargas").insert(p.cargas.map(podarCarga));
+    if(ins.error&&ins.error.code==="42703"){capDistancia=false;ins=await sb.from("cargas").insert(p.cargas.map(podarCarga));}
+    if(ins.error&&ins.error.code==="42703"){capTiempo=false;ins=await sb.from("cargas").insert(p.cargas.map(podarCarga));}
+    chk(ins);
+  }
+  if(p.bienestar)chk(await sb.from("bienestar").upsert(p.bienestar));
+  else chk(await sb.from("bienestar").delete().match({user_id:uid,fecha:k}));
+  if(p.ciclo!==undefined){
+    if(p.ciclo)chkTabla(await sb.from("ciclo").upsert(p.ciclo));
+    else chkTabla(await sb.from("ciclo").delete().match({user_id:uid,fecha:k}));
+  }
+  if(p.alimentacion)chk(await sb.from("alimentacion_dia").upsert(p.alimentacion));
+  else chk(await sb.from("alimentacion_dia").delete().match({user_id:uid,fecha:k}));
+  chk(await sb.from("comidas").delete().match({user_id:uid,fecha:k}));
+  if(p.comidas&&p.comidas.length)chk(await sb.from("comidas").insert(p.comidas));
+}
+/* Un fallo de red se reintenta; uno de datos (constraint, permiso) no, porque
+   reintentarlo fallaría para siempre. */
+function esFalloDeRed(e){
+  if(typeof navigator!=="undefined"&&navigator.onLine===false)return true;
+  if(e&&e.code&&/^[0-9A-Za-z]{5}$/.test(String(e.code)))return false;   // código SQL: es de datos
+  const m=((e&&(e.message||e.error_description))||String(e||"")).toLowerCase();
+  return /failed to fetch|networkerror|network request failed|load failed|timeout|conexi/.test(m);
+}
+const CLAVE_PEND="entreno_pendientes";
+const MAX_PEND=60;
+function leerPendientes(){
+  try{const j=localStorage.getItem(CLAVE_PEND);const a=j?JSON.parse(j):[];return Array.isArray(a)?a:[];}
+  catch(e){return [];}
+}
+function guardarPendientes(a){
+  try{localStorage.setItem(CLAVE_PEND,JSON.stringify(a.slice(-MAX_PEND)));}catch(e){}
+}
+function encolarDia(p){
+  const a=leerPendientes().filter(x=>!(x.fecha===p.fecha&&x.user_id===p.user_id));
+  a.push(p);guardarPendientes(a);pintarPendientes();
+}
+function pendientesDelUsuario(){
+  if(!user)return [];
+  return leerPendientes().filter(x=>x.user_id===user.id);
+}
+function pintarPendientes(){
+  const n=pendientesDelUsuario().length;
+  if(n>0)setConn("bad",n===1?"1 día sin subir":(n+" días sin subir"));
+  else if(typeof navigator!=="undefined"&&navigator.onLine===false)setConn("bad","Sin conexión");
+  else setConn("ok","Sincronizado");
+}
+let subiendoPend=false;
+/* Sube lo que haya quedado pendiente. Se llama al arrancar, al volver la
+   conexión y después de cada guardado exitoso. */
+async function subirPendientes(silencioso){
+  if(subiendoPend||!user)return;
+  const mios=pendientesDelUsuario();
+  if(mios.length===0)return;
+  if(typeof navigator!=="undefined"&&navigator.onLine===false)return;
+  subiendoPend=true;
+  let subidos=0;const quedan=[];
+  for(const p of mios){
+    try{await escribirDia(p);subidos++;}
+    catch(e){
+      if(esFalloDeRed(e))quedan.push(p);
+      else toast("Un día pendiente ("+p.fecha+") no se pudo subir: "+traducir(e));
+    }
+  }
+  const ajenos=leerPendientes().filter(x=>x.user_id!==user.id);
+  guardarPendientes(ajenos.concat(quedan));
+  subiendoPend=false;
+  pintarPendientes();
+  if(subidos>0&&!silencioso)toast(subidos===1?"Se subió el día que estaba pendiente ✓":("Se subieron "+subidos+" días pendientes ✓"));
+  if(subidos>0)renderAll();
+}
 async function saveDay(){
   syncModal();
   const rescatados=flushPendingFood();
+  const p=armarDiaPayload();
+  const guardadoKey=p.fecha;
   try{
-    // --- actividad ---
-    const vacioAct=!mEstado&&!mExtraGym&&!mExtraDep;
-    if(vacioAct){
-      const r=await sb.from("actividad").delete().match({user_id:user.id,fecha:mKey});if(r.error)throw r.error;delete act[mKey];
-    }else{
-      const r=await sb.from("actividad").upsert({user_id:user.id,fecha:mKey,estado:mEstado,extra_gym:mExtraGym,extra_deporte:mExtraDep});if(r.error)throw r.error;
-      act[mKey]={estado:mEstado,extra_gym:mExtraGym,extra_deporte:mExtraDep};
-    }
-    // --- cargas ---
-    const filaCarga=r=>{
-      const base={user_id:user.id,fecha:mKey,ejercicio:r.ex};
-      const m=r.modo||"peso";
-      if(m==="tiempo"){base.series=null;base.reps=null;base.kg=null;
-        if(capTiempo){base.modo="tiempo";base.duracion_seg=durDe(r.min,r.seg);}
-        if(capDistancia){base.distancia_m=null;base.vueltas=null;}}
-      else if(m==="distancia"){base.series=null;base.reps=null;base.kg=null;
-        if(capTiempo){base.modo="distancia";base.duracion_seg=durDe(r.min,r.seg);}
-        if(capDistancia){base.distancia_m=distDe(r.dist,r.unidad);
-          base.vueltas=r.vueltas!==""?parseInt(r.vueltas):null;}}
-      else{base.series=r.series!==""?parseFloat(r.series):null;
-        base.reps=r.reps!==""?parseInt(r.reps):null;
-        base.kg=r.kg!==""?parseFloat(r.kg):null;
-        if(capTiempo){base.modo="peso";base.duracion_seg=null;}
-        if(capDistancia){base.distancia_m=null;base.vueltas=null;}}
-      return base;};
-    const conDato=r=>{
-      if(!r.ex)return false;
-      const m=r.modo||"peso";
-      if(m==="tiempo")return durDe(r.min,r.seg)!=null;
-      if(m==="distancia")return distDe(r.dist,r.unidad)!=null||durDe(r.min,r.seg)!=null;
-      return r.series!==""||r.reps!==""||r.kg!=="";};
-    const usables=loggerActivo()?logRows.filter(conDato):[];
-    let clean=usables.map(filaCarga);
-    const dl=await sb.from("cargas").delete().match({user_id:user.id,fecha:mKey});if(dl.error)throw dl.error;
-    if(clean.length){
-      let ins=await sb.from("cargas").insert(clean);
-      if(ins.error&&ins.error.code==="42703"){ // migración 013 sin correr
-        capDistancia=false;clean=usables.map(filaCarga);
-        ins=await sb.from("cargas").insert(clean);
-      }
-      if(ins.error&&ins.error.code==="42703"){ // migración 012 sin correr
-        capTiempo=false;clean=usables.map(filaCarga);
-        ins=await sb.from("cargas").insert(clean);
-      }
-      if(ins.error)throw ins.error;
-    }
-    if(clean.length)loads[mKey]=clean.map(c=>({ejercicio:c.ejercicio,kg:c.kg,reps:c.reps,series:c.series,
-      modo:c.modo||"peso",duracion_seg:c.duracion_seg!=null?c.duracion_seg:null,
-      distancia_m:c.distancia_m!=null?c.distancia_m:null,vueltas:c.vueltas!=null?c.vueltas:null}));else delete loads[mKey];
-    // --- bienestar ---
-    const wbEmpty=!mEnergia&&!mAnimo&&!mSueno&&mHoras===""&&!mTexto&&!mFumo;
-    if(wbEmpty){
-      const r=await sb.from("bienestar").delete().match({user_id:user.id,fecha:mKey});if(r.error)throw r.error;delete bien[mKey];
-    }else{
-      const fila={user_id:user.id,fecha:mKey,energia:mEnergia,animo:mAnimo,sueno:mSueno,horas_dormidas:mHoras!==""?parseFloat(mHoras):null,sueno_texto:mTexto||null,fumo:mFumo,fumo_tipo:mFumo?(mFumoTipo||"Tabaco"):null};
-      const r=await sb.from("bienestar").upsert(fila);if(r.error)throw r.error;
-      bien[mKey]=fila;
-    }
-    // --- ciclo (período) ---
-    if(perfil.registra_periodo){
-      if(!mPeriodo){
-        const r=await sb.from("ciclo").delete().match({user_id:user.id,fecha:mKey});if(r.error&&r.error.code!=="42P01")throw r.error;delete ciclo[mKey];
-      }else{
-        const fila={user_id:user.id,fecha:mKey,flujo:mFlujoTipo||"Leve"};
-        const r=await sb.from("ciclo").upsert(fila);if(r.error&&r.error.code!=="42P01")throw r.error;
-        ciclo[mKey]=fila;
-      }
-    }
-    // --- alimentación (cabecera) ---
-    const tm=mTotalManual!==""?parseInt(mTotalManual):null;
-    const aguaVal=(mAgua&&mAgua>0)?mAgua:null;
-    if(tm==null&&!mAlcohol&&aguaVal==null){
-      const r=await sb.from("alimentacion_dia").delete().match({user_id:user.id,fecha:mKey});if(r.error)throw r.error;delete alim[mKey];
-    }else{
-      const fila={user_id:user.id,fecha:mKey,total_manual:tm,alcohol:mAlcohol,alcohol_tipo:mAlcohol?(mAlcTipo||null):null,agua_ml:aguaVal};
-      const r=await sb.from("alimentacion_dia").upsert(fila);if(r.error)throw r.error;
-      alim[mKey]=fila;
-    }
-    // --- comidas (ítems) ---
-    const items=[];MOMENTS.forEach(m=>mFood[m].forEach(it=>items.push({user_id:user.id,fecha:mKey,momento:m,descripcion:it.desc,kcal:it.kcal})));
-    const dc=await sb.from("comidas").delete().match({user_id:user.id,fecha:mKey});if(dc.error)throw dc.error;
-    if(items.length){const ic=await sb.from("comidas").insert(items);if(ic.error)throw ic.error;}
-    if(items.length)comi[mKey]=items.map(i=>({momento:i.momento,descripcion:i.descripcion,kcal:i.kcal}));else delete comi[mKey];
-
-    const guardadoKey=mKey;
+    await escribirDia(p);
+    aplicarDiaEnMemoria(p);
     const records=recordsDeFecha(guardadoKey);
     renderAll();closeSheet();
     destellarDia(guardadoKey);
     if(records.length)setTimeout(()=>avisarRecords(records),900);
     toast(rescatados>0?("Día guardado ✓ (sumé "+rescatados+(rescatados===1?" alimento":" alimentos")+" que quedaban escritos)"):"Día guardado ✓");
-  }catch(e){toast("No se guardó: "+traducir(e));}
+    pintarPendientes();
+    subirPendientes(true);
+  }catch(e){
+    if(esFalloDeRed(e)){
+      // el día no se pierde: queda en este dispositivo y se sube al volver la señal
+      aplicarDiaEnMemoria(p);
+      encolarDia(p);
+      renderAll();closeSheet();
+      destellarDia(guardadoKey);
+      toast("Sin conexión: el día quedó en este dispositivo y se sube solo ⏳");
+    }else{
+      toast("No se guardó: "+traducir(e));
+    }
+  }
 }
 
 
@@ -4497,6 +4608,11 @@ function showSub(which){
 }
 function init(){
   const now=new Date();viewY=now.getFullYear();viewM=now.getMonth();
+  // la cola de días sin subir se vacía sola cuando vuelve la señal
+  window.addEventListener("online",()=>{pintarPendientes();subirPendientes(false);});
+  window.addEventListener("offline",()=>pintarPendientes());
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible")subirPendientes(false);});
   // Si el sistema cambia de claro a oscuro, los SVG ya dibujados quedan con los
   // colores viejos: se limpia el cache de tokens y se redibuja.
   try{
