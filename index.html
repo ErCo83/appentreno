@@ -71,24 +71,30 @@
   .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
   .dow span{text-align:center;font-family:"Sometype Mono",monospace;font-size:var(--fs-2);color:var(--ink-faint);text-transform:uppercase}
   .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-  .cell{aspect-ratio:1/1.12;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);padding:5px 3px 3px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;overflow:hidden;transition:transform .1s}
+  /* Con objetivo calórico, una octava columna angosta lleva el balance de la semana */
+  .dow.conbal,.grid.conbal{grid-template-columns:repeat(7,1fr) 30px;gap:4px}
+  .wk{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:9px;background:var(--surface-2);font-family:"Sometype Mono",monospace;font-size:var(--fs-1);font-weight:600;line-height:1;color:var(--ink-faint);cursor:pointer;letter-spacing:-.03em}
+  .wk b{font-size:var(--fs-2);font-weight:800}
+  .cell{min-height:3.6rem;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);padding:4px 2px 4px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;overflow:hidden;transition:transform .1s}
   .cell:active{transform:scale(.95)}
   .cell.empty{border:none;background:transparent;cursor:default}
   .cell .num{font-family:"Sometype Mono",monospace;font-size:var(--fs-4);color:var(--ink-soft)}
   .cell .ic{font-size:var(--fs-7);margin-top:2px;line-height:1}
   .cell .ic.dbl{font-size:var(--fs-2);letter-spacing:-1px}
-  .cell .extra{position:absolute;top:3px;left:4px;font-size:var(--fs-2);color:var(--blue);font-weight:800;line-height:1}
+  .cell .top{display:flex;align-items:center;justify-content:center;gap:1px;line-height:1.25}
+  .cell .extra{font-size:var(--fs-1);color:var(--blue);font-weight:800;line-height:1}
   .cell.descanso{background:var(--rest);opacity:.9}
   .cell.gym{border-top:2.5px solid var(--accent)}.cell.deporte{border-top:2.5px solid var(--pitch)}
   .cell.today{box-shadow:0 0 0 2px var(--accent)}.cell.fut{opacity:.42}
   .cell.done .num{color:var(--green);font-weight:700}.cell.miss .num{color:var(--red)}
-  .cell .inds{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:2px;line-height:1}
-  .cell .inds .st{width:6px;height:6px;border-radius:50%}
-  .cell .inds .st.done{background:var(--green)}.cell .inds .st.miss{background:var(--red)}
-  .cell .inds .dt{width:5px;height:5px;border-radius:50%;flex:none;padding:0;margin:0;border:none}
-  /* el ánimo es un valor, no una categoría: va en escala y con anillo para distinguirse */
-  .cell .inds .dt.dt-animo{box-shadow:0 0 0 1.5px var(--surface-2)}
-  .cell.done .inds .dt.dt-animo,.cell.miss .inds .dt.dt-animo{box-shadow:0 0 0 1.5px rgba(255,255,255,.8)}
+  /* Registros del día: íconos en una grilla de hasta 3 por fila, anclada abajo.
+     Los puntos de color no se recordaban; el ícono se reconoce sin leyenda. */
+  .cell .inds{margin-top:auto;padding-top:2px;display:grid;grid-template-columns:repeat(3,auto);justify-content:center;gap:1px 0;line-height:1}
+  .cell .inds .ri{font-size:.6rem;line-height:1;width:1.05em;text-align:center}
+  /* Balance calórico del día: flecha arriba/abajo del objetivo, verde si juega a favor */
+  .cell .bal{font-size:.5rem;font-weight:800;line-height:1}
+  .bal.ok,.wk.ok{color:var(--green)}.bal.no,.wk.no{color:var(--red)}
+  .cell .bal.hoy{opacity:.5}
   .legend{margin-top:14px;font-size:var(--fs-4);color:var(--ink-soft)}
   .legrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
   .legrow:first-child{border-top:none}
@@ -98,19 +104,7 @@
   .lgbox.done{background:var(--ok-bg);border-color:var(--ok-line)}
   .lgbox.miss{background:var(--bad-bg);border-color:var(--bad-line)}
   .lgbox.rest{background:var(--rest)}
-  /* Colores compartidos por los puntos de la celda y los de la leyenda.
-     Van prefijados con dt- a propósito: `.agua`, por ejemplo, ya existe como
-     el bloque de hidratación del día y le metía su padding al punto. */
-  .dt-comida{background:var(--accent)}
-  .dt-agua{background:var(--blue)}
-  .dt-alcohol{background:var(--dot-alcohol)}
-  .dt-diario{background:var(--dot-diario)}
-  .dt-periodo{background:var(--dot-periodo)}
-  .dt-a1{background:var(--dot-a1)}.dt-a2{background:var(--dot-a2)}
-  .dt-a3{background:var(--dot-a3)}.dt-a4{background:var(--dot-a4)}
-  .dt-a5{background:var(--dot-a5)}
-  .lgdot{width:9px;height:9px;border-radius:50%;flex:none;padding:0;margin:0;border:none}
-  .lgdot.dt-animo{background:linear-gradient(135deg,var(--dot-a1),var(--dot-a3),var(--dot-a5))}
+  .legbal{font-weight:800}
   .legnote{font-size:var(--fs-3);color:var(--ink-faint);padding:6px 0 0;line-height:1.4}
   .dotg{width:8px;height:8px;border-radius:50%;background:var(--green)}.dotr{width:8px;height:8px;border-radius:50%;background:var(--red)}
   .swg{width:10px;height:10px;border-radius:3px;border-top:2.5px solid var(--accent);background:var(--surface-2)}
@@ -600,7 +594,6 @@
       --dot-a1:#e2705a;--dot-a2:#e9a074;--dot-a3:#e5c064;--dot-a4:#8fc47c;--dot-a5:#4fb87c;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
   }
-  :root[data-theme="dark"] .cell .inds .dt.dt-animo{box-shadow:0 0 0 1.5px var(--surface-2)}
   :root[data-theme="dark"] img,:root[data-theme="dark"] .chart{opacity:.94}
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -621,8 +614,6 @@
       --dot-a1:#e2705a;--dot-a2:#e9a074;--dot-a3:#e5c064;--dot-a4:#8fc47c;--dot-a5:#4fb87c;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
     }
-    /* el anillo del punto de animo toma el color de la celda, ahora oscura */
-    :root:not([data-theme="light"]) .cell .inds .dt.dt-animo{box-shadow:0 0 0 1.5px var(--surface-2)}
     :root:not([data-theme="light"]) img,:root:not([data-theme="light"]) .chart{opacity:.94}
   }
 </style>
@@ -691,7 +682,7 @@
     </div>
     <div class="card">
       <div class="calhead"><button id="prevM">‹</button><h2 id="calTitle">—</h2><button id="nextM">›</button></div>
-      <div class="dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="dow" id="calDow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span><span id="calDowSem" title="Balance calórico de la semana">Sem</span></div>
       <div class="grid" id="calGrid"></div>
       <div class="legend" id="calLegend"></div>
       <div class="quickrow"><button class="rquickbtn" id="btnQuickAgua">💧 Cargar agua</button><button class="rquickbtn" id="btnQuickRec">🕰️ Cargar un recuerdo</button></div>
@@ -1274,13 +1265,19 @@ function renderLegend(){
   h+='<div class="legrow"><span class="legcap">Plan</span>';
   h+='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="lgbox rest"></i> Libre</span>';
   h+='</div>';
-  // Indicadores (puntos de color, en el mismo orden en que aparecen en la celda)
-  let mini='<span><i class="lgdot dt-animo"></i> Ánimo</span><span><i class="lgdot dt-comida"></i> Comida</span><span><i class="lgdot dt-agua"></i> Agua</span>';
-  if(permiteAlcohol())mini+='<span><i class="lgdot dt-alcohol"></i> Alcohol</span>';
-  if(perfil.registra_diario)mini+='<span><i class="lgdot dt-diario"></i> Nota</span>';
-  if(perfil.registra_periodo)mini+='<span><i class="lgdot dt-periodo"></i> Período</span>';
+  // Registros (íconos, en el mismo orden en que aparecen en la celda)
+  let mini='<span>🙂 Ánimo</span><span>🍴 Comida</span><span>💧 Agua</span>';
+  if(permiteAlcohol())mini+='<span>🍷 Alcohol</span>';
+  if(perfil.registra_diario)mini+='<span>📝 Nota</span>';
+  if(perfil.registra_periodo)mini+='<span>🩸 Período</span>';
   h+='<div class="legrow"><span class="legcap">Registros</span>'+mini+'</div>';
-  h+='<div class="legnote">El punto de ánimo va del rojo al verde según cómo te sentiste.</div>';
+  if(!conocerme){
+    h+='<div class="legrow"><span class="legcap">Calorías</span>';
+    h+='<span><b class="legbal">▲</b> Arriba del objetivo</span><span><b class="legbal">▼</b> Abajo</span>';
+    h+='<span><b class="bal ok legbal">●</b> A favor</span><span><b class="bal no legbal">●</b> En contra</span>';
+    h+='</div>';
+    h+='<div class="legnote">La flecha de arriba a la derecha es el balance del día. La columna de la derecha suma la semana: tocala para ver el detalle.</div>';
+  }
   el("calLegend").innerHTML=h;
 }
 function renderWeekbar(){
@@ -1302,13 +1299,47 @@ function renderWeekbar(){
 function renderCalendar(){
   el("calTitle").textContent=MONTHS[viewM]+" "+viewY;
   const grid=el("calGrid");grid.innerHTML="";
+  // Con objetivo "conocerme" no hay balance que juzgar: ni flechas ni columna semanal
+  const conBal=perfil.objetivo!=="conocerme";
+  grid.classList.toggle("conbal",conBal);el("calDow").classList.toggle("conbal",conBal);
+  el("calDowSem").hidden=!conBal;
   const first=new Date(viewY,viewM,1),lead=weekdayMon(first),days=new Date(viewY,viewM+1,0).getDate();
+  const dias=[];
   // días del mes anterior que completan la primera semana
-  for(let i=lead;i>0;i--){const d=new Date(viewY,viewM,1-i);grid.appendChild(makeCell(d,true));}
-  for(let dn=1;dn<=days;dn++){const d=new Date(viewY,viewM,dn);grid.appendChild(makeCell(d,false));}
+  for(let i=lead;i>0;i--)dias.push({d:new Date(viewY,viewM,1-i),otro:true});
+  for(let dn=1;dn<=days;dn++)dias.push({d:new Date(viewY,viewM,dn),otro:false});
   // días del mes siguiente que completan la última semana
-  const usados=lead+days,faltan=(7-(usados%7))%7;
-  for(let i=1;i<=faltan;i++){const d=new Date(viewY,viewM+1,i);grid.appendChild(makeCell(d,true));}
+  const faltan=(7-(dias.length%7))%7;
+  for(let i=1;i<=faltan;i++)dias.push({d:new Date(viewY,viewM+1,i),otro:true});
+  dias.forEach((x,i)=>{
+    grid.appendChild(makeCell(x.d,x.otro));
+    if(conBal&&i%7===6)grid.appendChild(makeWeekCell(dias.slice(i-6,i+1).map(y=>y.d)));
+  });
+}
+/* Balance calórico de uno o varios días frente al objetivo. null si no hay
+   comida registrada en ninguno, o si el objetivo es solo conocerse. */
+function balDias(keys){
+  if(perfil.objetivo==="conocerme")return null;
+  const target=calorieTarget();let suma=0,dias=0;
+  keys.forEach(k=>{const c=consumedFor(k);if(c==null)return;suma+=c-target;dias++;});
+  if(!dias)return null;
+  suma=Math.round(suma);
+  const prom=Math.round(suma/dias),info=balanceInfo(target+prom,target);
+  // "mantener" dentro del margen no tiene dirección: está en equilibrio
+  const flecha=(perfil.objetivo==="mantener"&&info.ok)||suma===0?"≈":(suma>0?"▲":"▼");
+  return {suma:suma,dias:dias,prom:prom,target:target,ok:info.ok,flecha:flecha};
+}
+function makeWeekCell(ds){
+  const w=document.createElement("div");w.className="wk";
+  const bd=balDias(ds.map(ymd));
+  if(!bd){w.title="Sin comidas registradas esta semana";return w;}
+  w.className="wk "+(bd.ok?"ok":"no");
+  const detalle="Semana del "+ds[0].getDate()+"/"+(ds[0].getMonth()+1)+": "+fmtBal(bd.suma)+" kcal frente al objetivo · "+
+    bd.dias+(bd.dias===1?" día":" días")+" · "+fmtBal(bd.prom)+"/día";
+  w.title=detalle;w.setAttribute("role","button");w.setAttribute("aria-label",detalle);
+  w.innerHTML='<b>'+bd.flecha+'</b>'+fmtBal(bd.suma);
+  w.onclick=()=>toast(detalle);
+  return w;
 }
 function makeCell(d,otroMes){
     const k=ymd(d);const p=planFor(d);
@@ -1325,21 +1356,26 @@ function makeCell(d,otroMes){
     else if(hizoGym)center="🏋️";
     else if(hizoDep)center=(p.tipo==="deporte"?iconFor(p):"🏃");
     else center=(p.tipo!=="descanso"?iconFor(p):"");
-    // Indicadores del día: puntos de color en vez de emoji. A 44px de ancho,
-    // seis emoji de 8,5px son ilegibles; el color + la leyenda se leen de un vistazo.
+    // Registros del día como íconos, hasta 3 por fila. Los puntos de color
+    // obligaban a memorizar la leyenda; el ícono se reconoce solo.
     let ind="";
-    const punto=(cls,tit)=>'<span class="dt '+cls+'" title="'+escA(tit)+'"></span>';
+    const icono=(ic,tit)=>'<span class="ri" title="'+escA(tit)+'">'+ic+'</span>';
     const b=bien[k];
-    if(b&&b.animo)ind+=punto("dt-animo dt-a"+b.animo,"Ánimo: "+EMOTXT[b.animo-1]);
-    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+=punto("dt-comida","Comida registrada");
-    if(aguaDe(k)>0)ind+=punto("dt-agua","Agua: "+aguaDe(k)+" ml");
-    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+=punto("dt-alcohol","Alcohol");
-    if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+=punto("dt-diario","Nota en el diario");
-    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+=punto("dt-periodo","Período: "+ciclo[k].flujo);
+    if(b&&b.animo)ind+=icono(EMO.animo[b.animo-1],"Ánimo: "+EMOTXT[b.animo-1]);
+    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+=icono("🍴","Comida registrada");
+    if(aguaDe(k)>0)ind+=icono("💧","Agua: "+aguaDe(k)+" ml");
+    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+=icono("🍷","Alcohol");
+    if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+=icono("📝","Nota en el diario");
+    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+=icono("🩸","Período: "+ciclo[k].flujo);
     const inds=ind?'<div class="inds">'+ind+'</div>':"";
     const plus=hasExtra?'<span class="extra">＋</span>':"";
+    // Balance calórico del día; el de hoy va atenuado porque el día no terminó
+    const bd=balDias([k]);
+    const bal=bd?'<span class="bal '+(bd.ok?"ok":"no")+(isT?" hoy":"")+'" title="'+
+      escA(fmtBal(bd.suma)+" kcal frente a tu objetivo de "+bd.target+(isT?" (día en curso)":""))+'">'+bd.flecha+'</span>':"";
     const dbl=(hizoGym&&hizoDep);
-    c.innerHTML=plus+'<span class="num">'+d.getDate()+'</span><span class="ic'+(dbl?" dbl":"")+'">'+center+'</span>'+inds;
+    // "+", número y flecha en una sola fila: a 34px de ancho, sueltos se pisaban
+    c.innerHTML='<div class="top">'+plus+'<span class="num">'+d.getDate()+'</span>'+bal+'</div><span class="ic'+(dbl?" dbl":"")+'">'+center+'</span>'+inds;
     c.dataset.k=k;
     c.onclick=()=>openDay(k);
     return c;
@@ -1655,6 +1691,10 @@ function openDay(key){
   openSec={act:true,well:false,food:false,dia:false};
   sugCache={};sugAbierta=null;sugCargando=false;
   renderModal();el("ov").classList.add("show");
+  // La firma de apertura pasa por syncModal igual que la de cierre: los inputs
+  // devuelven texto ("7") donde la base trae numeros (7), y sin esto cualquier
+  // dia con horas, cargas o total manual avisaba cambios que nadie hizo.
+  syncModal();
   mFirmaInicial=firmaModal();
 }
 /* Al marcar Cumpli en un dia de deporte, el deporte planificado entra solo
