@@ -46,6 +46,7 @@
   .wb .m{display:block;font-size:var(--fs-8);margin-top:3px}
   .wb.done{background:rgba(98,211,154,.26);border-color:rgba(98,211,154,.5)}
   .wb.miss{background:rgba(239,155,133,.24);border-color:rgba(239,155,133,.5)}
+  .wb.recov{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
   .wb.today{box-shadow:0 0 0 2px var(--accent)}
   main{padding:18px 16px 26px;max-width:600px;margin:0 auto}
   .view{display:none;animation:fade .3s ease}.view.active{display:block}
@@ -104,6 +105,8 @@
   .lgbox.done{background:var(--ok-bg);border-color:var(--ok-line)}
   .lgbox.miss{background:var(--bad-bg);border-color:var(--bad-line)}
   .lgbox.rest{background:var(--rest)}
+  .lgbox.recov{background:var(--rest-2)}
+  .lgbox.nodata{background:repeating-linear-gradient(135deg,transparent,transparent 3px,var(--line) 3px,var(--line) 4px)}
   .legbal{font-weight:800}
   .legnote{font-size:var(--fs-3);color:var(--ink-faint);padding:6px 0 0;line-height:1.4}
   .dotg{width:8px;height:8px;border-radius:50%;background:var(--green)}.dotr{width:8px;height:8px;border-radius:50%;background:var(--red)}
@@ -273,6 +276,12 @@
   .dep{flex:none;display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface-2);font-size:var(--fs-5);cursor:pointer;white-space:nowrap}
   .dep i{font-style:normal;font-size:var(--fs-8);line-height:1}
   .dep.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  /* Actividades del día (ver renderActsHTML) */
+  .tagmini{font-family:"Sometype Mono",monospace;font-size:var(--fs-1);text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line-2);border-radius:999px;
+    padding:2px 6px;margin-left:5px;white-space:nowrap;font-weight:500}
+  .tagmini.rec{color:var(--ok-ink);border-color:var(--ok-line);background:var(--ok-bg)}
+  .actpick{border:1px dashed var(--line-2);border-radius:12px;padding:8px 10px;margin-top:8px}
   select{width:100%;font-family:"Hanken Grotesk",sans-serif;font-size:var(--fs-8);padding:12px 8px;border:1px solid var(--line-2);border-radius:11px;background:var(--surface);color:var(--ink);cursor:pointer}
   select:focus{outline:none;border-color:var(--accent)}
   .dsel{display:flex;gap:6px}
@@ -282,6 +291,13 @@
   .fhint{background:var(--warn-bg);border:1px solid var(--accent-soft);color:var(--bad-ink);border-radius:10px;padding:9px 11px;font-size:var(--fs-5);margin:4px 0 10px}
   .cell.done{background:var(--ok-bg)}
   .cell.miss{background:var(--bad-bg)}
+  /* Día de recuperación: ausencia justificada, ni verde ni rojo */
+  .cell.recov{background:var(--rest-2)}
+  .cell.recov .num{color:var(--ink-soft);font-weight:700}
+  /* Día planificado que quedó sin registrar: no es una falta, es un hueco.
+     Antes se veía igual que un día vacío y no había manera de distinguirlos. */
+  .cell.nodata{background:repeating-linear-gradient(135deg,transparent,transparent 4px,var(--line) 4px,var(--line) 5px)}
+  .cell.nodata .num{color:var(--ink-faint)}
   .cell.other{opacity:.3}
   .cell.other .num{color:var(--ink-faint)}
   .stripdays{display:flex;gap:3px;margin-top:3px}
@@ -422,6 +438,16 @@
   .repnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
   .repnav button{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;width:40px;height:40px;font-size:var(--fs-9);cursor:pointer;color:var(--ink)}
   .repnav .lbl{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+  /* Navegación entre versiones del plan semanal (ver planVers) */
+  .verbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+  .verbar button{background:var(--bg);border:1px solid var(--line-2);border-radius:10px;width:36px;height:36px;
+    font-size:var(--fs-8);cursor:pointer;color:var(--ink);flex:none}
+  .verbar button:disabled{opacity:.35;cursor:default}
+  .verbar .vl{text-align:center;line-height:1.25;min-width:0;flex:1}
+  .verbar .vl b{display:block;font-size:var(--fs-5)}
+  .verbar .vl span{display:block;font-family:"Sometype Mono",monospace;font-size:var(--fs-2);
+    text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
   .repsec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
   .repsec h3{font-size:var(--fs-8);font-weight:800;color:var(--pitch);margin-bottom:10px;display:flex;align-items:center;gap:7px}
   .repgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -697,12 +723,23 @@
       </div>
       <span class="tag">Tu semana</span><h2 style="margin:3px 0 10px">Plan de actividad</h2>
       <div class="note" id="planReco" style="margin-top:4px"></div>
+      <div class="verbar" id="planVerBar" style="display:none">
+        <button id="planVerPrev" aria-label="Versión anterior del plan">‹</button>
+        <div class="vl"><b id="planVerLbl">—</b><span id="planVerSub"></span></div>
+        <button id="planVerNext" aria-label="Versión siguiente del plan">›</button>
+      </div>
       <label class="fld" style="margin-top:14px">¿Qué semana estás organizando?</label>
       <div class="chips semrow" id="planSemanas"></div>
       <div class="note" id="planEstado" style="margin-top:10px"></div>
       <div id="planEditor"></div>
+      <div id="planVigencia" style="display:none;margin-top:14px">
+        <label class="fld">¿Desde cuándo rige este cambio?</label>
+        <input type="date" id="planDesde">
+        <div class="note" id="planDesdeHint" style="margin-top:8px"></div>
+      </div>
       <button class="act ghost" id="btnTpl" style="margin-top:14px">✨ Usar plan sugerido según mi objetivo</button>
       <button class="act" id="btnSavePlan" style="margin-top:10px">Guardar plan</button>
+      <button class="act ghost" id="btnCorregir" style="margin-top:10px;display:none">✏️ Corregir el plan vigente, sin crear una versión</button>
       <button class="act ghost" id="btnVolverBase" style="margin-top:10px;display:none">↺ Que esta semana vuelva al plan base</button>
     </div>
   </section>
@@ -784,6 +821,11 @@
     <div class="card" id="deportesCard" style="display:none">
       <span class="tag">Deportes</span><h2 style="margin:3px 0 8px" id="deportesTit">Del mes</h2>
       <div id="deportesList"></div>
+    </div>
+    <div class="card" id="recupCard" style="display:none">
+      <span class="tag">Recuperación</span><h2 style="margin:3px 0 8px" id="recupTit">Del mes</h2>
+      <div id="recupList"></div>
+      <div class="legnote">Kinesiología, fisioterapia y sesiones de recuperación. No cuentan como entrenamiento ni como falta.</div>
     </div>
     <div class="card" id="patronCard" style="display:none">
       <span class="tag">Patrones</span><h2 style="margin:3px 0 8px">Lo que dicen tus datos</h2>
@@ -1001,15 +1043,19 @@ const CONFIG = {
 /* ============================================================= */
 
 let sb=null,user=null,perfil=null;
-let plan={},act={},loads={},bien={},alim={},comi={},dia={},medidas=[],ciclo={};
+let act={},loads={},bien={},alim={},comi={},dia={},medidas=[],ciclo={},diaAct={};
+/* Versiones del plan semanal, ordenadas por fecha de vigencia (ver planFor):
+   [{desde:"2000-01-01", sem:{0:{dow:p},1:{dow:p}}}, {desde:"2026-09-20", sem:{…}}] */
+let planVers=[],planVerSel=null;
 let rutinas=[],rutinaEj={};  // rutinas[] = {id,nombre}; rutinaEj[rutina_id] = [{ejercicio,series,reps,kg,orden}]
 let historias=[];  // historias generadas por el narrador
 let recuerdos=[];  // «Mi historia»: recuerdos con fechas difusas
 let informes={};   // informes mensuales del agente, por período 'AAAA-MM'
 let viewY,viewM;
-/* Capacidades del backend (migración 012). Se detectan al cargar y se corrigen
-   solas si una escritura falla por columna inexistente (42703). */
-let capSemana=true,capTiempo=true,capDistancia=true;
+/* Capacidades del backend (migraciones 012 a 014). Se detectan al cargar y se
+   corrigen solas si una escritura falla por columna o tabla inexistente
+   (42703 / 42P01), para que la PWA se pueda publicar antes de correr el SQL. */
+let capSemana=true,capTiempo=true,capDistancia=true,capVigencia=true,capActividades=true;
 
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -1048,22 +1094,73 @@ const ERRORES=[[/invalid login credentials/i,"Email o contraseña incorrectos."]
 function traducir(e){const m=(e&&e.message)||String(e||"");for(const[re,t]of ERRORES)if(re.test(m))return t;return "No se pudo completar: "+m;}
 
 /* ---------- PERFIL / PLAN ---------- */
-/* --- Plan semanal: variantes por semana del mes ---
-   plan[0] = plan base; plan[1..5] = variante de esa semana del mes.
-   La semana del mes se cuenta por filas del calendario (lunes a domingo):
-   una eventual 6ª fila reusa la configuración de la semana 5. */
+/* --- Plan semanal: variantes por semana del mes, con historia ---
+   Dentro de una versión: sem[0] = plan base; sem[1..5] = variante de esa semana
+   del mes. La semana del mes se cuenta por filas del calendario (lunes a
+   domingo): una eventual 6ª fila reusa la configuración de la semana 5.
+
+   Entre versiones: cada una rige desde su fecha `desde` hasta que empieza la
+   siguiente. Antes había una sola, así que cambiar el plan reescribía la
+   historia — un mes cerrado cambiaba de cumplimiento y de racha. Cada versión es
+   un snapshot completo y no un diff: cuesta filas y ahorra toda la lógica de
+   composición. */
 const MAX_SEM=5;
+const DESDE_SIEMPRE="2000-01-01";
 function semanaDelMes(d){const first=new Date(d.getFullYear(),d.getMonth(),1);
   return Math.min(MAX_SEM,Math.floor((d.getDate()+weekdayMon(first)-1)/7)+1);}
-function planBase(dow){return (plan[0]&&plan[0][dow])||{tipo:"descanso",detalle:"",rutina_id:null};}
-function planSemana(sem,dow){return (sem>0&&plan[sem]&&plan[sem][dow])||null;}
-function tieneVariante(sem){if(!(sem>0)||!plan[sem])return false;for(let dw=0;dw<7;dw++)if(plan[sem][dw])return true;return false;}
-/* Acepta Date, "YYYY-MM-DD" o (legado) un número de día de semana → plan base */
-function planFor(ref){
-  if(typeof ref==="number")return planBase(ref);
-  const d=(typeof ref==="string")?parse(ref):ref;
-  return planSemana(semanaDelMes(d),d.getDay())||planBase(d.getDay());
+/* Versión vigente en una fecha. Una fecha anterior a la primera versión cae en
+   esa primera: sin esto, la historia previa al primer plan quedaría sin plan. */
+function versionEn(fecha){
+  if(!planVers.length)return null;
+  let v=planVers[0];
+  for(const x of planVers){if(x.desde<=fecha)v=x;else break;}
+  return v;
 }
+function semsDe(v){return (v&&v.sem)||{};}
+/* La versión que se está mirando o editando en la pestaña Plan */
+function versionSel(){
+  return planVers.find(v=>v.desde===planVerSel)||planVers[planVers.length-1]||null;
+}
+function versionVigente(){return versionEn(todayStr());}
+function baseEn(sems,dow){return (sems[0]&&sems[0][dow])||{tipo:"descanso",detalle:"",rutina_id:null};}
+function semanaEn(sems,sem,dow){return (sem>0&&sems[sem]&&sems[sem][dow])||null;}
+/* Estas tres miran la versión en edición: las usa el editor del plan */
+function planBase(dow){return baseEn(semsDe(versionSel()),dow);}
+function planSemana(sem,dow){return semanaEn(semsDe(versionSel()),sem,dow);}
+function tieneVariante(sem){const s=semsDe(versionSel());
+  if(!(sem>0)||!s[sem])return false;for(let dw=0;dw<7;dw++)if(s[sem][dw])return true;return false;}
+/* Acepta Date, "YYYY-MM-DD" o (legado) un número de día de semana → plan base.
+   Resuelve contra la versión vigente en esa fecha, que es lo que vuelve
+   inmutable la historia. Es el único acceso al plan desde el resto de la app. */
+function planFor(ref){
+  if(typeof ref==="number")return baseEn(semsDe(versionVigente()),ref);
+  const d=(typeof ref==="string")?parse(ref):ref;
+  const k=(typeof ref==="string")?ref:ymd(d);
+  const sems=semsDe(versionEn(k));
+  return semanaEn(sems,semanaDelMes(d),d.getDay())||baseEn(sems,d.getDay());
+}
+/* Agrupa las filas de plan_semanal en versiones. Sin la migración 014 corrida no
+   hay `vigente_desde` y todo cae en una única versión "desde siempre": la app
+   funciona como antes en vez de romperse. */
+function cargarPlanVers(filas){
+  const porFecha={};
+  filas.forEach(r=>{
+    const desde=(capVigencia&&r.vigente_desde)||DESDE_SIEMPRE;
+    const sem=r.semana||0;
+    if(!porFecha[desde])porFecha[desde]={desde:desde,sem:{}};
+    if(!porFecha[desde].sem[sem])porFecha[desde].sem[sem]={};
+    porFecha[desde].sem[sem][r.dia_semana]={tipo:r.tipo,detalle:r.detalle||"",rutina_id:r.rutina_id||null};
+  });
+  planVers=Object.values(porFecha).sort((a,b)=>a.desde<b.desde?-1:(a.desde>b.desde?1:0));
+  const vig=versionVigente();
+  planVerSel=vig?vig.desde:null;
+}
+function esVersionVigente(v){const g=versionVigente();return !!(v&&g&&v.desde===g.desde);}
+/* Una versión ya superada: se puede mirar, no editar. La vigente y las futuras sí
+   se editan — una futura recién programada tiene que poder corregirse. */
+function esVersionPasada(v){const g=versionVigente();return !!(v&&g&&v.desde<g.desde);}
+function fmtDesde(f){if(!f||f===DESDE_SIEMPRE)return "siempre";const d=parse(f);
+  return d.getDate()+" de "+MONTHS[d.getMonth()]+" de "+d.getFullYear();}
 /* --- Catálogo de deportes con su ícono --- */
 const DEPORTES=[["Fútbol","⚽"],["Running","🏃"],["Ciclismo","🚴"],["Natación","🏊"],
  ["Tenis","🎾"],["Pádel","🎾"],["Handball","🤾"],["Básquet","🏀"],["Vóley","🏐"],
@@ -1072,6 +1169,12 @@ const DEPORTES=[["Fútbol","⚽"],["Running","🏃"],["Ciclismo","🚴"],["Natac
  ["Patinaje","⛸️"],["Skate","🛹"],["Surf","🏄"],["Esquí","⛷️"],["Equitación","🏇"],
  ["Yoga","🧘"],["Pilates","🤸"],["Funcional","🤼"],["Baile","💃"],["Caminata","🚶"],
  ["Senderismo","🥾"],["Otro deporte","🏅"]];
+/* --- Catálogo de recuperación ---
+   Un día de kinesiología no es un día de entrenamiento, pero tampoco es una
+   falta: es una ausencia con justificación. Por eso es categoría propia y no un
+   deporte más (ver categoriaDe / estadoDia). */
+const RECUPERACION=[["Kinesiología","🩹"],["Fisioterapia","🩺"],["Masaje","💆"],
+ ["Elongación","🧘"],["Movilidad","🤸"],["Rehabilitación","🏥"],["Descanso indicado","🛌"]];
 function normTxt(t){return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();}
 function depDe(det){return String(det||"").split("·")[0].trim();}
 function notaDe(det){const p=String(det||"").split("·");return p.slice(1).join("·").trim();}
@@ -1081,11 +1184,56 @@ function buscarDeporte(nombre){const n=normTxt(nombre);if(!n)return null;
   d=DEPORTES.find(x=>n.includes(normTxt(x[0])));return d||null;}
 function iconDeporte(detalle){const d=buscarDeporte(depDe(detalle))||buscarDeporte(detalle);return d?d[1]:"🏃";}
 function iconFor(p){if(p.tipo==="gym")return "🏋️";if(p.tipo==="deporte")return iconDeporte(p.detalle);return "";}
-function achieved(k){const a=act[k];return !!(a&&(a.estado==="cumpli"||a.extra_gym||a.extra_deporte));}
+/* --- Actividades del día (migración 014) ---
+   Una fila por actividad efectivamente hecha, con su disciplina. Es lo que
+   permite registrar lo imprevisto (el tenis que no estaba en el plan) y la
+   recuperación, que antes no tenían dónde anotarse. */
+function buscarRecuperacion(nombre){const n=normTxt(nombre);if(!n)return null;
+  return RECUPERACION.find(x=>normTxt(x[0])===n)||null;}
+function iconActividad(a){
+  if(!a)return "🏅";
+  if(a.categoria==="gym")return "🏋️";
+  if(a.categoria==="recuperacion"){const r=buscarRecuperacion(a.disciplina);return r?r[1]:"🩹";}
+  const d=buscarDeporte(a.disciplina);return d?d[1]:"🏃";}
+function actsDe(k){return diaAct[k]||[];}
+/* Recuperación no suma a entrenamiento; el resto sí */
+function actsEntreno(k){return actsDe(k).filter(a=>a.categoria!=="recuperacion");}
+function actsRecup(k){return actsDe(k).filter(a=>a.categoria==="recuperacion");}
+function achieved(k){const a=act[k];
+  if(a&&(a.estado==="cumpli"||a.extra_gym||a.extra_deporte))return true;
+  return actsEntreno(k).length>0;}
+/* ¿El día fue sólo recuperación? Es una ausencia justificada: ni cumplido ni falta. */
+function soloRecuperacion(k){
+  if(achieved(k))return false;
+  return actsRecup(k).length>0;}
+/* ¿Se registró algo de actividad ese día? Distingue «no fui» de «no anoté».
+   Es la pieza que saca los días sin carga de las métricas. */
+function hayRegistroAct(k){
+  const a=act[k];
+  return !!(a&&(a.estado||a.extra_gym||a.extra_deporte))||actsDe(k).length>0;}
+/* Único punto de verdad del estado de un día. Antes esta lógica estaba repetida
+   —y desalineada— en mesStats, rachaVista, la adherencia del mes, renderCalendar
+   y serieDelMes.
+     libre        → el plan no pedía nada
+     cumplido     → entrenó (plan cumplido o actividad de entrenamiento)
+     recuperacion → no entrenó, pero hizo kinesiología / recuperación
+     falta        → dijo explícitamente que no fue
+     sin_carga    → tenía plan y no quedó registro: no se sabe, no se mide
+     futuro       → todavía no pasó */
+function estadoDia(k){
+  if(k>todayStr())return "futuro";
+  if(achieved(k))return "cumplido";
+  if(soloRecuperacion(k))return "recuperacion";
+  if(planFor(k).tipo==="descanso")return "libre";
+  if(act[k]&&act[k].estado==="no_fui")return "falta";
+  return hayRegistroAct(k)?"falta":"sin_carga";
+}
 /* Etiqueta del deporte: la del día si aplica, si no la primera que aparezca en el plan */
 function sportLabel(ref){
   if(ref){const p=planFor(ref);if(p.tipo==="deporte"&&p.detalle)return depDe(p.detalle)||"Deporte";}
-  for(let sem=0;sem<=MAX_SEM;sem++){const wk=plan[sem];if(!wk)continue;
+  // si el día no lo dice, la primera que aparezca en la versión vigente en esa fecha
+  const sems=semsDe(ref?versionEn(typeof ref==="string"?ref:ymd(ref)):versionVigente());
+  for(let sem=0;sem<=MAX_SEM;sem++){const wk=sems[sem];if(!wk)continue;
     for(let i=0;i<7;i++){const p=wk[i];if(p&&p.tipo==="deporte"&&p.detalle)return depDe(p.detalle)||"Deporte";}}
   return "Deporte";}
 /* --- Ejercicios por tiempo (sin peso): tipo de actividad + duración --- */
@@ -1190,7 +1338,7 @@ async function onSession(session){
   if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
-    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic]=await Promise.all([
+    const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic,rda]=await Promise.all([
       sb.from("perfiles").select("*").maybeSingle(),
       sb.from("plan_semanal").select("*"),
       fetchAll("actividad"),
@@ -1207,15 +1355,20 @@ async function onSession(session){
       fetchAll("recuerdos",{orden:"orden_fecha"}),
       // sin `datos`: el jsonb del informe se trae al abrir el reporte de ese mes
       fetchAll("informes",{campos:"periodo,actualizado,creado",orden:"periodo",asc:false}),
-      fetchAll("ciclo")
+      fetchAll("ciclo"),
+      fetchAll("dia_actividades",{orden:"orden"})
     ]);
-    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic].find(r=>r.error&&r.error.code!=="42P01");
+    const err=[rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic,rda].find(r=>r.error&&r.error.code!=="42P01");
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
-    plan={};(rpl.data||[]).forEach(r=>{const sem=r.semana||0;if(!plan[sem])plan[sem]={};
-      plan[sem][r.dia_semana]={tipo:r.tipo,detalle:r.detalle||"",rutina_id:r.rutina_id||null};});
-    if((rpl.data||[]).length)capSemana=("semana" in rpl.data[0]);
+    if((rpl.data||[]).length){capSemana=("semana" in rpl.data[0]);capVigencia=("vigente_desde" in rpl.data[0]);}
+    cargarPlanVers(rpl.data||[]);
+    capActividades=!(rda&&rda.error&&rda.error.code==="42P01");
+    diaAct={};((rda&&rda.data)||[]).forEach(r=>{if(!diaAct[r.fecha])diaAct[r.fecha]=[];
+      diaAct[r.fecha].push({categoria:r.categoria,disciplina:r.disciplina,
+        planificada:!!r.planificada,duracion_seg:r.duracion_seg!=null?r.duracion_seg:null,
+        nota:r.nota||"",orden:r.orden!=null?r.orden:0});});
     rutinas=(rru.data||[]).map(r=>({id:r.id,nombre:r.nombre}));
     historias=(rhi&&rhi.data)?rhi.data:[];
     recuerdos=(rrec&&rrec.data)?rrec.data:[];
@@ -1258,7 +1411,9 @@ function renderLegend(){
   // Estado del día (fondo)
   if(!conocerme){
     h+='<div class="legrow"><span class="legcap">Día</span>';
-    h+='<span><i class="lgbox done"></i> Cumplí</span><span><i class="lgbox miss"></i> No fui</span><span><b class="plusmark">＋</b> Actividad extra</span>';
+    h+='<span><i class="lgbox done"></i> Cumplí</span><span><i class="lgbox miss"></i> No fui</span>'+
+       '<span><i class="lgbox recov"></i> Recuperación</span><span><i class="lgbox nodata"></i> Sin registrar</span>'+
+       '<span><b class="plusmark">＋</b> Actividad extra</span>';
     h+='</div>';
   }
   // Tipo planificado (borde superior)
@@ -1285,11 +1440,13 @@ function renderWeekbar(){
   const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-weekdayMon(now));
   const names=["L","M","M","J","V","S","D"];
   for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=ymd(d);const p=planFor(d);
-    const a=act[k];const cls=achieved(k)?" done":(a&&a.estado==="no_fui"?" miss":"");
+    const es=estadoDia(k);
+    const cls=es==="cumplido"?" done":(es==="falta"?" miss":(es==="recuperacion"?" recov":""));
     const e=document.createElement("button");e.type="button";
     e.className="wb"+cls+(k===todayStr()?" today":"");
     const plan=p.tipo==="gym"?"gimnasio":(p.tipo==="deporte"?(depDe(p.detalle)||"deporte"):"día libre");
-    const estado=achieved(k)?", cumplido":((a&&a.estado==="no_fui")?", no fui":"");
+    const estado=es==="cumplido"?", cumplido":(es==="falta"?", no fui":
+      (es==="recuperacion"?", recuperación":(es==="sin_carga"?", sin registrar":"")));
     e.setAttribute("aria-label",DIAS[d.getDay()]+" "+d.getDate()+" de "+MONTHS[d.getMonth()]+": "+plan+estado);
     e.title=DIAS[d.getDay()]+" "+d.getDate()+" · "+plan;
     e.innerHTML='<span class="d">'+names[i]+'</span><span class="m">'+(iconFor(p)||"·")+'</span>';
@@ -1343,18 +1500,25 @@ function makeWeekCell(ds){
 }
 function makeCell(d,otroMes){
     const k=ymd(d);const p=planFor(d);
-    const a=act[k]||{};const ach=achieved(k);const miss=a.estado==="no_fui"&&!ach;
-    const hasExtra=(a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte");
+    const a=act[k]||{};const es=estadoDia(k);
+    const ach=(es==="cumplido"),miss=(es==="falta"),recov=(es==="recuperacion");
+    const sinCarga=(es==="sin_carga");
+    const hasExtra=(a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte")||
+      actsDe(k).some(x=>!x.planificada);
     const isFut=k>todayStr(),isT=k===todayStr();
     const c=document.createElement("div");
-    c.className="cell "+p.tipo+(ach?" done":miss?" miss":"")+(isT?" today":"")+(isFut?" fut":"")+(otroMes?" other":"");
+    c.className="cell "+p.tipo+(ach?" done":miss?" miss":recov?" recov":sinCarga?" nodata":"")+
+      (isT?" today":"")+(isFut?" fut":"")+(otroMes?" other":"");
     // ícono: refleja lo que realmente hiciste; si no hiciste nada, lo planificado
     let center;
-    const hizoGym=(p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym;
-    const hizoDep=(p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte;
-    if(hizoGym&&hizoDep)center="🏋️⚽";
+    const hizoGym=(p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym||actsDe(k).some(x=>x.categoria==="gym");
+    const hizoDep=(p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte||actsDe(k).some(x=>x.categoria==="deporte");
+    const soloRec=recov&&actsRecup(k).length;
+    if(soloRec)center=iconActividad(actsRecup(k)[0]);
+    else if(hizoGym&&hizoDep)center="🏋️⚽";
     else if(hizoGym)center="🏋️";
-    else if(hizoDep)center=(p.tipo==="deporte"?iconFor(p):"🏃");
+    else if(hizoDep){const dp=actsDe(k).find(x=>x.categoria==="deporte");
+      center=(p.tipo==="deporte"&&(!dp||dp.planificada))?iconFor(p):(dp?iconActividad(dp):"🏃");}
     else center=(p.tipo!=="descanso"?iconFor(p):"");
     // Registros del día como íconos, hasta 3 por fila. Los puntos de color
     // obligaban a memorizar la leyenda; el ícono se reconoce solo.
@@ -1398,8 +1562,12 @@ function rachaVista(){
   if(esActual){
     let n=0,d=new Date();
     for(let i=0;i<400;i++){const k=ymd(d);
-      if(achieved(k)){n++;d.setDate(d.getDate()-1);continue;}
-      if(planFor(d).tipo==="descanso"){d.setDate(d.getDate()-1);continue;}
+      const e=estadoDia(k);
+      if(e==="cumplido"){n++;d.setDate(d.getDate()-1);continue;}
+      // ni un día libre, ni uno de recuperación, ni uno sin registrar cortan la
+      // racha: los dos primeros porque no había que entrenar, el tercero porque
+      // no se sabe qué pasó — penalizar el olvido de anotar mide otra cosa.
+      if(e==="libre"||e==="recuperacion"||e==="sin_carga"){d.setDate(d.getDate()-1);continue;}
       if(k===todayStr()){d.setDate(d.getDate()-1);continue;}
       break;}
     return {n:n,actual:true};
@@ -1407,21 +1575,29 @@ function rachaVista(){
   const nd=new Date(viewY,viewM+1,0).getDate();let mejor=0,cur=0;
   for(let dn=1;dn<=nd;dn++){const d=new Date(viewY,viewM,dn),k=ymd(d);
     if(k>todayStr())break;
-    if(achieved(k)){cur++;if(cur>mejor)mejor=cur;continue;}
-    if(planFor(d).tipo==="descanso")continue;
+    const e=estadoDia(k);
+    if(e==="cumplido"){cur++;if(cur>mejor)mejor=cur;continue;}
+    if(e==="libre"||e==="recuperacion"||e==="sin_carga")continue;
     cur=0;}
   return {n:mejor,actual:false};
 }
-/* Días con actividad planificada en el mes visible, hasta hoy (para la adherencia) */
-function planificadosMes(){
-  const nd=new Date(viewY,viewM+1,0).getDate(),hoy=todayStr();let n=0;
-  for(let dn=1;dn<=nd;dn++){const d=new Date(viewY,viewM,dn);
-    if(ymd(d)>hoy)break;
-    if(planFor(d).tipo!=="descanso")n++;}
-  return n;
+/* Adherencia del mes visible, hasta hoy. `previstos` son los días con plan;
+   `conRegistro` los que además dejaron rastro. La adherencia se mide contra el
+   segundo: un día sin anotar no dice que faltaste, dice que no se sabe. */
+function adherenciaMes(){
+  const nd=new Date(viewY,viewM+1,0).getDate(),hoy=todayStr();
+  let previstos=0,conRegistro=0,sinCarga=0;
+  for(let dn=1;dn<=nd;dn++){const d=new Date(viewY,viewM,dn),k=ymd(d);
+    if(k>hoy)break;
+    if(planFor(d).tipo==="descanso")continue;
+    previstos++;
+    if(estadoDia(k)==="sin_carga")sinCarga++;else conRegistro++;}
+  return {previstos:previstos,conRegistro:conRegistro,sinCarga:sinCarga};
 }
+/* Un porcentaje sobre 2 días registrados de 30 es más engañoso que no mostrarlo.
+   Se exige que lo registrado no sea minoría, y al menos 3 días. */
+function adherenciaConfiable(a){return a.conRegistro>=3&&a.conRegistro>=a.sinCarga;}
 function renderStats(){
-  const mp=viewY+"-"+String(viewM+1).padStart(2,"0");
   const nombreMes=MONTHS[viewM]+" "+viewY;
   // 1) Balance calórico acumulado del mes visible
   const b=balanceMes(),eb=el("stBal");
@@ -1440,23 +1616,35 @@ function renderStats(){
   const r=rachaVista();
   el("stStreak").textContent=r.n;
   el("stStreakSub").textContent=r.actual?"hasta hoy":"mejor del mes";
-  el("statStreak").title=r.actual?"Días seguidos cumpliendo, hasta hoy. Los días libres del plan no cortan la racha."
-    :"Mejor racha de "+nombreMes+". Los días libres del plan no cortan la racha.";
+  const colaRacha=" Los días libres, los de recuperación y los que quedaron sin registrar no la cortan.";
+  el("statStreak").title=(r.actual?"Días seguidos cumpliendo, hasta hoy.":"Mejor racha de "+nombreMes+".")+colaRacha;
   // 3) Días activos del mes visible, con la adherencia al plan como contexto
-  let md=0;Object.keys(act).forEach(k=>{if(k.startsWith(mp)&&achieved(k))md++;});
+  const nd=new Date(viewY,viewM+1,0).getDate();
+  let md=0;
+  for(let dn=1;dn<=nd;dn++){const k=ymd(new Date(viewY,viewM,dn));
+    if(k>todayStr())break;
+    if(achieved(k))md++;}
   el("stMonth").textContent=md;
-  const prev=planificadosMes();
+  const ad=adherenciaMes();
   const em=el("stMonth");
-  if(perfil.objetivo==="conocerme"||prev===0){
-    el("stMonthSub").textContent=prev===0?"sin plan":"";
+  if(perfil.objetivo==="conocerme"||ad.previstos===0){
+    el("stMonthSub").textContent=ad.previstos===0?"sin plan":"";
     em.className="";
     el("statMonth").title="Días con gimnasio, deporte o actividad extra en "+nombreMes+".";
+  }else if(!adherenciaConfiable(ad)){
+    // Sin días suficientes registrados, un porcentaje es ruido con cara de dato
+    el("stMonthSub").textContent=ad.sinCarga+(ad.sinCarga===1?" día":" días")+" sin registrar";
+    em.className="";
+    el("statMonth").title="En "+nombreMes+" quedaron "+ad.sinCarga+" de "+ad.previstos+
+      " días planificados sin registrar, así que todavía no se puede calcular una adherencia que signifique algo.";
   }else{
-    const pct=Math.round((Math.min(md,prev)/prev)*100);
-    el("stMonthSub").textContent="de "+prev+" previstos · "+pct+"%";
+    const pct=Math.round((Math.min(md,ad.conRegistro)/ad.conRegistro)*100);
+    el("stMonthSub").textContent="de "+ad.conRegistro+" registrados · "+pct+"%";
     em.className=pct>=80?"good":(pct<50?"bad":"");
-    el("statMonth").title="Cumpliste "+md+" de los "+prev+" días con actividad planificada en "+nombreMes+
-      " ("+pct+"% de adherencia). Cuenta gimnasio, deporte y actividad extra.";
+    el("statMonth").title="Cumpliste "+md+" de los "+ad.conRegistro+" días planificados que registraste en "+
+      nombreMes+" ("+pct+"% de adherencia)."+
+      (ad.sinCarga?" Quedan "+ad.sinCarga+" días sin registrar, que no se cuentan.":"")+
+      " Cuenta gimnasio, deporte y actividad extra.";
   }
 }
 /* ---------- PLAN EDITABLE + ONBOARDING ---------- */
@@ -1522,9 +1710,52 @@ function syncEditor(state,prefix){for(let dw=0;dw<7;dw++){const s=state[dw];if(!
 let planEdit={},planSemSel=0;
 function copiaDe(src){const r={};for(let dw=0;dw<7;dw++){const p=src[dw]||{tipo:"descanso",detalle:"",rutina_id:null};
   r[dw]={tipo:p.tipo,detalle:p.detalle||"",rutina_id:p.rutina_id||null};}return r;}
+/* Barra de versiones: permite mirar planes anteriores sin poder editarlos.
+   Editar el pasado se hace con el selector «rige desde», que avisa. */
+function renderPlanVersiones(){
+  const bar=el("planVerBar");if(!bar)return;
+  if(!capVigencia||planVers.length<=1){bar.style.display="none";return;}
+  bar.style.display="";
+  const v=versionSel(),i=planVers.indexOf(v);
+  el("planVerLbl").textContent="Vigente desde el "+fmtDesde(v?v.desde:null);
+  const sig=planVers[i+1];
+  el("planVerSub").textContent=esVersionVigente(v)?"plan actual"
+    :(sig?("hasta el "+fmtDesde(sig.desde)):"versión futura");
+  const bp=el("planVerPrev"),bn=el("planVerNext");
+  bp.disabled=(i<=0);bn.disabled=(i>=planVers.length-1);
+  bp.onclick=()=>{if(i>0){planVerSel=planVers[i-1].desde;renderPlanTab();}};
+  bn.onclick=()=>{if(i<planVers.length-1){planVerSel=planVers[i+1].desde;renderPlanTab();}};
+}
+/* Qué va a pasar al guardar, en palabras. El usuario tiene que poder anticipar
+   si está corrigiendo el plan vigente o partiendo la historia en dos. */
+function renderVigenciaHint(){
+  const wrap=el("planVigencia"),hint=el("planDesdeHint"),inp=el("planDesde");
+  if(!wrap||!hint||!inp)return;
+  if(!capVigencia){wrap.style.display="none";el("btnCorregir").style.display="none";return;}
+  wrap.style.display="";
+  const vig=versionVigente(),desde=inp.value||todayStr();
+  const vigDesde=vig?vig.desde:DESDE_SIEMPRE;
+  const bc=el("btnCorregir");
+  if(desde===vigDesde){
+    hint.className="note";
+    hint.innerHTML="✏️ Vas a <b>corregir el plan vigente</b>. La historia no cambia.";
+    bc.style.display="none";
+  }else if(desde>vigDesde){
+    hint.className="note";
+    hint.innerHTML="🗓️ Se crea una <b>versión nueva</b>. Los días anteriores al "+
+      fmtDesde(desde)+" conservan el plan que estaba vigente.";
+    bc.style.display="";
+  }else{
+    hint.className="note var";
+    hint.innerHTML="⚠️ Esa fecha es <b>anterior</b> al plan vigente: cambia cómo se leen "+
+      "los días desde el "+fmtDesde(desde)+", así que tus indicadores de ese período se recalculan.";
+    bc.style.display="";
+  }
+}
 function renderPlanTab(){
   if(!perfil)return;
   el("planReco").textContent="💡 "+(PLAN_RECO[perfil.objetivo]||PLAN_RECO.mantener);
+  renderPlanVersiones();
   const sw=el("planSemanas");
   if(!capSemana){if(sw)sw.style.display="none";}
   else if(sw){
@@ -1548,49 +1779,132 @@ function renderPlanTab(){
         ? "✅ La <b>semana "+planSemSel+"</b> de cada mes tiene su propia organización. Guardá para actualizarla."
         : "↪️ La <b>semana "+planSemSel+"</b> sigue hoy al plan base. Cambiá los días que quieras y guardá: queda solo para las semanas "+planSemSel+".";}
   }
-  const bv=el("btnVolverBase");if(bv)bv.style.display=(capSemana&&propia)?"":"none";
-  const bt=el("btnTpl");if(bt)bt.style.display=(planSemSel===0)?"":"none";
+  const soloLectura=capVigencia&&esVersionPasada(versionSel());
+  const bv=el("btnVolverBase");if(bv)bv.style.display=(capSemana&&propia&&!soloLectura)?"":"none";
+  const bt=el("btnTpl");if(bt)bt.style.display=(planSemSel===0&&!soloLectura)?"":"none";
   buildEditor("planEditor",planEdit,"pe_");
-  el("btnSavePlan").textContent=(capSemana&&planSemSel>0)?("Guardar semana "+planSemSel):"Guardar plan";
+  // Una versión pasada se mira, no se edita: lo contrario dejaría reescribir la
+  // historia sin decirlo. Para eso está el selector «rige desde», que avisa.
+  const ed=el("planEditor");if(ed)ed.style.opacity=soloLectura?".55":"";
+  if(ed)ed.querySelectorAll("input,select,.chip,.dep").forEach(x=>{
+    if(soloLectura){x.setAttribute("disabled","disabled");x.style.pointerEvents="none";}});
+  const sp=el("btnSavePlan");
+  sp.style.display=soloLectura?"none":"";
+  if(soloLectura){
+    el("planVigencia").style.display="none";el("btnCorregir").style.display="none";
+    const est2=el("planEstado");
+    if(est2){est2.style.display="";est2.className="note";
+      est2.innerHTML="👁️ Estás mirando una <b>versión pasada</b> del plan, tal como regía entonces. Volvé al plan actual con ›.";}
+  }else{
+    // La fecha arranca en la de la versión que se está editando: si es la de
+    // «siempre», guardar por defecto corta hoy y deja la historia quieta.
+    const inp=el("planDesde"),vs=versionSel();
+    if(inp){
+      inp.value=(vs&&vs.desde!==DESDE_SIEMPRE)?vs.desde:todayStr();
+      inp.onchange=renderVigenciaHint;
+    }
+    renderVigenciaHint();
+    el("btnCorregir").onclick=()=>{
+      const vig=versionVigente();
+      el("planDesde").value=vig?vig.desde:todayStr();
+      renderVigenciaHint();
+    };
+  }
+  sp.textContent=(capSemana&&planSemSel>0)?("Guardar semana "+planSemSel):"Guardar plan";
   if(bt)bt.onclick=()=>{planEdit=tplFor(perfil.objetivo);buildEditor("planEditor",planEdit,"pe_");};
-  el("btnSavePlan").onclick=()=>conBoton("btnSavePlan",savePlan);
+  sp.onclick=()=>conBoton("btnSavePlan",savePlan);
   if(bv)bv.onclick=()=>conBoton("btnVolverBase",volverAlPlanBase);
 }
-function filasPlan(sem){
+function filasPlan(sem,desde){
   const rows=[];
   for(let dw=0;dw<7;dw++){const s=planEdit[dw];
     const fila={user_id:user.id,dia_semana:dw,tipo:s.tipo,
       detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null),
       rutina_id:s.tipo!=="descanso"?(s.rutina_id||null):null};
     if(capSemana)fila.semana=sem;
+    if(capVigencia)fila.vigente_desde=desde;
     rows.push(fila);}
   return rows;
 }
-function guardarEnMemoria(sem,rows){
-  plan[sem]={};rows.forEach(x=>plan[sem][x.dia_semana]={tipo:x.tipo,detalle:x.detalle||"",rutina_id:x.rutina_id||null});
+/* Una versión nueva es un snapshot completo, no un diff: arranca como copia de
+   la vigente. Si no se copiara, las semanas que no se están editando perderían
+   su variante al cambiar de versión. */
+function filasHeredadas(desde,semEditada){
+  if(!capVigencia)return [];
+  const base=versionEn(desde);if(!base)return [];
+  const rows=[];
+  Object.keys(base.sem).forEach(sem=>{
+    const s=parseInt(sem);
+    if(!capSemana&&s!==0)return;
+    // Sin esta guarda, la semana que se está editando saldría dos veces en el
+    // mismo upsert y Postgres rechaza el lote entero por conflicto repetido.
+    if(s===semEditada)return;                    // esa la escribe filasPlan
+    for(let dw=0;dw<7;dw++){const p=base.sem[sem][dw];if(!p)continue;
+      const fila={user_id:user.id,dia_semana:dw,tipo:p.tipo,
+        detalle:p.detalle||null,rutina_id:p.rutina_id||null,vigente_desde:desde};
+      if(capSemana)fila.semana=s;
+      rows.push(fila);}
+  });
+  return rows;
+}
+function guardarEnMemoria(sem,rows,desde){
+  const d=capVigencia?desde:DESDE_SIEMPRE;
+  let v=planVers.find(x=>x.desde===d);
+  if(!v){v={desde:d,sem:{}};planVers.push(v);
+    planVers.sort((a,b)=>a.desde<b.desde?-1:(a.desde>b.desde?1:0));}
+  v.sem[sem]={};
+  rows.forEach(x=>v.sem[sem][x.dia_semana]={tipo:x.tipo,detalle:x.detalle||"",rutina_id:x.rutina_id||null});
 }
 async function savePlan(){
   syncEditor(planEdit,"pe_");
   const sem=capSemana?planSemSel:0;
+  const inp=el("planDesde");
+  let desde=(capVigencia&&inp&&inp.value)?inp.value:DESDE_SIEMPRE;
+  const vig=versionVigente(),vigDesde=vig?vig.desde:DESDE_SIEMPRE;
+  if(capVigencia&&desde<vigDesde&&
+     !confirm("El "+fmtDesde(desde)+" es anterior al plan vigente.\n\n"+
+              "Los indicadores de ese período se van a recalcular con este plan. ¿Seguimos?"))return;
   try{
-    let r=await sb.from("plan_semanal").upsert(filasPlan(sem));
-    if(r.error&&r.error.code==="42703"){ // la migración 012 todavía no corrió
+    // una versión nueva hereda del plan que regía en esa fecha
+    const nueva=capVigencia&&!planVers.some(v=>v.desde===desde);
+    const filas=filasPlan(sem,desde).concat(nueva?filasHeredadas(desde,sem):[]);
+    let r=await sb.from("plan_semanal").upsert(filas);
+    if(r.error&&r.error.code==="42703"){ // la migración 014 todavía no corrió
+      capVigencia=false;desde=DESDE_SIEMPRE;
+      r=await sb.from("plan_semanal").upsert(filasPlan(sem,desde));
+    }
+    if(r.error&&r.error.code==="42703"){ // la 012 tampoco
       capSemana=false;planSemSel=0;
-      r=await sb.from("plan_semanal").upsert(filasPlan(0));
+      r=await sb.from("plan_semanal").upsert(filasPlan(0,desde));
     }
     if(r.error)throw r.error;
-    guardarEnMemoria(capSemana?sem:0,filasPlan(capSemana?sem:0));
-    renderAll();toast(sem>0?("Semana "+sem+" guardada ✓"):"Plan guardado ✓");
+    const semF=capSemana?sem:0;
+    if(capVigencia&&!planVers.some(v=>v.desde===desde)){
+      // materializa en memoria lo heredado, para no tener que recargar
+      const base=versionEn(desde),copia={desde:desde,sem:{}};
+      if(base)Object.keys(base.sem).forEach(s=>{copia.sem[s]=copiaDe(base.sem[s]);});
+      planVers.push(copia);planVers.sort((a,b)=>a.desde<b.desde?-1:(a.desde>b.desde?1:0));
+    }
+    guardarEnMemoria(semF,filasPlan(semF,desde),desde);
+    // queda seleccionada la versión recién guardada, aunque sea futura
+    planVerSel=capVigencia?desde:DESDE_SIEMPRE;
+    renderAll();renderPlanTab();
+    toast(!capVigencia||desde===vigDesde
+      ? (semF>0?("Semana "+semF+" guardada ✓"):"Plan guardado ✓")
+      : "Plan guardado ✓ · rige desde el "+fmtDesde(desde));
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
 async function volverAlPlanBase(){
   if(planSemSel<1)return;
   if(!confirm("¿Que la semana "+planSemSel+" vuelva a seguir el plan base?"))return;
+  const v=versionSel();
   try{
-    const r=await sb.from("plan_semanal").delete().match({user_id:user.id,semana:planSemSel});
+    const m={user_id:user.id,semana:planSemSel};
+    if(capVigencia&&v)m.vigente_desde=v.desde;
+    const r=await sb.from("plan_semanal").delete().match(m);
     if(r.error)throw r.error;
-    delete plan[planSemSel];
-    renderAll();toast("Semana "+planSemSel+" vuelve al plan base");
+    if(v)delete v.sem[planSemSel];
+    renderAll();renderPlanTab();toast("Semana "+planSemSel+" vuelve al plan base");
   }catch(e){toast("No se pudo: "+traducir(e));}
 }
 let obSexo=null,obFactor="1.375",obObjetivo="mantener",obPlan=null;
@@ -1629,7 +1943,10 @@ async function saveOnboard(){
     r=await sb.from("plan_semanal").upsert(rows);
     if(r.error&&r.error.code==="42703"){capSemana=false;rows.forEach(x=>{delete x.semana;});r=await sb.from("plan_semanal").upsert(rows);}
     if(r.error)throw r.error;
-    perfil=pf;plan={0:{}};rows.forEach(x=>plan[0][x.dia_semana]={tipo:x.tipo,detalle:x.detalle||""});
+    // El primer plan rige "desde siempre": es el que debe leer todo el historial
+    // importado de la v1, no sólo los días posteriores al alta.
+    perfil=pf;planVers=[{desde:DESDE_SIEMPRE,sem:{0:{}}}];planVerSel=DESDE_SIEMPRE;
+    rows.forEach(x=>planVers[0].sem[0][x.dia_semana]={tipo:x.tipo,detalle:x.detalle||"",rutina_id:null});
     el("headEyebrow").textContent="hola, "+(perfil.nombre||"");
     showOnly("app");renderAll();renderPerfil();el("mDate").value=todayStr();
     initOnboardingState();
@@ -1639,12 +1956,30 @@ async function saveOnboard(){
 
 /* ---------- MODAL DEL DÍA ---------- */
 let mKey,mEstado,mExtraGym,mExtraDep,logRows,mRutinaPrecargada=false,mDeportePrecargado=false;
+let mActs=[],mActPicker=false;   // actividades del día (ver dia_actividades)
 let mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo,mPeriodo,mFlujoTipo;
 let mFood,mTotalManual,mAlcohol,mAlcTipo,mAgua=0;
 let openSec={act:true,well:false,food:false,dia:false};
 function openDay(key){
   mKey=key;const a=act[key]||{};
   mEstado=a.estado||null;mExtraGym=!!a.extra_gym;mExtraDep=!!a.extra_deporte;
+  mActPicker=false;
+  mActs=actsDe(key).map(x=>{const ms=minSeg(x.duracion_seg);
+    return {categoria:x.categoria,disciplina:x.disciplina,planificada:!!x.planificada,
+      min:x.duracion_seg!=null?ms.min:"",seg:x.duracion_seg!=null?ms.seg:"",nota:x.nota||""};});
+  // Días anteriores a la migración 014: los extras vivían en dos booleanos.
+  // Se muestran como actividades para que el día se lea completo, sin migrar datos.
+  if(!mActs.length){
+    const p0=planFor(key);
+    // Al convertirlos en actividades, el booleano deja de ser la fuente: si no
+    // se apagara, quitar la actividad no lo borraría y el día quedaría activo.
+    if(a.extra_gym&&p0.tipo!=="gym"){
+      mActs.push({categoria:"gym",disciplina:"Gimnasio",planificada:false,min:"",seg:"",nota:""});
+      mExtraGym=false;}
+    if(a.extra_deporte&&p0.tipo!=="deporte"){
+      mActs.push({categoria:"deporte",disciplina:sportLabel(key),planificada:false,min:"",seg:"",nota:""});
+      mExtraDep=false;}
+  }
   logRows=(loads[key]||[]).map(r=>{
     const md=r.modo||"peso",ms=minSeg(r.duracion_seg),de=distAEdit(r.distancia_m);
     const conTiempo=(md==="tiempo"||md==="distancia");
@@ -1697,29 +2032,64 @@ function openDay(key){
   syncModal();
   mFirmaInicial=firmaModal();
 }
-/* Al marcar Cumpli en un dia de deporte, el deporte planificado entra solo
-   como primer renglon en modo tiempo. Sin esto habia que buscarlo a mano en un
-   buscador que dice "ejercicio", y nadie lo iba a hacer. */
-function precargarDeporte(){
+/* Al marcar Cumpli, la actividad planificada entra sola como primer renglón, con
+   la duracion de la ultima vez. Antes esto creaba una fila de `cargas`; ahora es
+   una actividad, que es lo que vuelve consultable la disciplina. */
+function precargarActividadPlan(){
   if(mEstado!=="cumpli")return;            // solo se registra lo que se cumplio
   const p=planFor(mKey);
-  if(p.tipo!=="deporte")return;
-  if(logRows.length>0)return;              // ya hay algo cargado o una rutina precargada
-  const nombre=depDe(p.detalle)||sportLabel(mKey);
+  if(p.tipo==="descanso")return;
+  if(mActs.some(a=>a.planificada))return;  // ya esta
+  const cat=(p.tipo==="gym")?"gym":"deporte";
+  const nombre=(p.tipo==="gym")?"Gimnasio":(depDe(p.detalle)||sportLabel(mKey));
   if(!nombre||nombre==="Deporte")return;
-  logRows.push(nuevaFila(nombre,modoDe(nombre)));
-  mDeportePrecargado=true;
+  const ult=ultimaActividad(nombre,mKey),ms=minSeg(ult?ult.duracion_seg:null);
+  mActs.unshift({categoria:cat,disciplina:nombre,planificada:true,
+    min:(ult&&ult.duracion_seg!=null)?ms.min:"",seg:(ult&&ult.duracion_seg!=null)?ms.seg:"",nota:""});
+  mDeportePrecargado=(cat==="deporte");
 }
-function gymActive(){const p=planFor(mKey);return (p.tipo==="gym"&&mEstado==="cumpli")||mExtraGym;}
-/* El registro de ejercicios ya no es solo del gimnasio: un dia de deporte
-   cumplido tambien puede detallar lo que se hizo (series, tiempo o distancia). */
+/* Ultima vez que se hizo esa disciplina, para precargar la duracion */
+function ultimaActividad(disciplina,excepto){
+  const n=normTxt(disciplina);let mejor=null;
+  Object.keys(diaAct).forEach(k=>{
+    if(k===excepto||k>todayStr())return;
+    (diaAct[k]||[]).forEach(a=>{if(normTxt(a.disciplina)!==n||a.duracion_seg==null)return;
+      if(!mejor||k>mejor.fecha)mejor={fecha:k,duracion_seg:a.duracion_seg};});});
+  return mejor;
+}
+function agregarActividad(cat,disc){
+  mActPicker=false;
+  const n=String(disc||"").trim();if(!n)return;
+  if(mActs.some(a=>a.categoria===cat&&normTxt(a.disciplina)===normTxt(n))){
+    toast("Esa actividad ya está en el día");return;}
+  const p=planFor(mKey);
+  // ¿es justo la del plan? entonces no es "extra", y el reporte no la cuenta como tal
+  const planif=(cat==="gym"&&p.tipo==="gym")||
+    (cat==="deporte"&&p.tipo==="deporte"&&normTxt(depDe(p.detalle))===normTxt(n));
+  const ult=ultimaActividad(n,mKey),ms=minSeg(ult?ult.duracion_seg:null),hay=!!(ult&&ult.duracion_seg!=null);
+  mActs.push({categoria:cat,disciplina:n,planificada:planif,
+    min:hay?ms.min:"",seg:hay?ms.seg:"",nota:""});
+}
+function hayActCat(cat){return mActs.some(a=>a.categoria===cat);}
+function gymActive(){const p=planFor(mKey);
+  return (p.tipo==="gym"&&mEstado==="cumpli")||mExtraGym||hayActCat("gym");}
+/* El registro de ejercicios ya no es solo del gimnasio: cualquier dia con una
+   actividad de entrenamiento puede detallar lo que hizo (series, tiempo o
+   distancia). Recuperacion no abre el logger: se mide por su duracion. */
 function loggerActivo(){
   const p=planFor(mKey);
-  return gymActive()||(p.tipo==="deporte"&&mEstado==="cumpli")||mExtraDep;
+  return gymActive()||(p.tipo==="deporte"&&mEstado==="cumpli")||mExtraDep||hayActCat("deporte");
 }
 function foodSum(){let s=0;MOMENTS.forEach(m=>mFood[m].forEach(it=>{if(it.kcal!=null)s+=Number(it.kcal);}));return s;}
 function acc(id,title,summary,body){return '<div class="acc'+(openSec[id]?" open":"")+'"><div class="h" data-toggle="'+id+'"><span>'+title+'</span><span class="summary">'+summary+' <span class="chev">▸</span></span></div><div class="b">'+body+'</div></div>';}
-function actSummary(){const a=[];if(gymActive())a.push("Gym");if((planFor(mKey).tipo==="deporte"&&mEstado==="cumpli")||mExtraDep)a.push(sportLabel(mKey));if(mEstado==="no_fui"&&!(mEstado==="cumpli"||mExtraGym||mExtraDep))a.push("No fui");return a.length?a.join(" · "):"—";}
+function actSummary(){
+  const a=mActs.map(x=>iconActividad(x)+" "+x.disciplina);
+  if(!a.length){
+    if(gymActive())a.push("Gym");
+    if((planFor(mKey).tipo==="deporte"&&mEstado==="cumpli")||mExtraDep)a.push(sportLabel(mKey));
+  }
+  if(!a.length&&mEstado==="no_fui")a.push("No fui");
+  return a.length?a.join(" · "):"—";}
 function wellSummary(){const a=[];if(mEnergia)a.push(EMO.energia[mEnergia-1]);if(mAnimo)a.push(EMO.animo[mAnimo-1]);if(mSueno)a.push(EMO.sueno[mSueno-1]);if(mHoras!=="")a.push(mHoras+"h");if(mFumo)a.push("🌿");if(mPeriodo)a.push("🩸");return a.length?a.join(" "):"—";}
 function foodSummary(){const s=foodSum();const t=mTotalManual!==""?Number(mTotalManual):s;let str=t>0?(t+"/"+calorieTarget()+" kcal"):"—";if(mAlcohol)str+=" 🍷";return str;}
 function diaSummary(){const n=(dia[mKey]||[]).length;return n?n+(n===1?" nota":" notas"):"—";}
@@ -1740,22 +2110,53 @@ function renderModal(){
 function renderActBody(p){
   let h="";
   if(p.tipo!=="descanso")h+='<div class="seclabel">¿Cumpliste lo planificado?</div><div class="mark"><button id="bDone" class="'+(mEstado==="cumpli"?"gon":"")+'">✓ Cumplí</button><button id="bMiss" class="'+(mEstado==="no_fui"?"ron":"")+'">✗ No fui</button><button id="bClear" class="ghost">Limpiar</button></div>';
-  h+='<div class="seclabel">'+(p.tipo==="descanso"?"¿Qué hiciste?":"¿Algo más?")+'</div><div class="acts">';
-  if(p.tipo!=="gym")h+='<button class="actbtn'+(mExtraGym?" on":"")+'" id="tGym">🏋️ Gimnasio</button>';
-  if(p.tipo!=="deporte")h+='<button class="actbtn'+(mExtraDep?" on":"")+'" id="tDep">🏃 '+esc(sportLabel(mKey))+'</button>';
-  h+='</div>';
+  h+='<div id="actsBox">'+renderActsHTML(p)+'</div>';
   if(loggerActivo())h+='<div id="loggerBox">'+renderLoggerHTML()+'</div>';
+  return h;
+}
+/* Las actividades del día. Antes acá había dos botones fijos —gimnasio y el
+   deporte del plan— así que una actividad imprevista (te invitaron a jugar al
+   tenis) no tenía dónde anotarse, y una sesión de kinesiología tampoco. */
+function renderActsHTML(p){
+  let h='<div class="seclabel">'+(p.tipo==="descanso"?"¿Qué hiciste?":"¿Qué hiciste ese día?")+'</div>';
+  if(!mActs.length&&!mActPicker)
+    h+='<p class="muted" style="font-size:var(--fs-6);margin-bottom:6px">Sumá lo que hayas hecho, esté o no en tu plan: otro deporte, gimnasio, o una sesión de kinesiología o recuperación.</p>';
+  mActs.forEach((a,i)=>{
+    h+='<div class="logrow"><div class="top"><span class="lname">'+iconActividad(a)+' '+esc(a.disciplina)+
+       (a.planificada?' <span class="tagmini">del plan</span>':'')+
+       (a.categoria==="recuperacion"?' <span class="tagmini rec">recuperación</span>':'')+'</span>'+
+       '<span class="topbtns"><button class="rmv" data-rmact="'+i+'">✕</button></span></div>';
+    h+='<div class="fields"><div class="f"><label>Minutos</label><input type="number" inputmode="numeric" min="0" id="am'+i+'" value="'+(a.min!==""&&a.min!=null?a.min:"")+'"></div>'+
+       '<div class="f"><label>Segundos</label><input type="number" inputmode="numeric" min="0" max="59" id="as'+i+'" value="'+(a.seg!==""&&a.seg!=null?a.seg:"")+'"></div></div>';
+    h+='<input type="text" id="an'+i+'" placeholder="Nota (opcional): con quién, dónde, cómo salió" value="'+escA(a.nota||"")+'">';
+    h+='</div>';});
+  if(mActPicker){
+    const grupo=(titulo,lista,cat)=>'<div class="seclabel">'+titulo+'</div><div class="deps">'+
+      lista.map(d=>'<span class="dep" data-addact="'+cat+'" data-disc="'+escA(d[0])+'"><i>'+d[1]+'</i>'+esc(d[0])+'</span>').join("")+
+      // «Otra» también en recuperación: hay sesiones fuera del catálogo
+      // (osteopatía, punción seca) y sin esto no habría dónde anotarlas
+      (cat!=="gym"?'<span class="dep" data-addotra="'+cat+'"><i>✏️</i>Otra</span>':'')+'</div>';
+    h+='<div class="actpick">';
+    h+=grupo("🏋️ Gimnasio",[["Gimnasio","🏋️"]],"gym");
+    h+=grupo("🏃 Deportes",DEPORTES,"deporte");
+    h+=grupo("🩹 Recuperación",RECUPERACION,"recuperacion");
+    h+='<button class="act ghost" id="actPickCancel" style="margin-top:8px">Cancelar</button></div>';
+  }else{
+    h+='<button class="act ghost" id="actAdd" style="margin-top:6px">+ Agregar actividad</button>';
+  }
   return h;
 }
 function renderLoggerHTML(){
   const pd=planFor(mKey),esDep=(pd.tipo==="deporte");
   const nomDep=esDep?(depDe(pd.detalle)||sportLabel(mKey)):"";
+  // La duración de la actividad ya se carga arriba, en su renglón: acá va el
+  // detalle de la sesión (entrada en calor, series, un tramo de running).
   let h='<div class="seclabel">'+(esDep&&nomDep!=="Deporte"
-    ? esc(iconDeporte(pd.detalle)+" "+nomDep+" · ¿cuánto duró?")
+    ? esc("Detalle de "+nomDep)
     : "Ejercicios realizados")+'</div>';
   if(mRutinaPrecargada)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
-  else if(mDeportePrecargado)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">⏱️ Poné cuánto duró y confirmá con «Guardar día». Abajo podés sumar lo que hayas hecho además.</div>';
-  if(logRows.length===0)h+='<p class="muted" style="font-size:var(--fs-6);margin-bottom:4px">Buscá y agregá lo que hiciste. Cada renglón puede ir con peso, por tiempo (cinta, plancha) o por distancia (running, ciclismo, natación).</p>';
+  else if(mDeportePrecargado)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">⏱️ La duración va arriba, en el renglón de la actividad. Acá podés sumar lo que hayas hecho además.</div>';
+  if(logRows.length===0)h+='<p class="muted" style="font-size:var(--fs-6);margin-bottom:4px">Opcional. Cada renglón puede ir con peso, por tiempo (cinta, plancha) o por distancia (running, ciclismo, natación).</p>';
   logRows.forEach((r,i)=>{
     const u=ultimaCarga(r.ex,mKey),m=r.modo||"peso";
     const ico=m==="tiempo"?"⏱️ ":(m==="distancia"?"📏 ":"");
@@ -2220,12 +2621,21 @@ function attachModal(){
   let b;
   if((b=el("bDone")))b.onclick=()=>{syncModal();
     mEstado=mEstado==="cumpli"?null:"cumpli";
-    if(mEstado==="cumpli")precargarDeporte();
+    if(mEstado==="cumpli")precargarActividadPlan();
     renderModal();};
   if((b=el("bMiss")))b.onclick=()=>{syncModal();mEstado=mEstado==="no_fui"?null:"no_fui";renderModal();};
   if((b=el("bClear")))b.onclick=()=>{syncModal();mEstado=null;renderModal();};
-  if((b=el("tGym")))b.onclick=()=>{syncModal();mExtraGym=!mExtraGym;renderModal();};
-  if((b=el("tDep")))b.onclick=()=>{syncModal();mExtraDep=!mExtraDep;renderModal();};
+  if((b=el("actAdd")))b.onclick=()=>{syncModal();mActPicker=true;renderModal();};
+  if((b=el("actPickCancel")))b.onclick=()=>{syncModal();mActPicker=false;renderModal();};
+  document.querySelectorAll("[data-addact]").forEach(x=>x.onclick=()=>{syncModal();
+    agregarActividad(x.dataset.addact,x.dataset.disc);renderModal();});
+  document.querySelectorAll("[data-addotra]").forEach(x=>x.onclick=()=>{syncModal();
+    const cat=x.dataset.addotra;
+    const n=(prompt(cat==="recuperacion"?"¿Qué sesión de recuperación hiciste?":"¿Qué actividad hiciste?")||"").trim();
+    if(n)agregarActividad(cat,n);
+    mActPicker=false;renderModal();});
+  document.querySelectorAll("[data-rmact]").forEach(x=>x.onclick=()=>{syncModal();
+    mActs.splice(parseInt(x.dataset.rmact),1);renderModal();});
   if((b=el("fumoSi")))b.onclick=()=>{syncModal();mFumo=true;if(!mFumoTipo)mFumoTipo="Tabaco";renderModal();};
   if((b=el("fumoNo")))b.onclick=()=>{syncModal();mFumo=false;renderModal();};
   if((b=el("alcSi")))b.onclick=()=>{syncModal();mAlcohol=true;if(!mAlcTipo)mAlcTipo="Vino";renderModal();};
@@ -2275,6 +2685,9 @@ function syncModal(){
     if(s)r.series=s.value;if(rp)r.reps=rp.value;if(k)r.kg=k.value;
     if(mn)r.min=mn.value;if(sg)r.seg=sg.value;
     if(ds)r.dist=ds.value;if(un)r.unidad=un.value;if(vu)r.vueltas=vu.value;});
+  mActs.forEach((a,i)=>{
+    const mn=el("am"+i),sg=el("as"+i),nt=el("an"+i);
+    if(mn)a.min=mn.value;if(sg)a.seg=sg.value;if(nt)a.nota=nt.value;});
   let x;if((x=el("whHours")))mHoras=x.value;
   if((x=el("whDream")))mTexto=x.value;
   if((x=el("fdTotal")))mTotalManual=x.value;
@@ -2369,6 +2782,7 @@ function firmaModal(){
   try{
     return JSON.stringify([mEstado,mExtraGym,mExtraDep,
       logRows.map(r=>[r.ex,r.modo,r.series,r.reps,r.kg,r.min,r.seg,r.dist,r.unidad,r.vueltas]),
+      mActs.map(a=>[a.categoria,a.disciplina,a.planificada,a.min,a.seg,a.nota]),
       mEnergia,mAnimo,mSueno,mHoras,mTexto,mFumo,mFumoTipo,mPeriodo,mFlujoTipo,
       mTotalManual,mAlcohol,mAlcTipo,
       MOMENTS.map(m=>(mFood[m]||[]).map(it=>[it.desc,it.kcal])),
@@ -2421,14 +2835,24 @@ function armarDiaPayload(){
     if(m==="tiempo")return durDe(r.min,r.seg)!=null;
     if(m==="distancia")return distDe(r.dist,r.unidad)!=null||durDe(r.min,r.seg)!=null;
     return r.series!==""||r.reps!==""||r.kg!=="";};
-  const vacioAct=!mEstado&&!mExtraGym&&!mExtraDep;
+  const acts=mActs.filter(a=>String(a.disciplina||"").trim()).map((a,i)=>({
+    user_id:uid,fecha:fecha,categoria:a.categoria,disciplina:String(a.disciplina).trim(),
+    planificada:!!a.planificada,duracion_seg:durDe(a.min,a.seg),
+    nota:(a.nota||"").trim()||null,orden:i}));
+  // extra_gym / extra_deporte se derivan de las actividades y se siguen
+  // escribiendo: los lee el agente mensual y una PWA vieja que haya quedado
+  // cacheada. Sin esto, actualizar la app cambiaría la historia de esos días.
+  const xGym=mExtraGym||acts.some(a=>a.categoria==="gym"&&!a.planificada);
+  const xDep=mExtraDep||acts.some(a=>a.categoria==="deporte"&&!a.planificada);
+  const vacioAct=!mEstado&&!xGym&&!xDep;
   const wbEmpty=!mEnergia&&!mAnimo&&!mSueno&&mHoras===""&&!mTexto&&!mFumo;
   const tm=mTotalManual!==""?parseInt(mTotalManual):null;
   const aguaVal=(mAgua&&mAgua>0)?mAgua:null;
   const items=[];MOMENTS.forEach(m=>mFood[m].forEach(it=>items.push({user_id:uid,fecha:fecha,momento:m,descripcion:it.desc,kcal:it.kcal})));
   return {
-    v:1,user_id:uid,fecha:fecha,creado:Date.now(),
-    actividad:vacioAct?null:{user_id:uid,fecha:fecha,estado:mEstado,extra_gym:mExtraGym,extra_deporte:mExtraDep},
+    v:2,user_id:uid,fecha:fecha,creado:Date.now(),
+    actividad:vacioAct?null:{user_id:uid,fecha:fecha,estado:mEstado,extra_gym:xGym,extra_deporte:xDep},
+    actividades:acts,
     cargas:(loggerActivo()?logRows.filter(conDato):[]).map(filaCarga),
     bienestar:wbEmpty?null:{user_id:uid,fecha:fecha,energia:mEnergia,animo:mAnimo,sueno:mSueno,
       horas_dormidas:mHoras!==""?parseFloat(mHoras):null,sueno_texto:mTexto||null,
@@ -2445,6 +2869,14 @@ function aplicarDiaEnMemoria(p){
   const k=p.fecha;
   if(p.actividad)act[k]={estado:p.actividad.estado,extra_gym:p.actividad.extra_gym,extra_deporte:p.actividad.extra_deporte};
   else delete act[k];
+  // undefined = payload viejo de la cola, que no sabía de actividades: no tocar.
+  // [] sí borra, que es lo que pasa al quitarlas todas.
+  if(p.actividades!==undefined){
+    if(p.actividades.length)diaAct[k]=p.actividades.map(a=>({categoria:a.categoria,disciplina:a.disciplina,
+      planificada:!!a.planificada,duracion_seg:a.duracion_seg!=null?a.duracion_seg:null,
+      nota:a.nota||"",orden:a.orden!=null?a.orden:0}));
+    else delete diaAct[k];
+  }
   if(p.cargas&&p.cargas.length)loads[k]=p.cargas.map(c=>({ejercicio:c.ejercicio,kg:c.kg,reps:c.reps,series:c.series,
     modo:c.modo||"peso",duracion_seg:c.duracion_seg!=null?c.duracion_seg:null,
     distancia_m:c.distancia_m!=null?c.distancia_m:null,vueltas:c.vueltas!=null?c.vueltas:null}));
@@ -2470,6 +2902,17 @@ async function escribirDia(p){
   const chkTabla=r=>{if(r.error&&r.error.code!=="42P01")throw r.error;return r;};
   if(p.actividad)chk(await sb.from("actividad").upsert(p.actividad));
   else chk(await sb.from("actividad").delete().match({user_id:uid,fecha:k}));
+  if(p.actividades!==undefined&&capActividades){
+    const del=await sb.from("dia_actividades").delete().match({user_id:uid,fecha:k});
+    if(del.error&&del.error.code==="42P01")capActividades=false;   // migración 014 sin correr
+    else{
+      chk(del);
+      if(p.actividades.length){
+        const ins=await sb.from("dia_actividades").insert(p.actividades);
+        if(ins.error&&ins.error.code==="42P01")capActividades=false;else chk(ins);
+      }
+    }
+  }
   chk(await sb.from("cargas").delete().match({user_id:uid,fecha:k}));
   if(p.cargas&&p.cargas.length){
     let ins=await sb.from("cargas").insert(p.cargas.map(podarCarga));
@@ -2671,40 +3114,77 @@ function rachaRegistro(){
   }
   return n;
 }
-/* Deportes practicados en el mes visible. Se leen de `cargas`: desde que el
-   deporte planificado se precarga como renglon al marcar Cumpli, cada partido
-   deja una fila con su nombre, y eso lo vuelve agregable. Tambien cuenta los
-   dias de deporte cumplidos que no tienen renglon, para no subreportar. */
+/* Deportes practicados en el mes visible, de tres fuentes que conviven porque
+   el dato cambió de lugar con el tiempo y no se migró nada:
+     1. `dia_actividades` (migración 014), que es de donde sale lo nuevo;
+     2. filas de `cargas` con nombre de deporte, que es como se guardaba entre
+        9-sexies y la 014;
+     3. días de deporte cumplidos sin ninguna de las dos, que cuentan como
+        sesión sin tiempo para no subreportar el historial viejo.
+   Se deduplica por día + disciplina: un mismo partido anotado en dos de esas
+   fuentes contaría dos veces. */
 function deportesMes(){
-  const mp=viewY+"-"+pad2(viewM+1),porDep={};
-  const anota=(nombre,seg,metros)=>{
-    const d=buscarDeporte(nombre);
-    const clave=d?d[0]:nombre;
-    if(!porDep[clave])porDep[clave]={nombre:clave,icono:d?d[1]:"🏃",sesiones:0,seg:0,metros:0};
-    porDep[clave].sesiones++;
-    porDep[clave].seg+=seg||0;
-    porDep[clave].metros+=metros||0;
+  const mp=viewY+"-"+pad2(viewM+1),porDep={},vistos={};
+  const clave=nombre=>{const d=buscarDeporte(nombre);return d?d[0]:nombre;};
+  const anota=(k,nombre,seg,metros)=>{
+    const d=buscarDeporte(nombre),c=d?d[0]:nombre;
+    const marca=k+"|"+normTxt(c);
+    if(vistos[marca]){                       // ya contado: sumar solo lo que falte
+      if(seg)porDep[c].seg+=seg;
+      if(metros)porDep[c].metros+=metros;
+      return;}
+    vistos[marca]=true;
+    if(!porDep[c])porDep[c]={nombre:c,icono:d?d[1]:"🏃",sesiones:0,seg:0,metros:0};
+    porDep[c].sesiones++;
+    porDep[c].seg+=seg||0;
+    porDep[c].metros+=metros||0;
   };
+  // 1) actividades del día
+  Object.keys(diaAct).forEach(k=>{
+    if(!k.startsWith(mp))return;
+    (diaAct[k]||[]).forEach(a=>{
+      if(a.categoria!=="deporte")return;
+      anota(k,a.disciplina,Number(a.duracion_seg||0),0);
+    });
+  });
+  // 2) filas de cargas con nombre de deporte
   Object.keys(loads).forEach(k=>{
     if(!k.startsWith(mp))return;
     (loads[k]||[]).forEach(it=>{
       if(!buscarDeporte(it.ejercicio))return;      // solo lo que es un deporte
-      anota(it.ejercicio,Number(it.duracion_seg||0),Number(it.distancia_m||0));
+      anota(k,it.ejercicio,Number(it.duracion_seg||0),Number(it.distancia_m||0));
     });
   });
-  // dias de deporte cumplidos sin ningun renglon: cuentan como sesion sin tiempo
+  // 3) dias de deporte cumplidos sin ningun renglon: sesion sin tiempo
   Object.keys(act).forEach(k=>{
     if(!k.startsWith(mp))return;
     const a=act[k]||{},p=planFor(k);
     const hizo=(p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte;
     if(!hizo)return;
-    const yaTiene=(loads[k]||[]).some(it=>buscarDeporte(it.ejercicio));
-    if(yaTiene)return;
     const nombre=(p.tipo==="deporte"&&depDe(p.detalle))||sportLabel(k);
     if(!nombre||nombre==="Deporte")return;
-    anota(nombre,0,0);
+    if(vistos[k+"|"+normTxt(clave(nombre))])return;
+    if((loads[k]||[]).some(it=>buscarDeporte(it.ejercicio)))return;
+    anota(k,nombre,0,0);
   });
   return Object.values(porDep).sort((a,b)=>(b.seg-a.seg)||(b.sesiones-a.sesiones));
+}
+/* Recuperación del mes visible, por disciplina. Mismo criterio que deportesMes,
+   pero sin fuentes históricas: antes de la migración 014 no existía el dato. */
+function recuperacionMes(){
+  const mp=viewY+"-"+pad2(viewM+1),por={};
+  let dias=0;
+  Object.keys(diaAct).forEach(k=>{
+    if(!k.startsWith(mp))return;
+    const recs=(diaAct[k]||[]).filter(a=>a.categoria==="recuperacion");
+    if(recs.length)dias++;
+    recs.forEach(a=>{
+      const n=a.disciplina||"Recuperación";
+      if(!por[n])por[n]={nombre:n,icono:iconActividad(a),sesiones:0,seg:0};
+      por[n].sesiones++;por[n].seg+=Number(a.duracion_seg||0);
+    });
+  });
+  return {dias:dias,lista:Object.values(por).sort((a,b)=>(b.sesiones-a.sesiones)||(b.seg-a.seg))};
 }
 /* Relacion entre lo que dormiste y como te sentiste al dia siguiente.
    Promedio condicionado, no una correlacion estadistica: con pocos datos
@@ -2828,6 +3308,21 @@ function renderIndicadores(){
           (pct>0?'<span class="depbar"><span style="width:'+pct+'%"></span></span>':'')+
           '</span><span class="dval">'+(d.seg>0?fmtHoras(d.seg):"—")+'</span></div>';
       }).join("");
+    }
+  }
+  // recuperación del mes visible
+  const rec=recuperacionMes(),rcard=el("recupCard");
+  if(rcard){
+    if(!rec.lista.length)rcard.style.display="none";
+    else{
+      rcard.style.display="";
+      el("recupTit").textContent=MONTHS[viewM].charAt(0).toUpperCase()+MONTHS[viewM].slice(1)+" "+viewY+
+        " · "+rec.dias+(rec.dias===1?" día":" días");
+      el("recupList").innerHTML=rec.lista.map(d=>
+        '<div class="depfila"><span class="di">'+d.icono+'</span>'+
+        '<span class="dn"><span class="dnom">'+esc(d.nombre)+'</span>'+
+        '<span class="dmeta">'+d.sesiones+(d.sesiones===1?" sesión":" sesiones")+'</span></span>'+
+        '<span class="dval">'+(d.seg>0?fmtHoras(d.seg):"—")+'</span></div>').join("");
     }
   }
   // records vigentes
@@ -3233,9 +3728,9 @@ async function finishTour(){
 const TIPS={
   "v-prog":{e:"📈",t:"Progreso",p:"Acá ves tu evolución en el tiempo: peso, cintura (si tu objetivo es bajar), balance calórico y tus cargas en el gym. Cargá tu peso periódicamente para ver la tendencia."},
   "v-rutinas":{e:"🏋️",t:"Rutinas y Plan",p:"Creá rutinas con nombre (Sesión A, B...) y asignalas a tus días de gym desde 'Plan semanal'. Al abrir un día de gym, sus ejercicios aparecen precargados listos para completar."},
-  "v-plan":{e:"🗓️",t:"Plan semanal",p:"Definí qué hacés cada día. Si no todas las semanas del mes son iguales, elegí 'Sem 1', 'Sem 2'… y armá esa semana aparte: las que no toques siguen el plan base. En los días de deporte elegí cuál (handball, tenis, ciclismo, running…) y su ícono aparece en el calendario."},
+  "v-plan":{e:"🗓️",t:"Plan semanal",p:"Definí qué hacés cada día. Si no todas las semanas del mes son iguales, elegí 'Sem 1', 'Sem 2'… y armá esa semana aparte: las que no toques siguen el plan base. Cuando cambiás el plan elegís desde qué fecha rige: los días anteriores se siguen leyendo con el plan que tenías, así tu historial no se reescribe."},
   "v-diario":{e:"📖",t:"Diario personal",p:"Escribí lo que quieras, cuando quieras. Y cuando tengas varias entradas, usá el Narrador ✨ para convertir un período en una historia de ficción. Tus sueños también cuentan."},
-  "v-cal":{e:"📅",t:"Calendario",p:"Tocá un día para registrar todo: entrenamiento, bienestar, comidas y diario. El fondo verde significa que cumpliste tu plan; el rojizo, que no fuiste."},
+  "v-cal":{e:"📅",t:"Calendario",p:"Tocá un día para registrar todo: entrenamiento, bienestar, comidas y diario. Verde es que cumpliste; rojizo, que no fuiste; rayado, un día planificado que quedó sin registrar (no cuenta para las métricas). Podés sumar cualquier actividad, esté o no en tu plan, incluida una sesión de kinesiología."},
   "v-perfil":{e:"👤",t:"Perfil",p:"Tus datos y objetivo (que definen tu meta calórica), y los interruptores de qué registrar. Desde acá también podés volver a ver el tutorial cuando quieras."}
 };
 let tipsVistos=new Set();
@@ -3335,6 +3830,13 @@ function serieDelMes(y,m){
     const fila={f:d,dow:new Date(y,m,d).getDay()};
     if(p.tipo!=="descanso")fila.plan=p.tipo;
     if(a.estado)fila.est=a.estado==="cumpli"?"ok":"no";
+    // `sinCarga` marca el día que no dejó ningún registro: sin esto el agente lo
+    // leería como una falta y narraría un mes peor del que fue.
+    const es=estadoDia(k);
+    if(es==="sin_carga")fila.sinCarga=1;
+    if(es==="recuperacion")fila.rec=1;
+    const acs=actsDe(k);
+    if(acs.length)fila.acts=acs.map(x=>x.categoria.charAt(0)+":"+x.disciplina);
     if(a.extra_gym)fila.xgym=1;
     if(a.extra_deporte)fila.xdep=1;
     if(kc!=null)fila.kcal=kc;
@@ -3358,6 +3860,12 @@ function resumenParaAgente(y,m){
   const pv=mesStats(pY,pM);
   const comp=(o)=>({
     diasTranscurridos:o.dias,planificados:o.planificados,cumplidos:o.cumplidos,noFui:o.noFui,
+    // `planificadosConRegistro` es el denominador del cumplimiento: los días sin
+    // registro quedan aparte en vez de contarse como faltas.
+    planificadosConRegistro:o.conRegistro,planificadosSinRegistro:o.sinCarga,
+    cumplimientoPct:o.conRegistro?Math.round(o.cumplidos/o.conRegistro*100):null,
+    diasRecuperacion:o.recupDias,sesionesRecuperacion:o.recupSesiones,
+    minutosRecuperacion:Math.round((o.recupSeg||0)/60),
     extras:o.extras,diasGym:o.gymDias,diasDeporte:o.depDias,sesionesConCargas:o.sesionesGym,
     ejerciciosDistintos:o.ejercicios.size,
     pesoInicio:o.pesoIni,pesoFin:o.pesoFin,pesoPrevioAlMes:o.pesoPrevio,
@@ -3380,7 +3888,17 @@ function resumenParaAgente(y,m){
   const mejoras=[];
   Object.keys(s.maxKg).forEach(ex=>{const prev=pv.maxKg[ex];if(prev!=null&&s.maxKg[ex]>prev)mejoras.push({ejercicio:ex,de:prev,a:s.maxKg[ex]});});
   const out={mes:comp(s),mesAnterior:comp(pv),objetivoKcal:calorieTarget(),
-    metaAguaAprox:metaAguaDia(null),progresionCargas:mejoras};
+    metaAguaAprox:metaAguaDia(null),progresionCargas:mejoras,
+    // El agente necesita saber cómo leer estos números, o va a narrar el
+    // cumplimiento con la definición vieja (días sin registrar = faltas).
+    comoLeerActividad:"El cumplimiento se calcula sobre planificadosConRegistro, "+
+      "no sobre planificados: los días sin ningún registro (planificadosSinRegistro) "+
+      "no se saben y no se cuentan ni como cumplidos ni como faltas. Los días de "+
+      "recuperación (kinesiología, fisioterapia) son ausencias justificadas: no "+
+      "suman entrenamiento ni restan cumplimiento. Si planificadosSinRegistro es "+
+      "alto frente a planificadosConRegistro, decilo en vez de afirmar una adherencia.",
+    recuperacionPorDisciplina:Object.values(s.recupPorDisc).map(d=>
+      ({disciplina:d.nombre,sesiones:d.sesiones,minutos:Math.round(d.seg/60)}))};
   if(perfil.registra_periodo){
     const desde=y+"-"+pad2(m+1)+"-01",hasta=y+"-"+pad2(m+1)+"-"+pad2(diasDelMes(y,m));
     const bf=bienestarPorFase(desde,hasta),reg=cicloRegularidad();
@@ -3552,7 +4070,9 @@ function ultimaMedidaAntes(fechaISO,campo){
 // Calcula todos los indicadores de un mes
 function mesStats(y,m){
   const hoy=todayStr(),nd=diasDelMes(y,m),mp=y+"-"+pad2(m+1);
-  const s={mp:mp,dias:0,planificados:0,cumplidos:0,noFui:0,extras:0,gymDias:0,depDias:0,
+  const s={mp:mp,dias:0,planificados:0,conRegistro:0,sinCarga:0,
+    cumplidos:0,noFui:0,extras:0,gymDias:0,depDias:0,
+    recupDias:0,recupSesiones:0,recupSeg:0,recupPorDisc:{},
     kcalDias:[],enObjetivo:0,alcoholDias:0,
     energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
     aguaDias:[],aguaMeta:0,
@@ -3562,13 +4082,23 @@ function mesStats(y,m){
     const k=y+"-"+pad2(m+1)+"-"+pad2(d);
     if(k>hoy)continue;
     s.dias++;
-    const p=planFor(new Date(y,m,d)),a=act[k]||{};
-    if(p.tipo!=="descanso")s.planificados++;
-    if(achieved(k))s.cumplidos++;
-    if(a.estado==="no_fui"&&!achieved(k))s.noFui++;
-    if((a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte"))s.extras++;
-    if((p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym)s.gymDias++;
-    if((p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte)s.depDias++;
+    const p=planFor(new Date(y,m,d)),a=act[k]||{},es=estadoDia(k);
+    // Los días planificados se parten en los que dejaron rastro y los que no:
+    // el cumplimiento se mide contra los primeros (ver renderReporte).
+    if(p.tipo!=="descanso"){s.planificados++;
+      if(es==="sin_carga")s.sinCarga++;else s.conRegistro++;}
+    if(es==="cumplido")s.cumplidos++;
+    if(es==="falta")s.noFui++;
+    if(es==="recuperacion")s.recupDias++;
+    actsRecup(k).forEach(x=>{s.recupSesiones++;
+      const seg=Number(x.duracion_seg||0);s.recupSeg+=seg;
+      const dd=x.disciplina||"Recuperación";
+      if(!s.recupPorDisc[dd])s.recupPorDisc[dd]={nombre:dd,icono:iconActividad(x),sesiones:0,seg:0};
+      s.recupPorDisc[dd].sesiones++;s.recupPorDisc[dd].seg+=seg;});
+    if((a.extra_gym&&p.tipo!=="gym")||(a.extra_deporte&&p.tipo!=="deporte")||
+       actsEntreno(k).some(x=>!x.planificada))s.extras++;
+    if((p.tipo==="gym"&&a.estado==="cumpli")||a.extra_gym||actsDe(k).some(x=>x.categoria==="gym"))s.gymDias++;
+    if((p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte||actsDe(k).some(x=>x.categoria==="deporte"))s.depDias++;
     const c=consumedFor(k);
     if(c!=null){s.kcalDias.push(c);if(balanceInfo(c,calorieTarget()).ok)s.enObjetivo++;}
     if(alim[k]&&alim[k].alcohol)s.alcoholDias++;
@@ -3623,8 +4153,13 @@ function renderReporte(){
   let pY=repY,pM=repM-1;if(pM<0){pM=11;pY--;}
   const pv=mesStats(pY,pM);
   const nombreMes=MONTHS[repM]+" "+repY;
-  const pctCumpl=s.planificados?Math.round(s.cumplidos/s.planificados*100):0;
-  const pctPrev=pv.planificados?Math.round(pv.cumplidos/pv.planificados*100):null;
+  // El cumplimiento se mide sobre los días planificados que dejaron registro:
+  // un día sin anotar no dice que faltaste, dice que no se sabe.
+  const confiable=adherenciaConfiable({conRegistro:s.conRegistro,sinCarga:s.sinCarga});
+  const confiablePrev=adherenciaConfiable({conRegistro:pv.conRegistro,sinCarga:pv.sinCarga});
+  // Se topea en 100: cumplir un día libre puede dar más cumplidos que planificados
+  const pctCumpl=s.conRegistro?Math.round(Math.min(s.cumplidos,s.conRegistro)/s.conRegistro*100):0;
+  const pctPrev=(confiablePrev&&pv.conRegistro)?Math.round(Math.min(pv.cumplidos,pv.conRegistro)/pv.conRegistro*100):null;
   const objetivoNeutral=perfil.objetivo==="conocerme";
 
   let h='<div class="rephead"><div class="inner"><div class="eyebrow">Reporte mensual · Entreno</div><h2>'+nombreMes+'</h2><div class="who">'+esc(perfil.nombre||"")+'</div></div></div><div class="repbody">';
@@ -3635,19 +4170,48 @@ function renderReporte(){
   h+='<div class="repsec"><h3>🏃 Actividad</h3>';
   if(s.planificados===0&&s.cumplidos===0){h+='<p class="repempty">Sin actividad registrada este mes.</p>';}
   else{
-    h+='<div class="repbar"><span style="width:'+Math.min(100,pctCumpl)+'%"></span></div>';
+    if(confiable)h+='<div class="repbar"><span style="width:'+Math.min(100,pctCumpl)+'%"></span></div>';
     h+='<div class="repgrid">';
-    h+=kpi("Cumplimiento",pctCumpl+"%",pctPrev!=null?delta(pctCumpl,pctPrev):"");
-    h+=kpi("Días activos",s.cumplidos+" / "+s.planificados,delta(s.cumplidos,pv.cumplidos));
+    h+=kpi("Cumplimiento",confiable?(pctCumpl+"%"):"—",
+      confiable&&pctPrev!=null?delta(pctCumpl,pctPrev):"");
+    h+=kpi("Días activos",s.cumplidos+" / "+s.conRegistro,delta(s.cumplidos,pv.cumplidos));
+    // La cobertura es la contracara de sacar los días sin carga del denominador:
+    // sin ella, registrar un solo día del mes se leería como un mes perfecto.
+    h+=kpi("Días registrados",s.conRegistro+" / "+s.planificados,delta(s.conRegistro,pv.conRegistro));
     h+=kpi("Gimnasio",s.gymDias+(s.gymDias===1?" día":" días"),delta(s.gymDias,pv.gymDias));
     h+=kpi("Deporte",s.depDias+(s.depDias===1?" día":" días"),delta(s.depDias,pv.depDias));
     h+='</div>';
-    if(s.extras||s.noFui){h+='<div style="margin-top:10px">';
+    if(!confiable&&s.planificados)
+      h+='<div class="fhint" style="margin-top:10px">Quedaron '+s.sinCarga+' de '+s.planificados+
+         ' días planificados sin registrar, así que no se calcula un porcentaje de cumplimiento: sería un número preciso sobre datos que no están.</div>';
+    if(s.extras||s.noFui||s.sinCarga){h+='<div style="margin-top:10px">';
       if(s.extras)h+='<div class="repline"><span class="rl">Actividades extra</span><span class="rv">'+s.extras+'</span></div>';
       if(s.noFui)h+='<div class="repline"><span class="rl">Días que no fuiste</span><span class="rv">'+s.noFui+'</span></div>';
+      if(s.sinCarga)h+='<div class="repline"><span class="rl">Días sin registrar</span><span class="rv">'+s.sinCarga+'</span></div>';
       h+='</div>';}
   }
   h+='</div>';
+
+  // RECUPERACIÓN
+  if(s.recupSesiones||pv.recupSesiones){
+    h+='<div class="repsec"><h3>🩹 Recuperación</h3>';
+    if(!s.recupSesiones){h+='<p class="repempty">Sin sesiones de recuperación este mes.</p>';}
+    else{
+      h+='<div class="repgrid">';
+      h+=kpi("Sesiones",String(s.recupSesiones),delta(s.recupSesiones,pv.recupSesiones));
+      h+=kpi("Días",s.recupDias+(s.recupDias===1?" día":" días"),delta(s.recupDias,pv.recupDias));
+      if(s.recupSeg)h+=kpi("Tiempo",fmtHoras(s.recupSeg),
+        pv.recupSeg?delta(Math.round(s.recupSeg/60),Math.round(pv.recupSeg/60)):"");
+      h+='</div>';
+      const discs=Object.values(s.recupPorDisc).sort((a,b)=>(b.sesiones-a.sesiones)||(b.seg-a.seg));
+      if(discs.length){h+='<div style="margin-top:10px">';
+        discs.forEach(d=>{h+='<div class="repline"><span class="rl">'+d.icono+' '+esc(d.nombre)+'</span><span class="rv">'+
+          d.sesiones+(d.sesiones===1?" sesión":" sesiones")+(d.seg?" · "+fmtHoras(d.seg):"")+'</span></div>';});
+        h+='</div>';}
+      h+='<div class="legnote">Los días de recuperación no cuentan como entrenamiento ni como falta: salen del cálculo de cumplimiento.</div>';
+    }
+    h+='</div>';
+  }
 
   // CUERPO
   h+='<div class="repsec"><h3>⚖️ Cuerpo</h3>';
@@ -4328,8 +4892,8 @@ async function delRutina(id){
   try{
     const res=await sb.from("rutinas").delete().eq("id",id);if(res.error)throw res.error;
     rutinas=rutinas.filter(x=>x.id!==id);delete rutinaEj[id];
-    for(let sem=0;sem<=MAX_SEM;sem++){const wk=plan[sem];if(!wk)continue;
-      for(let dw=0;dw<7;dw++)if(wk[dw]&&wk[dw].rutina_id===id)wk[dw].rutina_id=null;}
+    planVers.forEach(v=>{for(let sem=0;sem<=MAX_SEM;sem++){const wk=v.sem[sem];if(!wk)continue;
+      for(let dw=0;dw<7;dw++)if(wk[dw]&&wk[dw].rutina_id===id)wk[dw].rutina_id=null;}});
     renderRutinas();toast("Rutina borrada");
   }catch(e){toast("No se pudo borrar: "+traducir(e));}
 }
@@ -4623,7 +5187,8 @@ function procesarDestinoNotif(url){
 async function doLogout(){
   try{ if(sb) await sb.auth.signOut(); }
   catch(e){ /* aunque falle la red, cerramos localmente igual */ }
-  user=null;perfil=null;plan={};act={};loads={};bien={};alim={};comi={};dia={};medidas=[];
+  user=null;perfil=null;planVers=[];planVerSel=null;diaAct={};
+  act={};loads={};bien={};alim={};comi={};dia={};medidas=[];
   const em=el("email"),pw=el("pass");if(em)em.value="";if(pw)pw.value="";
   showOnly("authView");
   el("conn").hidden=true;
