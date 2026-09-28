@@ -49,6 +49,13 @@
   .wb.recov{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
   .wb.today{box-shadow:0 0 0 2px var(--accent)}
   main{padding:18px 16px 26px;max-width:600px;margin:0 auto}
+  /* La app oculta vistas y controles con el atributo `hidden` (showOnly, el
+     encabezado, los botones del wizard). El `[hidden]{display:none}` del
+     navegador es una regla del user-agent, así que CUALQUIER regla nuestra que
+     fije `display` le gana y el elemento se dibuja igual — aunque sea una simple
+     clase. Ya pasó: .weekbar, .conn, .helpbtn, .outbtn y #onboardView tenían esa
+     trampa armada. Esta línea la desactiva de una vez y para todos. */
+  [hidden]{display:none !important}
   .view{display:none;animation:fade .3s ease}.view.active{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
@@ -104,7 +111,11 @@
   /* ---------- Onboarding: una pregunta por pantalla ----------
      Ver appentreno-docs/DISENO-ONBOARDING.md. La regla es que un paso no scrollea:
      si no entra en una pantalla de teléfono, el paso tiene demasiado. */
-  #onboardView{max-width:460px;margin:0 auto;padding:0 16px 24px;
+  /* El :not([hidden]) NO es decorativo: showOnly() oculta esta vista con el
+     atributo `hidden`, y un `display:flex` en el selector de id le gana al
+     `[hidden]{display:none}` del navegador. Sin esto, el onboarding se dibuja
+     sobre la app para todo usuario que ya tiene perfil. */
+  #onboardView:not([hidden]){max-width:460px;margin:0 auto;padding:0 16px 24px;
     min-height:100svh;display:flex;flex-direction:column}
   .wzbar{height:3px;background:var(--line);border-radius:99px;margin-top:14px;overflow:hidden;flex:none}
   .wzbar span{display:block;height:100%;background:var(--accent);border-radius:99px;
