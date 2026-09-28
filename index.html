@@ -213,6 +213,19 @@
   .faddrow input.k{width:70px;text-align:center;font-family:"Sometype Mono",monospace}
   .faddrow .est{border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:10px;width:44px;font-size:var(--fs-8);cursor:pointer}
   .faddrow .add{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:10px;width:44px;font-size:var(--fs-9);cursor:pointer}
+  /* Supuesto de porción de la estimación, con corrección en un toque.
+     La medición del 28/9 mostró que toda la discrepancia es de porciones, y el
+     usuario no tenía forma de ver sobre qué base se calculó. */
+  .estbox{margin-top:7px;background:var(--surface-2);border:1px dashed var(--line-2);border-radius:11px;padding:9px 10px}
+  .estbox .et{font-size:var(--fs-4);color:var(--ink-soft);line-height:1.35}
+  .estbox .et b{color:var(--ink);font-weight:600}
+  .estbox .eb{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+  .estbox .estbtn{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:9px;
+    padding:7px 4px;font-size:var(--fs-3);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .estbox .estbtn:active{background:var(--surface-2)}
+  .estbox .ev{font-family:"Sometype Mono",monospace;font-size:var(--fs-6);font-weight:700;
+    color:var(--accent);flex:none;min-width:74px;text-align:center}
+  .estbox .en{margin-top:6px;font-family:"Sometype Mono",monospace;font-size:var(--fs-2);color:var(--ink-faint)}
   .kcalbox{margin-top:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;padding:13px}
   .kcalbar{height:10px;border-radius:99px;background:var(--rest-2);overflow:hidden;margin:9px 0 8px}
   .kcalbar>span{display:block;height:100%;border-radius:99px}
@@ -2024,7 +2037,7 @@ function openDay(key){
   mTotalManual=ad.total_manual!=null?ad.total_manual:"";mAlcohol=!!ad.alcohol;mAlcTipo=ad.alcohol_tipo||"";
   mAgua=ad.agua_ml!=null?Number(ad.agua_ml):0;
   openSec={act:true,well:false,food:false,dia:false};
-  sugCache={};sugAbierta=null;sugCargando=false;
+  sugCache={};sugAbierta=null;sugCargando=false;mEst={};
   renderModal();el("ov").classList.add("show");
   // La firma de apertura pasa por syncModal igual que la de cierre: los inputs
   // devuelven texto ("7") donde la base trae numeros (7), y sin esto cualquier
@@ -2212,7 +2225,8 @@ function renderFoodBody(){
     h+='<div class="sugbox'+(sugAbierta===mi?" show":"")+'" id="sugbox'+mi+'">'+renderSugerenciasHTML(mi)+'</div>';
     mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><span class="fk">'+(it.kcal!=null?it.kcal+" kcal":"—")+'</span><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
-    h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal"><button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button><button class="add" data-fadd="'+mi+'">＋</button></div></div>';
+    h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal"><button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button><button class="add" data-fadd="'+mi+'">＋</button></div>';
+    h+='<div id="festbox'+mi+'">'+estimacionHTML(mi)+'</div></div>';
   });
   if(permiteAlcohol()){
     h+='<div class="seclabel">¿Tomaste alcohol?</div><div class="acts"><button class="actbtn'+(mAlcohol?" on":"")+'" id="alcSi">Sí</button><button class="actbtn'+(!mAlcohol?" on":"")+'" id="alcNo">No</button></div>';
@@ -2440,6 +2454,7 @@ function addFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
   const kcal=ki.value!==""?parseFloat(ki.value):null;
+  delete mEst[mi];   // el supuesto era de esa comida, no de la siguiente
   syncModal();mFood[MOMENTS[mi]].push({desc:desc,kcal:kcal});renderModal();
 }
 /* Rescata lo que el usuario escribió pero no confirmó con ＋ */
@@ -2462,6 +2477,54 @@ function markPending(mi){
 }
 /* --- Sugerencias de comida con IA --- */
 let sugCache={},sugAbierta=null,sugCargando=false;
+/* Última estimación de IA por momento del día: mEst[mi] = {base, kcal, supuesto, escala}.
+   `base` es lo que estimó el modelo y `escala` el ajuste que hizo el usuario, así
+   que corregir dos veces no acumula redondeos: siempre se recalcula sobre base. */
+let mEst={};
+/* El ajuste es una escalera de pasos enteros, no un multiplicador acumulado:
+   así «más chico» es exactamente el inverso de «más grande» y nada deriva por
+   redondeo de flotantes. Tope de 4 pasos por lado (de 0,35× a 2,86×). */
+const ESC_PASOS=4,ESC_FACTOR=1.3;
+function ajustarPorcion(mi,dir){
+  const e=mEst[mi];if(!e)return;
+  const paso=Math.min(ESC_PASOS,Math.max(-ESC_PASOS,(e.paso||0)+(dir>0?1:-1)));
+  e.paso=paso;
+  e.escala=Math.pow(ESC_FACTOR,paso);
+  e.kcal=Math.max(1,Math.round(e.base*e.escala));
+  const ki=el("fak"+mi);if(ki)ki.value=e.kcal;
+}
+function escalaTexto(esc){
+  if(esc>1.6)return "mucho más grande";
+  if(esc>1.1)return "más grande";
+  if(esc<0.62)return "mucho más chico";
+  if(esc<0.9)return "más chico";
+  return "como lo estimó";
+}
+/* El recuadro del supuesto. Se pinta solo, sin pasar por renderModal(), porque
+   lo que el usuario escribió en los campos de comida vive únicamente en el DOM. */
+function estimacionHTML(mi){
+  const e=mEst[mi];if(!e)return "";
+  let h='<div class="estbox"><div class="et">';
+  h+=e.supuesto?('Calculé sobre: <b>'+esc(e.supuesto)+'</b>')
+               :'Estimación sobre una porción típica.';
+  h+='</div><div class="eb">';
+  h+='<button class="estbtn" data-esc="'+mi+'_-1" title="Era una porción más chica">− más chico</button>';
+  h+='<span class="ev">'+e.kcal+' kcal</span>';
+  h+='<button class="estbtn" data-esc="'+mi+'_1" title="Era una porción más grande">más grande +</button>';
+  h+='</div>';
+  if(e.paso)h+='<div class="en">Ajustado: '+escalaTexto(e.escala)+' que lo estimado ('+Math.round(e.escala*100)+'%)</div>';
+  h+='</div>';
+  return h;
+}
+function pintarEstimacion(mi){
+  const box=el("festbox"+mi);if(!box)return;
+  box.innerHTML=estimacionHTML(mi);
+  box.querySelectorAll("[data-esc]").forEach(b=>b.onclick=()=>{
+    const p=b.dataset.esc.split("_");
+    ajustarPorcion(parseInt(p[0]),parseInt(p[1]));
+    pintarEstimacion(parseInt(p[0]));
+  });
+}
 function renderSugerenciasHTML(mi){
   if(sugAbierta!==mi)return "";
   if(sugCargando)return '<div class="sugload">Pensando ideas para vos…</div>';
@@ -2512,7 +2575,17 @@ async function estimateFood(mi){
   try{
     const {data,error}=await sb.functions.invoke("estimar-calorias",{body:{desc:desc}});
     if(error)throw error;
-    if(data&&data.kcal!=null){ki.value=data.kcal;toast("≈ "+data.kcal+" kcal estimadas");}
+    if(data&&data.kcal!=null&&data.kcal>0){
+      ki.value=data.kcal;
+      // Se guarda el supuesto de porción para poder mostrarlo y dejar corregirlo:
+      // toda la diferencia entre la app y el usuario resultó ser de porciones,
+      // y hasta ahora el usuario no tenía forma de ver sobre qué se calculó.
+      mEst[mi]={base:data.kcal,kcal:data.kcal,supuesto:data.supuesto||null,escala:1,paso:0};
+      // Se pinta sólo el recuadro, sin renderModal(): lo que el usuario escribió
+      // en los campos de comida vive en el DOM y un re-render lo perdería.
+      pintarEstimacion(mi);
+      toast("≈ "+data.kcal+" kcal estimadas");
+    }
     else if(data&&data.error==="sinclave")toast("Falta ANTHROPIC_KEY en los secretos de la función");
     else toast("No pude estimar, probá de nuevo");
   }catch(e){toast("No pude estimar: revisá que la función esté desplegada");}
@@ -2655,6 +2728,13 @@ function attachModal(){
     renderModal();});
   document.querySelectorAll("[data-frm]").forEach(x=>x.onclick=()=>{syncModal();const p=x.dataset.frm.split("_");mFood[MOMENTS[+p[0]]].splice(+p[1],1);renderModal();});
   document.querySelectorAll("[data-fadd]").forEach(x=>x.onclick=()=>addFood(+x.dataset.fadd));
+  // Los botones del recuadro de estimación: tras un renderModal() vienen sin
+  // handler, porque estimacionHTML() sólo devuelve el marcado.
+  document.querySelectorAll("[data-esc]").forEach(b=>b.onclick=()=>{
+    const p=b.dataset.esc.split("_");
+    ajustarPorcion(parseInt(p[0]),parseInt(p[1]));
+    pintarEstimacion(parseInt(p[0]));
+  });
   document.querySelectorAll("[data-est]").forEach(x=>x.onclick=()=>estimateFood(+x.dataset.est));
   document.querySelectorAll("[data-drm]").forEach(x=>x.onclick=()=>delDiario(parseInt(x.dataset.drm)));
   const inp=el("exSearch");if(inp){inp.oninput=()=>renderExSuggest(inp.value);inp.onfocus=()=>renderExSuggest(inp.value);}
