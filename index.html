@@ -212,6 +212,8 @@
   .faddrow{display:flex;gap:6px;margin-top:6px}
   .faddrow input.k{width:70px;text-align:center;font-family:"Sometype Mono",monospace}
   .faddrow .est{border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:10px;width:44px;font-size:var(--fs-8);cursor:pointer}
+  .faddrow .est.foto{font-size:var(--fs-7)}
+  .faddrow .est:disabled{opacity:.5;cursor:default}
   .faddrow .add{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:10px;width:44px;font-size:var(--fs-9);cursor:pointer}
   /* Supuesto de porción de la estimación, con corrección en un toque.
      La medición del 28/9 mostró que toda la discrepancia es de porciones, y el
@@ -2218,14 +2220,18 @@ function renderWellBody(){
   return h;
 }
 function renderFoodBody(){
-  let h='<div class="fhint">Escribí el alimento, poné las kcal (o tocá ✨) y sumalo con <b>＋</b> o <b>Enter</b>. Si te lo olvidás, al guardar lo agregamos igual.</div>';
+  let h='<div class="fhint">Escribí el alimento y poné las kcal, o tocá <b>✨</b> para estimarlas y <b>📷</b> para sacarle una foto. Sumalo con <b>＋</b> o <b>Enter</b>; si te lo olvidás, al guardar lo agregamos igual.</div>';
   MOMENTS.forEach((m,mi)=>{
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
     h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span style="display:flex;align-items:center;gap:8px"><span class="mk">'+(sub>0?sub+" kcal":"")+'</span><button class="sugbtn" data-sug="'+mi+'">✨ ideas</button></span></div>';
     h+='<div class="sugbox'+(sugAbierta===mi?" show":"")+'" id="sugbox'+mi+'">'+renderSugerenciasHTML(mi)+'</div>';
     mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><span class="fk">'+(it.kcal!=null?it.kcal+" kcal":"—")+'</span><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
-    h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal"><button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button><button class="add" data-fadd="'+mi+'">＋</button></div>';
+    h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal">'+
+       '<button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button>'+
+       '<button class="est foto" data-foto="'+mi+'" id="ffot'+mi+'" title="Estimar desde una foto">📷</button>'+
+       '<input type="file" accept="image/*" capture="environment" id="ffile'+mi+'" hidden>'+
+       '<button class="add" data-fadd="'+mi+'">＋</button></div>';
     h+='<div id="festbox'+mi+'">'+estimacionHTML(mi)+'</div></div>';
   });
   if(permiteAlcohol()){
@@ -2568,27 +2574,81 @@ function agregarSugerencia(mi,idx){
   renderModal();
   toast("Agregado a "+MOMENTS[mi]);
 }
+/* Aplica el resultado de una estimación, venga de texto o de foto. */
+function aplicarEstimacion(mi,data){
+  if(!(data&&data.kcal!=null&&data.kcal>0))return false;
+  const ki=el("fak"+mi);if(ki)ki.value=data.kcal;
+  // Se guarda el supuesto de porción para poder mostrarlo y dejar corregirlo:
+  // toda la diferencia entre la app y el usuario resultó ser de porciones,
+  // y hasta ahora el usuario no tenía forma de ver sobre qué se calculó.
+  mEst[mi]={base:data.kcal,kcal:data.kcal,supuesto:data.supuesto||null,escala:1,paso:0};
+  // Se pinta sólo el recuadro, sin renderModal(): lo que el usuario escribió
+  // en los campos de comida vive en el DOM y un re-render lo perdería.
+  pintarEstimacion(mi);
+  return true;
+}
+const ERR_EST={sinclave:"Falta ANTHROPIC_KEY en los secretos de la función",
+  tipo_img:"Ese formato de imagen no sirve, probá con una foto normal",
+  img_grande:"La foto quedó demasiado grande, probá de nuevo",
+  vacio:"Escribí el alimento o saca una foto"};
+function avisarErrorEst(data){
+  const m=data&&data.error&&ERR_EST[data.error];
+  toast(m||"No pude estimar, probá de nuevo");
+}
 async function estimateFood(mi){
-  const di=el("fad"+mi),ki=el("fak"+mi),btn=el("fest"+mi);
+  const di=el("fad"+mi),btn=el("fest"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
   btn.disabled=true;const old=btn.textContent;btn.textContent="…";
   try{
     const {data,error}=await sb.functions.invoke("estimar-calorias",{body:{desc:desc}});
     if(error)throw error;
-    if(data&&data.kcal!=null&&data.kcal>0){
-      ki.value=data.kcal;
-      // Se guarda el supuesto de porción para poder mostrarlo y dejar corregirlo:
-      // toda la diferencia entre la app y el usuario resultó ser de porciones,
-      // y hasta ahora el usuario no tenía forma de ver sobre qué se calculó.
-      mEst[mi]={base:data.kcal,kcal:data.kcal,supuesto:data.supuesto||null,escala:1,paso:0};
-      // Se pinta sólo el recuadro, sin renderModal(): lo que el usuario escribió
-      // en los campos de comida vive en el DOM y un re-render lo perdería.
-      pintarEstimacion(mi);
-      toast("≈ "+data.kcal+" kcal estimadas");
-    }
-    else if(data&&data.error==="sinclave")toast("Falta ANTHROPIC_KEY en los secretos de la función");
-    else toast("No pude estimar, probá de nuevo");
+    if(aplicarEstimacion(mi,data))toast("≈ "+data.kcal+" kcal estimadas");
+    else avisarErrorEst(data);
   }catch(e){toast("No pude estimar: revisá que la función esté desplegada");}
+  btn.disabled=false;btn.textContent=old;
+}
+/* --- Estimar desde una foto ---
+   Una foto de celular sin tocar son varios MB, así que se redimensiona en el
+   cliente antes de subirla: a 1024 px de lado mayor una etiqueta nutricional
+   sigue siendo legible y el peso baja a ~250 KB. La foto no se guarda en ningún
+   lado: se usa para estimar y se descarta. */
+const FOTO_LADO=1024, FOTO_CALIDAD=0.82;
+function medidaEscalada(w,h,maxLado){
+  const may=Math.max(w,h);
+  if(!may)return {w:0,h:0};
+  if(may<=maxLado)return {w:Math.round(w),h:Math.round(h)};
+  const f=maxLado/may;
+  return {w:Math.max(1,Math.round(w*f)),h:Math.max(1,Math.round(h*f))};
+}
+async function fotoAJpeg(file){
+  // createImageBitmap con from-image respeta la orientación EXIF; sin eso, una
+  // foto vertical de celular llega rotada y el modelo la lee peor.
+  let bmp;
+  try{bmp=await createImageBitmap(file,{imageOrientation:"from-image"});}
+  catch(e){bmp=await createImageBitmap(file);}
+  const d=medidaEscalada(bmp.width,bmp.height,FOTO_LADO);
+  const cv=document.createElement("canvas");cv.width=d.w;cv.height=d.h;
+  cv.getContext("2d").drawImage(bmp,0,0,d.w,d.h);
+  if(bmp.close)bmp.close();
+  const url=cv.toDataURL("image/jpeg",FOTO_CALIDAD);
+  return {media_type:"image/jpeg",data:url.slice(url.indexOf(",")+1)};
+}
+async function estimarDesdeFoto(mi,file){
+  const btn=el("ffot"+mi),di=el("fad"+mi);
+  if(!file)return;
+  btn.disabled=true;const old=btn.textContent;btn.textContent="…";
+  try{
+    const img=await fotoAJpeg(file);
+    const desc=(di&&di.value||"").trim();
+    const {data,error}=await sb.functions.invoke("estimar-calorias",{body:{img:img,desc:desc||undefined}});
+    if(error)throw error;
+    if(aplicarEstimacion(mi,data)){
+      // Sin descripción escrita, se usa lo que el modelo reconoció, para que el
+      // renglón no quede como «(foto)» en el historial y sirva al buscador.
+      if(di&&!desc&&data.supuesto)di.value=String(data.supuesto).split(/[.,;(]/)[0].trim().slice(0,60);
+      toast("≈ "+data.kcal+" kcal desde la foto");
+    }else avisarErrorEst(data);
+  }catch(e){toast("No pude leer la foto, probá de nuevo");}
   btn.disabled=false;btn.textContent=old;
 }
 /* --- Panel rápido de hidratación (desde el Calendario, para HOY) --- */
@@ -2736,6 +2796,13 @@ function attachModal(){
     pintarEstimacion(parseInt(p[0]));
   });
   document.querySelectorAll("[data-est]").forEach(x=>x.onclick=()=>estimateFood(+x.dataset.est));
+  // El 📷 abre el selector de archivo oculto; el input dispara la estimación.
+  document.querySelectorAll("[data-foto]").forEach(x=>x.onclick=()=>{
+    const mi=+x.dataset.foto,f=el("ffile"+mi);if(f)f.click();});
+  MOMENTS.forEach((m,mi)=>{
+    const f=el("ffile"+mi);
+    if(f)f.onchange=()=>{const file=f.files&&f.files[0];f.value="";estimarDesdeFoto(mi,file);};
+  });
   document.querySelectorAll("[data-drm]").forEach(x=>x.onclick=()=>delDiario(parseInt(x.dataset.drm)));
   const inp=el("exSearch");if(inp){inp.oninput=()=>renderExSuggest(inp.value);inp.onfocus=()=>renderExSuggest(inp.value);}
   habilitarArrastre(el("loggerBox"),".logrow",".agarre",(desde,hasta)=>{
