@@ -184,6 +184,12 @@
   .wzsw.on{background:var(--accent);border-color:var(--accent)}
   .wzsw.on i{transform:translateX(18px);background:var(--on-accent)}
   @media (prefers-reduced-motion:reduce){.wzsw,.wzsw i{transition:none}}
+  /* Zona de borrado de cuenta: se distingue del resto del perfil a propósito,
+     porque es la única acción irreversible de toda la app. */
+  .card.zona-roja{border-color:var(--bad-line)}
+  .act.peligro{background:var(--red);border-color:var(--red);color:#fff}
+  .act.ghost.peligro{background:transparent;border-color:var(--bad-line);color:var(--red)}
+  .act.peligro:disabled{opacity:.45;cursor:default}
   .lgbox{width:13px;height:13px;border-radius:4px;border:1px solid var(--line-2)}
   .lgbox.done{background:var(--ok-bg);border-color:var(--ok-line)}
   .lgbox.miss{background:var(--bad-bg);border-color:var(--bad-line)}
@@ -940,6 +946,7 @@
       <label class="fld">Sexo</label><div class="chips" id="pSexo"></div>
       <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
       <label class="fld">Peso inicial (kg)</label><input type="number" id="pPesoIni" step="0.1" inputmode="decimal">
+      <p class="muted" style="font-size:var(--fs-4);margin-top:5px">Es tu punto de partida, no tu peso de hoy: no hace falta actualizarlo. Tu peso actual se registra en <b>Progreso</b>, y ahí queda la evolución.</p>
       <label class="fld">Nivel de actividad</label><div class="chips" id="pFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="pObjetivo"></div>
       <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="pAjuste" inputmode="numeric">
@@ -978,8 +985,6 @@
         <div class="nrow"><span><span class="nl">🏋️ Día de actividad</span><br><span class="ns">Aviso los días de gimnasio o deporte</span></span><div class="acts"><button class="actbtn" id="nActSi">Sí</button><button class="actbtn" id="nActNo">No</button></div></div>
         <div class="horas"><div><label class="fld" style="margin-top:0">Hora del aviso de actividad</label><input type="time" id="nHoraAct"></div></div>
         <button class="act ghost" id="btnNotifTest" style="margin-top:14px">Probar una notificación</button>
-        <button class="act ghost" id="btnNotifDiag" style="margin-top:10px">🔎 Probar el envío del servidor</button>
-        <div id="notifDiag" style="display:none;margin-top:10px;font-family:'Sometype Mono',monospace;font-size:var(--fs-3);background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto"></div>
         <button class="act ghost" id="btnNotifOff" style="margin-top:10px">Desactivar en este dispositivo</button>
       </div>
     </div>
@@ -988,6 +993,22 @@
       <span class="tag">Ayuda</span><h2 style="margin:3px 0 8px">¿Necesitás una mano?</h2>
       <p class="muted" style="font-size:var(--fs-6);margin-bottom:12px">Volvé a ver la introducción cuando quieras. Y recordá: en cada sección tenés el signo <b>?</b> arriba a la derecha para un recordatorio rápido.</p>
       <button class="act ghost" id="btnVerTour">🎬 Ver el tutorial de nuevo</button>
+    </div>
+    <!-- Borrado de cuenta. Google Play lo exige dentro de la app para cualquier
+         app con cuentas de usuario; ver sección 8 del documento técnico. -->
+    <div class="card zona-roja">
+      <span class="tag">Tu cuenta</span><h2 style="margin:3px 0 4px">Eliminar mi cuenta</h2>
+      <p class="muted" style="font-size:var(--fs-5)">Se borra tu cuenta y <b>todos</b> tus datos: actividad, peso y medidas, comidas, entrenamientos, bienestar, diario, recuerdos e historias. No se puede deshacer y no guardamos copias.</p>
+      <div id="borrarPaso1">
+        <button class="act ghost peligro" id="btnBorrarCuenta" style="margin-top:12px">Eliminar mi cuenta</button>
+      </div>
+      <div id="borrarPaso2" hidden>
+        <label class="fld">Escribí tu email para confirmar</label>
+        <input type="email" id="borrarMail" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="tu@email.com">
+        <p class="muted" style="font-size:var(--fs-4);margin-top:6px">Te lo pedimos escrito para que no pase por accidente.</p>
+        <button class="act peligro" id="btnBorrarConfirmar" style="margin-top:12px" disabled>Sí, eliminar definitivamente</button>
+        <button class="act ghost" id="btnBorrarCancelar" style="margin-top:8px">Mejor no</button>
+      </div>
       <p class="privacy-note" style="margin-top:14px"><a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a></p>
     </div>
   </section>
@@ -2115,10 +2136,10 @@ function obPaso2(){
 }
 function obPaso3(){
   return '<div class="wzq"><h1>Tu altura y tu peso</h1>'+
-    '<p>El peso lo vas a poder ir registrando con el tiempo: esto es sólo el punto de partida.</p>'+
+    '<p>Tu punto de partida. Después vas a ir registrando tu peso desde Progreso, y esto queda como la marca del día uno.</p>'+
     '<div class="frow"><div><label class="fld" style="margin-top:0">Altura (cm)</label>'+
     '<input type="number" id="obAlt" class="wzbig" inputmode="numeric" placeholder="170" value="'+escA(ob.alt)+'"></div>'+
-    '<div><label class="fld" style="margin-top:0">Peso (kg)</label>'+
+    '<div><label class="fld" style="margin-top:0">Peso inicial (kg)</label>'+
     '<input type="number" id="obPeso" class="wzbig" step="0.1" inputmode="decimal" placeholder="70" value="'+escA(ob.pesoSalteado?"":ob.peso)+'"'+(ob.pesoSalteado?" disabled":"")+'></div></div>'+
     (ob.pesoSalteado
       ? '<div class="wzwarn">Vamos a calcular con <b>70 kg</b> aproximados, así que tu objetivo va a estar impreciso hasta que registres tu peso real desde Progreso.</div>'
@@ -5588,35 +5609,33 @@ async function guardarNotifHoras(){
   try{await sb.from("perfiles").update(payload).eq("user_id",user.id);toast("Horarios guardados ✓");}
   catch(e){toast("No se pudieron guardar los horarios");}
 }
-// Llama a la Edge Function en modo prueba: fuerza los avisos y muestra qué pasó.
-async function diagnosticarPush(){
-  const box=el("notifDiag");
-  box.style.display="block";
-  box.textContent="Consultando al servidor…";
+/* El botón «Probar el envío del servidor» se quitó el 28/9/2026. Llamaba a
+   `enviar-notificaciones` desde el navegador, y esa función corre con la clave
+   service-role: recorre TODOS los perfiles con avisos activos y devuelve, por
+   usuario, su huso horario y cuántos dispositivos tiene suscriptos. Exponerla
+   desde el frontend hacía que cualquiera con la URL pudiera dispararla y leer
+   ese detalle de terceros. El diagnóstico se hace desde los logs de Supabase.
+   `probarNotif()` se queda: muestra una notificación local, no toca el servidor. */
+/* Borra la cuenta del usuario que está en sesión. La cola de días pendientes se
+   limpia primero: si quedara algo encolado, el siguiente usuario de este
+   dispositivo vería intentos de subir días de una cuenta que ya no existe. */
+async function borrarCuenta(){
   try{
-    const {data,error}=await sb.functions.invoke("enviar-notificaciones",{body:{}});
+    const {data,error}=await sb.functions.invoke("borrar-cuenta",{body:{confirmar:"ELIMINAR"}});
     if(error)throw error;
-    let t="";
-    if(data.aviso)t+="⚠️ "+data.aviso+"\n\n";
-    t+="Modo: "+(data.modo||"?")+"\n";
-    t+="Enviados: "+(data.enviados!=null?data.enviados:"?")+"\n";
-    (data.pasos||[]).forEach(p=>{t+="· "+p+"\n";});
-    (data.usuarios||[]).forEach(u=>{
-      t+="\nHora local detectada: "+(u.horaLocal||"?")+" ("+(u.fechaLocal||"?")+", UTC"+(u.tzOffset>=0?"+":"")+u.tzOffset+")\n";
-      t+="Dispositivos suscriptos: "+u.subs+"\n";
-      if(u.aviso)t+="⚠️ "+u.aviso+"\n";
-      t+="Avisos evaluados: "+((u.avisos&&u.avisos.length)?u.avisos.join(", "):"ninguno")+"\n";
-    });
-    if(data.errores&&data.errores.length){
-      t+="\n❌ ERRORES:\n";
-      data.errores.forEach(e=>{t+="· "+e+"\n";});
-    }else if(data.enviados>0){
-      t+="\n✅ Envío correcto. Deberías recibir las notificaciones en unos segundos.";
+    if(!data||!data.ok){
+      const msgs={sin_confirmar:"No se pudo confirmar el borrado.",
+        sesion_invalida:"Tu sesión expiró. Volvé a entrar y probá otra vez.",
+        no_auth:"Tu sesión expiró. Volvé a entrar y probá otra vez."};
+      toast((data&&msgs[data.error])||"No se pudo eliminar la cuenta. Probá de nuevo.");
+      return;
     }
-    box.textContent=t;
+    try{localStorage.removeItem(CLAVE_PEND);}catch(e){}
+    try{await sb.auth.signOut();}catch(e){}
+    alert("Tu cuenta y todos tus datos fueron eliminados.\n\nGracias por haber usado Entreno.");
+    location.reload();
   }catch(e){
-    box.textContent="No se pudo consultar: "+(e&&e.message?e.message:String(e))+
-      "\n\nRevisá que la función enviar-notificaciones esté desplegada con la versión nueva.";
+    toast("No se pudo eliminar la cuenta: revisá que la función borrar-cuenta esté desplegada");
   }
 }
 async function probarNotif(){
@@ -5714,7 +5733,6 @@ function init(){
   el("btnNotifOn").onclick=()=>conBoton("btnNotifOn",activarPush);
   el("btnNotifOff").onclick=()=>conBoton("btnNotifOff",desactivarPush);
   el("btnNotifTest").onclick=probarNotif;
-  el("btnNotifDiag").onclick=()=>conBoton("btnNotifDiag",diagnosticarPush);
   ["nHoraAm","nHoraPm","nHoraAct"].forEach(id=>{const i=el(id);if(i)i.onchange=guardarNotifHoras;});
   registrarSW();
   navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",e=>{
@@ -5729,6 +5747,25 @@ function init(){
   ["subHistoria","subHistoria2"].forEach(id=>{if(el(id))el(id).onclick=()=>showSubDiario("historia");});
   el("btnHelp").onclick=()=>showTip(currentView(),true);
   el("btnVerTour").onclick=()=>startTour();
+  /* --- Borrado de cuenta ---
+     Dos pasos y con el email escrito a mano: es irreversible y borra datos de
+     salud, así que un botón suelto no alcanza. El borrado real lo hace la edge
+     function `borrar-cuenta`, que saca la identidad del JWT y no acepta un id por
+     parámetro: no hay forma de pedirle que borre la cuenta de otro. */
+  el("btnBorrarCuenta").onclick=()=>{
+    el("borrarPaso1").hidden=true;el("borrarPaso2").hidden=false;
+    const i=el("borrarMail");i.value="";el("btnBorrarConfirmar").disabled=true;
+    setTimeout(()=>{try{i.focus();}catch(e){}},50);
+  };
+  el("btnBorrarCancelar").onclick=()=>{
+    el("borrarPaso2").hidden=true;el("borrarPaso1").hidden=false;
+  };
+  el("borrarMail").oninput=()=>{
+    const esperado=String((user&&user.email)||"").trim().toLowerCase();
+    el("btnBorrarConfirmar").disabled=
+      el("borrarMail").value.trim().toLowerCase()!==esperado||!esperado;
+  };
+  el("btnBorrarConfirmar").onclick=()=>conBoton("btnBorrarConfirmar",borrarCuenta);
   el("subRutinas").onclick=()=>showSub("rutinas");
   el("subPlan").onclick=()=>showSub("plan");
   if(el("subRutinas2"))el("subRutinas2").onclick=()=>showSub("rutinas");
