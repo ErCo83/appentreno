@@ -101,6 +101,78 @@
   .legrow:first-child{border-top:none}
   .legrow span{display:flex;align-items:center;gap:4px}
   .legcap{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);width:60px;flex:none}
+  /* ---------- Onboarding: una pregunta por pantalla ----------
+     Ver appentreno-docs/DISENO-ONBOARDING.md. La regla es que un paso no scrollea:
+     si no entra en una pantalla de teléfono, el paso tiene demasiado. */
+  #onboardView{max-width:460px;margin:0 auto;padding:0 16px 24px;
+    min-height:100svh;display:flex;flex-direction:column}
+  .wzbar{height:3px;background:var(--line);border-radius:99px;margin-top:14px;overflow:hidden;flex:none}
+  .wzbar span{display:block;height:100%;background:var(--accent);border-radius:99px;
+    width:0;transition:width .32s cubic-bezier(.4,0,.2,1)}
+  @media (prefers-reduced-motion:reduce){.wzbar span{transition:none}}
+  .wztop{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    min-height:44px;margin-top:6px;flex:none}
+  .wztop #wzBack{background:none;border:none;color:var(--ink-soft);font-size:var(--fs-11);
+    line-height:1;cursor:pointer;padding:0 8px 0 0;margin-left:-8px}
+  .wzcount{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-left:auto}
+  .wzstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 0 18px}
+  .wzstep.entra{animation:wzIn .24s cubic-bezier(.2,0,0,1) both}
+  @keyframes wzIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.wzstep.entra{animation:none}}
+  .wzq h1{font-size:var(--fs-12);font-weight:800;line-height:1.15;letter-spacing:-.02em}
+  .wzq p{font-size:var(--fs-6);color:var(--ink-soft);line-height:1.45;margin-top:8px}
+  .wzq.center{text-align:center}
+  input.wzbig{font-size:var(--fs-10);font-weight:700;padding:14px 12px;margin-top:10px}
+  .wzfoot{flex:none;padding-top:4px}
+  .wzfoot .act:disabled{opacity:.4;cursor:default}
+  .wzskip{display:block;width:100%;background:none;border:none;color:var(--ink-soft);
+    font-size:var(--fs-5);padding:12px 0 2px;cursor:pointer;text-decoration:underline}
+  .wzerr{margin-top:10px;font-size:var(--fs-5);color:var(--bad-ink);
+    background:var(--bad-bg);border:1px solid var(--bad-line);border-radius:10px;padding:8px 10px}
+  .wzwarn{margin-top:12px;font-size:var(--fs-5);color:var(--bad-ink);background:var(--warn-bg);
+    border:1px solid var(--accent-soft);border-radius:10px;padding:9px 11px;line-height:1.4}
+  .wzhint{font-size:var(--fs-4);color:var(--ink-faint);margin-top:6px;line-height:1.4}
+  .wzlink{background:none;border:none;color:var(--accent);font-size:var(--fs-5);
+    padding:12px 0 0;cursor:pointer;text-decoration:underline}
+  /* Lista de opciones con explicación: cinco niveles de actividad en pastillas de
+     una palabra eran indescifrables, y elegir mal distorsiona todo el objetivo. */
+  .optlist{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .opt{display:grid;grid-template-columns:1fr;gap:2px;text-align:left;cursor:pointer;
+    background:var(--surface);border:1px solid var(--line-2);border-radius:13px;padding:12px 14px;
+    color:var(--ink);transition:border-color .12s,background .12s}
+  .opt .oem{font-size:var(--fs-9);line-height:1}
+  .opt .on1{font-size:var(--fs-7);font-weight:700}
+  .opt .on2{font-size:var(--fs-4);color:var(--ink-soft);line-height:1.35}
+  .opt.on{border-color:var(--accent);background:var(--ok-bg)}
+  .opt.on .on2{color:var(--ink-soft)}
+  @media (prefers-reduced-motion:reduce){.opt{transition:none}}
+  /* El premio: el objetivo calórico, que cuenta hacia arriba al entrar al paso */
+  .wzeye{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .wzbignum b{display:block;font-size:clamp(56px,18vw,86px);font-weight:800;line-height:1;
+    letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+  .wzbignum span{display:block;font-size:var(--fs-6);color:var(--ink-soft);margin-top:4px}
+  .wzcalc{margin-top:22px;text-align:left;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .wzrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    font-size:var(--fs-5);padding:5px 0;color:var(--ink-soft)}
+  .wzrow b{font-family:"Sometype Mono",monospace;color:var(--ink);flex:none}
+  .wzrow.tot{border-top:1px solid var(--line-2);margin-top:5px;padding-top:9px;color:var(--ink)}
+  .wzrow.tot b{color:var(--accent);font-weight:700}
+  /* Interruptor del ciclo menstrual: se pregunta, ya no se infiere del sexo */
+  .wzopt{display:flex;align-items:flex-start;gap:12px;margin-top:20px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:13px;padding:12px 14px}
+  .wzoptx{flex:1}
+  .wzoptx b{display:block;font-size:var(--fs-6)}
+  .wzoptx span{display:block;font-size:var(--fs-4);color:var(--ink-soft);margin-top:3px;line-height:1.35}
+  .wzsw{flex:none;width:46px;height:28px;border-radius:99px;border:1px solid var(--line-2);
+    background:var(--bg);cursor:pointer;padding:0;position:relative;transition:background .16s,border-color .16s}
+  .wzsw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+    background:var(--ink-faint);transition:transform .16s,background .16s}
+  .wzsw.on{background:var(--accent);border-color:var(--accent)}
+  .wzsw.on i{transform:translateX(18px);background:var(--on-accent)}
+  @media (prefers-reduced-motion:reduce){.wzsw,.wzsw i{transition:none}}
   .lgbox{width:13px;height:13px;border-radius:4px;border:1px solid var(--line-2)}
   .lgbox.done{background:var(--ok-bg);border-color:var(--ok-line)}
   .lgbox.miss{background:var(--bad-bg);border-color:var(--bad-line)}
@@ -693,26 +765,19 @@
     </div>
   </section>
 
+  <!-- Onboarding: una pregunta por pantalla, con el objetivo calórico como premio
+       en el paso 6. Ver appentreno-docs/DISENO-ONBOARDING.md -->
   <section id="onboardView" hidden>
-    <div class="card">
-      <span class="tag">Paso 1 de 2</span><h2 style="margin:3px 0 6px">¡Bienvenido/a! 👋</h2>
-      <p class="muted" style="font-size:var(--fs-6)">Contanos de vos para calcular tu objetivo calórico. Todo se puede cambiar después desde Perfil.</p>
-      <label class="fld">Tu nombre</label><input type="text" id="oNombre" placeholder="¿Cómo te llamamos?">
-      <label class="fld">Sexo</label><div class="chips" id="oSexo"></div>
-      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="oNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="oAlt" inputmode="numeric" placeholder="170"></div></div>
-      <label class="fld">Peso actual (kg)</label><input type="number" id="oPeso" step="0.1" inputmode="decimal" placeholder="70">
-      <label class="fld">Nivel de actividad</label><div class="chips" id="oFactor"></div>
-      <label class="fld">Objetivo</label><div class="chips" id="oObjetivo"></div>
-      <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="oAjuste" inputmode="numeric">
-      <p class="muted" style="font-size:var(--fs-5);margin-top:4px">Se sugiere solo según tu objetivo; podés ajustarlo.</p>
+    <div class="wzbar"><span id="wzFill"></span></div>
+    <div class="wztop">
+      <button id="wzBack" aria-label="Volver al paso anterior">‹</button>
+      <span class="wzcount" id="wzCount"></span>
     </div>
-    <div class="card">
-      <span class="tag">Paso 2 de 2</span><h2 style="margin:3px 0 6px">Tu semana</h2>
-      <div class="note" id="obReco" style="margin-top:8px"></div>
-      <div id="obPlanEditor"></div>
-      <p class="muted" style="font-size:var(--fs-5);margin-top:10px">Es una sugerencia según tu objetivo: tocá los días para acomodarla a tu vida real.</p>
+    <div class="wzstep" id="wzStep"></div>
+    <div class="wzfoot">
+      <button class="act" id="wzNext">Seguir</button>
+      <button class="wzskip" id="wzSkip" hidden>Prefiero no decirlo</button>
     </div>
-    <button class="act" id="btnOnboard" style="margin-bottom:20px">Empezar 🚀</button>
   </section>
 
   <section class="view" id="v-cal">
@@ -1287,7 +1352,28 @@ function esMenor(){try{return age()<18;}catch(e){return false;}}
 function permiteAlcohol(){return perfil.registra_alcohol && !esMenor();}
 function permiteFumar(){return perfil.registra_fumar && !esMenor();}
 function latestWeight(){const p=medidas.filter(m=>m.peso_kg!=null);if(p.length)return Number(p[p.length-1].peso_kg);return perfil.peso_inicial_kg?Number(perfil.peso_inicial_kg):70;}
-function calorieTarget(){const w=latestWeight(),h=perfil.altura_cm,a=age();const bmr=10*w+6.25*h-5*a+(perfil.sexo==="M"?5:-161);return Math.round((bmr*Number(perfil.factor_actividad)+Number(perfil.ajuste_kcal||0))/10)*10;}
+/* Mifflin-St Jeor + factor de actividad + ajuste. Se extrajo como función pura
+   porque el onboarding necesita mostrar el objetivo ANTES de que exista `perfil`,
+   y devuelve el desglose para poder explicarlo en pantalla en vez de mostrar un
+   número sin origen. */
+const PESO_SUPUESTO=70;   // cuando el usuario saltea el peso en el onboarding
+function edadDe(nacimiento){
+  const b=parse(nacimiento),t=new Date();let a=t.getFullYear()-b.getFullYear();
+  if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;
+  return a;
+}
+function calcObjetivo(d){
+  const w=Number(d.peso)||PESO_SUPUESTO, h=Number(d.altura)||0, a=Number(d.edad)||0;
+  const bmr=10*w+6.25*h-5*a+(d.sexo==="M"?5:-161);
+  const f=Number(d.factor)||1, aj=Number(d.ajuste||0);
+  return {bmr:Math.round(bmr),factor:f,ajuste:aj,
+    mantenimiento:Math.round(bmr*f),
+    total:Math.round((bmr*f+aj)/10)*10};
+}
+function calorieTarget(){
+  return calcObjetivo({peso:latestWeight(),altura:perfil.altura_cm,edad:age(),
+    sexo:perfil.sexo,factor:perfil.factor_actividad,ajuste:perfil.ajuste_kcal}).total;
+}
 // Referencia general de hidratación: ~35 ml por kg, +500 ml los días de actividad.
 // Es orientativo, no una indicación médica.
 // Opciones de mate. Los ml son lo efectivamente ingerido: se descuenta
@@ -1922,36 +2008,253 @@ async function volverAlPlanBase(){
     renderAll();renderPlanTab();toast("Semana "+planSemSel+" vuelve al plan base");
   }catch(e){toast("No se pudo: "+traducir(e));}
 }
-let obSexo=null,obFactor="1.375",obObjetivo="mantener",obPlan=null;
+/* ---------- ONBOARDING: UNA PREGUNTA POR PANTALLA ----------
+   Antes era un formulario de nueve campos en dos tarjetas, que validaba todo al
+   final con toasts: se contestaba todo y recién entonces te decía que algo estaba
+   mal. Y el último campo se llamaba «Ajuste calórico diario», que es jerga.
+
+   Ahora son siete pasos, cada uno con una pregunta, y el paso 6 no pregunta nada:
+   revela el objetivo calórico con su desglose. Ése es el punto: que la persona vea
+   para qué sirvió lo que cargó. Ver appentreno-docs/DISENO-ONBOARDING.md */
+const OB_PASOS=7;
+let ob={paso:1,nombre:"",sexo:null,nac:"",alt:"",peso:"",pesoSalteado:false,
+        factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false};
+let obPlan=null;   // lo usa buildEditor/syncEditor con el prefijo "ob_"
+
+/* Los niveles de actividad explicados por lo que la persona hace. Antes eran una
+   palabra sola («Moderado») y nadie sabe cuál es el suyo, pero elegir mal acá
+   distorsiona todo el objetivo calórico. */
+const OB_FACTORES=[
+  ["1.2","Sedentario","Trabajo sentado, no entreno"],
+  ["1.375","Ligero","Camino bastante, o entreno 1 o 2 veces por semana"],
+  ["1.55","Moderado","Entreno 3 a 5 veces por semana"],
+  ["1.725","Alto","Entreno casi todos los días"],
+  ["1.9","Muy alto","Entreno fuerte todos los días, o mi trabajo es físico"]];
+const OB_OBJETIVOS=[
+  ["bajar","🔻","Bajar grasa","Comer un poco menos de lo que gastás"],
+  ["musculo","💪","Ganar músculo","Comer un poco más, con entrenamiento de fuerza"],
+  ["mantener","⚖️","Mantener","Sostener tu peso actual"],
+  ["conocerme","🔍","Solo conocerme","Registrar sin objetivo de peso ni juicios"]];
+
 function startOnboarding(){
   setConn("ok","Cuenta creada");
   el("headEyebrow").textContent="¡bienvenido/a!";
-  obSexo=null;obFactor="1.375";obObjetivo="mantener";obPlan=tplFor(obObjetivo);
-  buildDateSelects("oNac");
-  el("oAjuste").value=SUGERIDO[obObjetivo];
-  refreshObChips();buildEditor("obPlanEditor",obPlan,"ob_");
-  el("obReco").textContent="💡 "+PLAN_RECO[obObjetivo];
-  el("btnOnboard").onclick=()=>conBoton("btnOnboard",saveOnboard);
+  ob={paso:1,nombre:"",sexo:null,nac:"",alt:"",peso:"",pesoSalteado:false,
+      factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false};
+  obPlan=null;
   showOnly("onboardView");
+  renderOb();
 }
-function refreshObChips(){
-  chipGroup("oSexo",[["M","Hombre"],["F","Mujer"]],obSexo,v=>{obSexo=v;refreshObChips();});
-  chipGroup("oFactor",FACTORES,obFactor,v=>{obFactor=v;refreshObChips();});
-  chipGroup("oObjetivo",OBJETIVOS,obObjetivo,v=>{obObjetivo=v;el("oAjuste").value=SUGERIDO[v];obPlan=tplFor(v);buildEditor("obPlanEditor",obPlan,"ob_");el("obReco").textContent="💡 "+PLAN_RECO[v];refreshObChips();});
+function obEdad(){try{return ob.nac?edadDe(ob.nac):null;}catch(e){return null;}}
+function obObjetivoCalc(){
+  return calcObjetivo({peso:ob.pesoSalteado?null:ob.peso,altura:ob.alt,edad:obEdad(),
+    sexo:ob.sexo,factor:ob.factor,ajuste:ob.ajuste!=null?ob.ajuste:SUGERIDO[ob.objetivo]});
 }
+/* Validación por paso: el botón de avanzar se habilita solo cuando el paso está
+   completo, y el motivo se muestra debajo del campo, no en un toast al final. */
+function obValido(paso){
+  if(paso===1)return ob.nombre.trim().length>0;
+  if(paso===2)return !!ob.sexo && !!ob.nac && ob.nac!=="INVALIDA";
+  if(paso===3){
+    const a=parseInt(ob.alt);
+    if(!(a>=100&&a<=250))return false;
+    if(ob.pesoSalteado||ob.peso==="")return true;
+    const p=parseFloat(ob.peso);return p>=25&&p<=350;
+  }
+  if(paso===4)return !!ob.factor;
+  if(paso===5)return !!ob.objetivo;
+  return true;
+}
+function obMotivo(paso){
+  if(paso===1&&!obValido(1))return "";
+  if(paso===2){
+    if(!ob.sexo)return "";
+    if(ob.nac==="INVALIDA")return "Esa fecha no existe, revisala";
+    if(!ob.nac)return "";
+  }
+  if(paso===3){
+    const a=parseInt(ob.alt);
+    if(ob.alt!==""&&!(a>=100&&a<=250))return "La altura tiene que estar entre 100 y 250 cm";
+    if(!ob.pesoSalteado&&ob.peso!==""){
+      const p=parseFloat(ob.peso);
+      if(!(p>=25&&p<=350))return "Ese peso no parece posible, revisalo";
+    }
+  }
+  return "";
+}
+/* ---------- Render de cada paso ---------- */
+function obPaso1(){
+  return '<div class="wzq"><h1>¿Cómo te llamamos?</h1>'+
+    '<p>Para que la app te hable como una persona y no como un formulario.</p>'+
+    '<input type="text" id="obNombre" class="wzbig" placeholder="Tu nombre" autocomplete="given-name" value="'+escA(ob.nombre)+'"></div>';
+}
+function obPaso2(){
+  let h='<div class="wzq"><h1>Contanos de vos</h1>'+
+    '<p>El sexo y la edad entran en el cálculo de cuántas calorías gastás en reposo. Son los dos únicos datos que la fórmula necesita de acá.</p>'+
+    '<label class="fld">Sexo</label><div class="chips" id="obSexoC"></div>'+
+    '<label class="fld">Fecha de nacimiento</label><div class="dsel" id="obNacC"></div>';
+  if(ob.sexo==="F"){
+    // Antes `registra_periodo` se activaba sola para todo perfil con sexo = F.
+    // Es seguimiento de salud íntima habilitado por inferencia: que lo elija ella.
+    h+='<div class="wzopt"><div class="wzoptx"><b>¿Querés registrar tu ciclo menstrual?</b>'+
+       '<span>La app puede predecir tus fases y cruzarlas con tu energía y ánimo. Se activa y se apaga cuando quieras.</span></div>'+
+       '<button class="wzsw'+(ob.ciclo?" on":"")+'" id="obCiclo" role="switch" aria-checked="'+(ob.ciclo?"true":"false")+'"><i></i></button></div>';
+  }
+  return h+'</div>';
+}
+function obPaso3(){
+  return '<div class="wzq"><h1>Tu altura y tu peso</h1>'+
+    '<p>El peso lo vas a poder ir registrando con el tiempo: esto es sólo el punto de partida.</p>'+
+    '<div class="frow"><div><label class="fld" style="margin-top:0">Altura (cm)</label>'+
+    '<input type="number" id="obAlt" class="wzbig" inputmode="numeric" placeholder="170" value="'+escA(ob.alt)+'"></div>'+
+    '<div><label class="fld" style="margin-top:0">Peso (kg)</label>'+
+    '<input type="number" id="obPeso" class="wzbig" step="0.1" inputmode="decimal" placeholder="70" value="'+escA(ob.pesoSalteado?"":ob.peso)+'"'+(ob.pesoSalteado?" disabled":"")+'></div></div>'+
+    (ob.pesoSalteado
+      ? '<div class="wzwarn">Vamos a calcular con <b>70 kg</b> aproximados, así que tu objetivo va a estar impreciso hasta que registres tu peso real desde Progreso.</div>'
+      : '')+
+    '</div>';
+}
+function obPaso4(){
+  return '<div class="wzq"><h1>¿Cuánto te movés?</h1>'+
+    '<p>Contá tu semana habitual, no la ideal. Es lo que más mueve tu objetivo calórico.</p>'+
+    '<div class="optlist" id="obFactorC">'+
+    OB_FACTORES.map(f=>'<button class="opt'+(ob.factor===f[0]?" on":"")+'" data-v="'+f[0]+'">'+
+      '<span class="on1">'+esc(f[1])+'</span><span class="on2">'+esc(f[2])+'</span></button>').join("")+
+    '</div></div>';
+}
+function obPaso5(){
+  return '<div class="wzq"><h1>¿Qué buscás?</h1>'+
+    '<p>Define cómo la app lee tus números. Se puede cambiar cuando quieras.</p>'+
+    '<div class="optlist" id="obObjC">'+
+    OB_OBJETIVOS.map(o=>'<button class="opt'+(ob.objetivo===o[0]?" on":"")+'" data-v="'+o[0]+'">'+
+      '<span class="oem">'+o[1]+'</span><span class="on1">'+esc(o[2])+'</span><span class="on2">'+esc(o[3])+'</span></button>').join("")+
+    '</div></div>';
+}
+function obPaso6(){
+  const c=obObjetivoCalc(),neutral=ob.objetivo==="conocerme";
+  const fLbl=(OB_FACTORES.find(f=>f[0]===ob.factor)||["","",""])[1];
+  let h='<div class="wzq center"><div class="wzeye">'+esc(ob.nombre.trim().split(" ")[0]||"Listo")+', esto es tu objetivo</div>'+
+    '<div class="wzbignum"><b id="obNum">0</b><span>kcal por día</span></div>';
+  h+='<div class="wzcalc">';
+  h+='<div class="wzrow"><span>Lo que gastás en reposo</span><b>'+c.bmr.toLocaleString("es-AR")+'</b></div>';
+  h+='<div class="wzrow"><span>Por tu actividad ('+esc(fLbl.toLowerCase())+')</span><b>×'+String(c.factor).replace(".",",")+'</b></div>';
+  h+='<div class="wzrow"><span>Gasto estimado del día</span><b>'+c.mantenimiento.toLocaleString("es-AR")+'</b></div>';
+  if(!neutral)h+='<div class="wzrow"><span>Ajuste por tu objetivo</span><b>'+(c.ajuste>0?"+":"")+c.ajuste.toLocaleString("es-AR")+'</b></div>';
+  h+='<div class="wzrow tot"><span>Tu objetivo</span><b>'+c.total.toLocaleString("es-AR")+' kcal</b></div>';
+  h+='</div>';
+  if(ob.pesoSalteado)h+='<div class="wzwarn">Calculado con 70 kg aproximados. Registrá tu peso desde Progreso para afinarlo.</div>';
+  if(ob.ajustando){
+    h+='<label class="fld">Ajuste diario (kcal)</label>'+
+       '<input type="number" id="obAjuste" inputmode="numeric" value="'+escA(c.ajuste)+'">'+
+       '<p class="wzhint">Negativo para déficit, positivo para superávit. Si no sabés, dejá el sugerido.</p>';
+  }else if(!neutral){
+    h+='<button class="wzlink" id="obAjustar">Ajustar el déficit o superávit</button>';
+  }
+  return h+'</div>';
+}
+function obPaso7(){
+  if(!obPlan)obPlan=tplFor(ob.objetivo||"mantener");
+  return '<div class="wzq"><h1>Tu semana</h1>'+
+    '<p>Armamos esta rutina según tu objetivo. Tocá los días que no te cierren — y no te preocupes, se cambia cuando quieras.</p>'+
+    '<div class="note">💡 '+esc(PLAN_RECO[ob.objetivo]||PLAN_RECO.mantener)+'</div>'+
+    '<div id="obPlanEditor"></div></div>';
+}
+const OB_RENDER=[obPaso1,obPaso2,obPaso3,obPaso4,obPaso5,obPaso6,obPaso7];
+
+/* Cuenta hacia arriba el objetivo calórico. Es el momento de impacto del
+   onboarding, así que vale la animación; se respeta prefers-reduced-motion. */
+function obAnimarNumero(destino){
+  const e=el("obNum");if(!e)return;
+  let quieto=false;
+  try{quieto=window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(x){}
+  if(quieto||!destino){e.textContent=destino.toLocaleString("es-AR");return;}
+  const t0=performance.now(),dur=900;
+  const paso=(t)=>{
+    const p=Math.min(1,(t-t0)/dur);
+    const suave=1-Math.pow(1-p,3);            // arranca rápido y frena
+    e.textContent=Math.round(destino*suave).toLocaleString("es-AR");
+    if(p<1)requestAnimationFrame(paso);
+  };
+  requestAnimationFrame(paso);
+}
+function renderOb(){
+  const n=ob.paso;
+  el("wzFill").style.width=Math.round((n/OB_PASOS)*100)+"%";
+  el("wzCount").textContent=n+" de "+OB_PASOS;
+  el("wzBack").hidden=(n===1);
+  const cont=el("wzStep");
+  cont.innerHTML=OB_RENDER[n-1]();
+  cont.classList.remove("entra");void cont.offsetWidth;cont.classList.add("entra");
+  const sig=el("wzNext");
+  sig.textContent=(n===OB_PASOS)?"Empezar 🚀":"Seguir";
+  sig.disabled=!obValido(n);
+  const motivo=obMotivo(n);
+  if(motivo){const d=document.createElement("div");d.className="wzerr";d.textContent=motivo;cont.appendChild(d);}
+  // El «prefiero no decirlo» sólo aplica al peso, que es el único campo opcional
+  const sk=el("wzSkip");
+  sk.hidden=!(n===3&&!ob.pesoSalteado);
+  sk.textContent="Prefiero no poner mi peso";
+  obEnganchar(n);
+}
+/* Conecta los controles del paso actual. Cada cambio guarda en `ob` y sólo
+   re-renderiza cuando hace falta, para no perder el foco mientras se escribe. */
+function obEnganchar(n){
+  const revalidar=()=>{el("wzNext").disabled=!obValido(ob.paso);};
+  if(n===1){
+    const i=el("obNombre");i.oninput=()=>{ob.nombre=i.value;revalidar();};
+    i.onkeydown=e=>{if(e.key==="Enter"&&obValido(1))obSiguiente();};
+    setTimeout(()=>{try{i.focus();}catch(e){}},60);
+  }
+  if(n===2){
+    chipGroup("obSexoC",[["M","Hombre"],["F","Mujer"]],ob.sexo,v=>{ob.sexo=v;renderOb();});
+    buildDateSelects("obNacC");
+    if(ob.nac&&ob.nac!=="INVALIDA")setDateSelects("obNacC",ob.nac);
+    ["_d","_m","_y"].forEach(s=>{const e=el("obNacC"+s);if(e)e.onchange=()=>{ob.nac=readDateSelects("obNacC");renderOb();};});
+    const c=el("obCiclo");if(c)c.onclick=()=>{ob.ciclo=!ob.ciclo;renderOb();};
+  }
+  if(n===3){
+    const a=el("obAlt"),p=el("obPeso");
+    a.oninput=()=>{ob.alt=a.value;revalidar();};
+    if(p&&!ob.pesoSalteado)p.oninput=()=>{ob.peso=p.value;revalidar();};
+    setTimeout(()=>{try{if(!ob.alt)a.focus();}catch(e){}},60);
+  }
+  if(n===4)el("obFactorC").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ob.factor=b.dataset.v;renderOb();});
+  if(n===5)el("obObjC").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    ob.objetivo=b.dataset.v;ob.ajuste=null;obPlan=tplFor(ob.objetivo);renderOb();});
+  if(n===6){
+    obAnimarNumero(obObjetivoCalc().total);
+    const b=el("obAjustar");if(b)b.onclick=()=>{ob.ajustando=true;renderOb();};
+    const i=el("obAjuste");
+    if(i)i.oninput=()=>{ob.ajuste=i.value===""?0:parseInt(i.value)||0;
+      const num=el("obNum");if(num)num.textContent=obObjetivoCalc().total.toLocaleString("es-AR");};
+  }
+  if(n===7)buildEditor("obPlanEditor",obPlan,"ob_");
+}
+function obSiguiente(){
+  if(!obValido(ob.paso))return;
+  if(ob.paso===7){conBoton("wzNext",saveOnboard);return;}
+  if(ob.paso===6)ob.ajustando=false;
+  ob.paso++;renderOb();
+}
+function obAnterior(){
+  if(ob.paso===1)return;
+  if(ob.paso===7)syncEditor(obPlan,"ob_");   // no perder lo editado al volver
+  ob.paso--;renderOb();
+}
+el("wzNext").onclick=obSiguiente;
+el("wzBack").onclick=obAnterior;
+el("wzSkip").onclick=()=>{ob.pesoSalteado=true;ob.peso="";renderOb();};
+
 async function saveOnboard(){
-  const nac=readDateSelects("oNac"),alt=parseInt(el("oAlt").value);
-  if(!el("oNombre").value.trim()){toast("Contanos tu nombre");return;}
-  if(!obSexo){toast("Elegí tu sexo (hace al cálculo calórico)");return;}
-  if(!nac){toast("Completá día, mes y año de nacimiento");return;}
-  if(nac==="INVALIDA"){toast("Esa fecha de nacimiento no existe, revisala");return;}
-  if(!(alt>=100&&alt<=250)){toast("La altura debe estar entre 100 y 250 cm");return;}
   syncEditor(obPlan,"ob_");
-  const pf={user_id:user.id,nombre:el("oNombre").value.trim(),sexo:obSexo,nacimiento:nac,altura_cm:alt,
-    peso_inicial_kg:el("oPeso").value!==""?parseFloat(el("oPeso").value):null,
-    factor_actividad:parseFloat(obFactor),objetivo:obObjetivo,
-    ajuste_kcal:el("oAjuste").value!==""?parseInt(el("oAjuste").value):0,
-    registra_alcohol:true,registra_fumar:false,registra_diario:true,registra_periodo:(obSexo==="F")};
+  const c=obObjetivoCalc();
+  const pf={user_id:user.id,nombre:ob.nombre.trim(),sexo:ob.sexo,nacimiento:ob.nac,
+    altura_cm:parseInt(ob.alt),
+    peso_inicial_kg:(!ob.pesoSalteado&&ob.peso!=="")?parseFloat(ob.peso):null,
+    factor_actividad:parseFloat(ob.factor),objetivo:ob.objetivo,
+    ajuste_kcal:c.ajuste,
+    registra_alcohol:true,registra_fumar:false,registra_diario:true,
+    registra_periodo:ob.ciclo};
   const rows=[];for(let dw=0;dw<7;dw++){const s=obPlan[dw];const fila={user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)};if(capSemana)fila.semana=0;rows.push(fila);}
   try{
     let r=await sb.from("perfiles").insert(pf);if(r.error)throw r.error;
@@ -3841,11 +4144,16 @@ async function savePerfil(){
 
 
 /* ---------- ONBOARDING GUIADO (tour + tips contextuales) ---------- */
+/* El TOUR viene DESPUÉS del onboarding y no lo repite: el wizard cargó el perfil,
+   esto muestra qué se puede hacer. Se actualiza con cada tanda de funcionalidad —
+   los 4 pasos originales eran de agosto de 2026 y no mencionaban nada de lo
+   construido después. */
 const TOUR=[
-  {emoji:"🎉",titulo:"¡Tu perfil está listo!",texto:"Configuramos tu objetivo calórico y tu semana. Todo esto lo podés cambiar cuando quieras desde la pestaña Perfil.",hl:"Tip: en Perfil también activás o desactivás qué querés registrar (alcohol, diario, etc.)."},
-  {emoji:"✨",titulo:"Tu diferencial: el Narrador",texto:"Lo que hace única a esta app: en la sección Diario, un narrador con IA convierte lo que escribís y soñás en un relato de ficción del género que elijas.",hl:"Cuanto más escribas en tu diario, mejores historias vas a poder generar."},
-  {emoji:"📅",titulo:"Tu día a día",texto:"El Calendario es el corazón. Tocá cualquier día para registrar tu entrenamiento, cómo dormiste, qué comiste y tu ánimo. El color del día te muestra si cumpliste tu plan.",hl:"El botón central de la barra, siempre te trae de vuelta acá."},
-  {emoji:"🏋️",titulo:"Rutinas y Progreso",texto:"En Rutinas armás tus sesiones de gym reutilizables y las asignás a tus días. En Progreso ves tu evolución: peso, cargas y tendencias.",hl:"¿Perdido en alguna sección? Tocá el signo ? arriba a la derecha."}
+  {emoji:"📅",titulo:"Tu día en una pantalla",texto:"El Calendario es el corazón. Tocá cualquier día y registrás todo junto: qué entrenaste, cómo dormiste, qué comiste y tu ánimo. El fondo del día te dice cómo fue: verde cumpliste, rojizo no fuiste, rayado quedó sin registrar.",hl:"Un día rayado no cuenta como falta: la app no inventa lo que no sabe."},
+  {emoji:"🍽️",titulo:"Anotá lo que comés sin pensarlo",texto:"Escribí el alimento y tocá ✨ para que la IA estime las calorías, o 📷 para sacarle una foto. Te dice sobre qué porción calculó, así que si tu plato era más chico lo corregís en un toque.",hl:"Con comida envasada, sacale foto a la etiqueta: de ahí sale el dato exacto."},
+  {emoji:"🗓️",titulo:"Tu plan, y tu semana real",texto:"En Plan semanal definís qué hacés cada día, y podés tener semanas distintas dentro del mes. Los cambios rigen desde la fecha que elijas, así que tu historial no se reescribe. En Rutinas armás sesiones reutilizables y las asignás a tus días.",hl:"Surgió un partido que no estaba en el plan, o fuiste al kinesiólogo? Se registra igual."},
+  {emoji:"📈",titulo:"Mirá tu progreso",texto:"Peso con media móvil, volumen de entrenamiento, récords personales, tus deportes del mes y tus sesiones de recuperación. Y una vez por mes, un reporte completo que podés guardar en PDF.",hl:"¿Perdido en alguna sección? Tocá el signo ? arriba a la derecha."},
+  {emoji:"✨",titulo:"Y algo que no tiene ninguna otra app",texto:"En Diario escribís lo que quieras, y un narrador con IA convierte un período de tu vida en un relato de ficción del género que elijas. Tus sueños también cuentan.",hl:"Cuanto más escribas, mejores historias vas a poder generar."}
 ];
 let tourIdx=0;
 function startTour(){tourIdx=0;renderTour();el("tourOv").classList.add("show");}
