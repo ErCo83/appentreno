@@ -109,87 +109,120 @@
   .legrow span{display:flex;align-items:center;gap:4px}
   .legcap{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);width:60px;flex:none}
   /* ---------- Onboarding: una pregunta por pantalla ----------
-     Ver appentreno-docs/DISENO-ONBOARDING.md. La regla es que un paso no scrollea:
-     si no entra en una pantalla de teléfono, el paso tiene demasiado. */
-  /* El :not([hidden]) NO es decorativo: showOnly() oculta esta vista con el
-     atributo `hidden`, y un `display:flex` en el selector de id le gana al
-     `[hidden]{display:none}` del navegador. Sin esto, el onboarding se dibuja
-     sobre la app para todo usuario que ya tiene perfil. */
-  #onboardView:not([hidden]){max-width:460px;margin:0 auto;padding:0 16px 24px;
-    min-height:100svh;display:flex;flex-direction:column}
-  .wzbar{height:3px;background:var(--line);border-radius:99px;margin-top:14px;overflow:hidden;flex:none}
-  .wzbar span{display:block;height:100%;background:var(--accent);border-radius:99px;
-    width:0;transition:width .32s cubic-bezier(.4,0,.2,1)}
-  @media (prefers-reduced-motion:reduce){.wzbar span{transition:none}}
-  .wztop{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    min-height:44px;margin-top:6px;flex:none}
-  .wztop #wzBack{background:none;border:none;color:var(--ink-soft);font-size:var(--fs-11);
-    line-height:1;cursor:pointer;padding:0 8px 0 0;margin-left:-8px}
-  .wzcount{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.1em;
-    text-transform:uppercase;color:var(--ink-faint);margin-left:auto}
-  .wzstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 0 18px}
-  .wzstep.entra{animation:wzIn .24s cubic-bezier(.2,0,0,1) both}
-  @keyframes wzIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+     Ver appentreno-docs/DISENO-ONBOARDING.md.
+
+     Va `position:fixed` y no como sección normal: vive dentro de <main>, que
+     tiene padding propio, así que con `min-height:100svh` el alto total superaba
+     la pantalla y había que scrollear para llegar al botón de seguir. Ahora la
+     única parte que scrollea es la pregunta; la barra de avance y el botón están
+     siempre a la vista. */
+  #onboardView:not([hidden]){position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;
+    background:linear-gradient(165deg,var(--pitch) 0%,var(--pitch-deep) 62%,#0d2419 100%);
+    color:var(--on-pitch);overflow:hidden}
+  /* Halo de marca, mismo gesto que el header de la app */
+  #onboardView:not([hidden])::before{content:"";position:absolute;right:-120px;top:-140px;
+    width:380px;height:380px;border-radius:50%;
+    background:radial-gradient(circle,rgba(226,100,58,.22),transparent 68%);pointer-events:none}
+  #onboardView:not([hidden])::after{content:"";position:absolute;left:-90px;bottom:-120px;
+    width:300px;height:300px;border-radius:50%;border:1.5px solid rgba(255,255,255,.07);pointer-events:none}
+  .wzwrap{position:relative;z-index:2;display:flex;flex-direction:column;flex:1;min-height:0;
+    width:100%;max-width:440px;margin:0 auto;padding:0 20px}
+  /* Avance por segmentos: se lee "voy por el 3 de 7" de un vistazo */
+  .wzbar{display:flex;gap:5px;padding-top:max(18px,env(safe-area-inset-top));flex:none}
+  .wzbar i{flex:1;height:3px;border-radius:99px;background:rgba(255,255,255,.16);transition:background .3s ease}
+  .wzbar i.on{background:var(--accent)}
+  @media (prefers-reduced-motion:reduce){.wzbar i{transition:none}}
+  .wztop{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;flex:none}
+  .wztop #wzBack{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+    color:var(--on-pitch);width:34px;height:34px;border-radius:10px;font-size:var(--fs-9);
+    line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+  .wzcount{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--on-pitch-soft);margin-left:auto}
+  /* Lo único que scrollea */
+  .wzstep{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
+    justify-content:center;padding:6px 0 16px;-webkit-overflow-scrolling:touch}
+  .wzstep::-webkit-scrollbar{width:0}
+  .wzstep.entra{animation:wzIn .26s cubic-bezier(.2,0,0,1) both}
+  @keyframes wzIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.wzstep.entra{animation:none}}
-  .wzq h1{font-size:var(--fs-12);font-weight:800;line-height:1.15;letter-spacing:-.02em}
-  .wzq p{font-size:var(--fs-6);color:var(--ink-soft);line-height:1.45;margin-top:8px}
+  .wzq h1{font-size:clamp(26px,7.4vw,34px);font-weight:800;line-height:1.1;letter-spacing:-.025em}
+  .wzq p{font-size:var(--fs-6);color:var(--on-pitch-soft);line-height:1.5;margin-top:10px}
   .wzq.center{text-align:center}
-  input.wzbig{font-size:var(--fs-10);font-weight:700;padding:14px 12px;margin-top:10px}
-  .wzfoot{flex:none;padding-top:4px}
-  .wzfoot .act:disabled{opacity:.4;cursor:default}
-  .wzskip{display:block;width:100%;background:none;border:none;color:var(--ink-soft);
-    font-size:var(--fs-5);padding:12px 0 2px;cursor:pointer;text-decoration:underline}
-  .wzerr{margin-top:10px;font-size:var(--fs-5);color:var(--bad-ink);
-    background:var(--bad-bg);border:1px solid var(--bad-line);border-radius:10px;padding:8px 10px}
-  .wzwarn{margin-top:12px;font-size:var(--fs-5);color:var(--bad-ink);background:var(--warn-bg);
-    border:1px solid var(--accent-soft);border-radius:10px;padding:9px 11px;line-height:1.4}
-  .wzhint{font-size:var(--fs-4);color:var(--ink-faint);margin-top:6px;line-height:1.4}
-  .wzlink{background:none;border:none;color:var(--accent);font-size:var(--fs-5);
-    padding:12px 0 0;cursor:pointer;text-decoration:underline}
-  /* Lista de opciones con explicación: cinco niveles de actividad en pastillas de
-     una palabra eran indescifrables, y elegir mal distorsiona todo el objetivo. */
-  .optlist{display:flex;flex-direction:column;gap:8px;margin-top:14px}
-  .opt{display:grid;grid-template-columns:1fr;gap:2px;text-align:left;cursor:pointer;
-    background:var(--surface);border:1px solid var(--line-2);border-radius:13px;padding:12px 14px;
-    color:var(--ink);transition:border-color .12s,background .12s}
-  .opt .oem{font-size:var(--fs-9);line-height:1}
+  .wzq .fld{color:var(--on-pitch-soft)}
+  /* Campos sobre el fondo oscuro */
+  #onboardView input,#onboardView select{background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.16);color:var(--on-pitch)}
+  #onboardView input::placeholder{color:rgba(255,255,255,.35)}
+  #onboardView input:focus,#onboardView select:focus{border-color:var(--accent);
+    background:rgba(255,255,255,.11);outline:none}
+  #onboardView select option{background:var(--pitch-deep);color:var(--on-pitch)}
+  input.wzbig{font-size:var(--fs-11);font-weight:700;padding:15px 14px;margin-top:12px}
+  #onboardView .chips .chip{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);
+    color:var(--on-pitch);padding:11px 18px;font-size:var(--fs-6)}
+  #onboardView .chips .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* Pie siempre visible: era el motivo por el que había que scrollear */
+  .wzfoot{flex:none;padding:10px 0 max(16px,env(safe-area-inset-bottom))}
+  .wzfoot .act{background:var(--accent);border-color:var(--accent);color:#fff;
+    font-size:var(--fs-8);padding:16px;border-radius:14px;font-weight:700;
+    box-shadow:0 10px 26px -12px rgba(226,100,58,.8)}
+  .wzfoot .act:disabled{opacity:.32;box-shadow:none;cursor:default}
+  .wzskip{display:block;width:100%;background:none;border:none;color:var(--on-pitch-soft);
+    font-size:var(--fs-5);padding:13px 0 0;cursor:pointer;text-decoration:underline}
+  .wzerr,.wzerr2{margin-top:10px;font-size:var(--fs-5);color:#ffd9cd}
+  .wzerr{background:rgba(226,100,58,.16);border:1px solid rgba(226,100,58,.4);border-radius:10px;padding:9px 11px}
+  .wzerr2:empty{display:none}
+  .wzwarn{margin-top:14px;font-size:var(--fs-5);color:#f5dcc9;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:11px 13px;line-height:1.45}
+  .wzhint{font-size:var(--fs-4);color:var(--on-pitch-soft);margin-top:7px;line-height:1.4}
+  .wzlink{background:none;border:none;color:var(--accent-soft);font-size:var(--fs-5);
+    padding:14px 0 0;cursor:pointer;text-decoration:underline}
+  /* Opciones con explicación: cinco pastillas de una palabra eran indescifrables */
+  .optlist{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+  .opt{display:grid;gap:3px;text-align:left;cursor:pointer;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.14);border-radius:15px;padding:14px 16px;
+    color:var(--on-pitch);transition:border-color .14s,background .14s,transform .14s}
+  .opt:active{transform:scale(.985)}
+  .opt .oem{font-size:var(--fs-10);line-height:1;margin-bottom:3px}
   .opt .on1{font-size:var(--fs-7);font-weight:700}
-  .opt .on2{font-size:var(--fs-4);color:var(--ink-soft);line-height:1.35}
-  .opt.on{border-color:var(--accent);background:var(--ok-bg)}
-  .opt.on .on2{color:var(--ink-soft)}
-  @media (prefers-reduced-motion:reduce){.opt{transition:none}}
-  /* El premio: el objetivo calórico, que cuenta hacia arriba al entrar al paso */
-  .wzeye{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);letter-spacing:.12em;
-    text-transform:uppercase;color:var(--accent);margin-bottom:6px}
-  .wzbignum b{display:block;font-size:clamp(56px,18vw,86px);font-weight:800;line-height:1;
-    letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-  .wzbignum span{display:block;font-size:var(--fs-6);color:var(--ink-soft);margin-top:4px}
-  .wzcalc{margin-top:22px;text-align:left;background:var(--surface-2);
-    border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .opt .on2{font-size:var(--fs-4);color:var(--on-pitch-soft);line-height:1.4}
+  .opt.on{border-color:var(--accent);background:rgba(226,100,58,.16)}
+  .opt.on .on2{color:#f0d5c6}
+  @media (prefers-reduced-motion:reduce){.opt{transition:none}.opt:active{transform:none}}
+  /* El premio: el objetivo calórico */
+  .wzeye{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent-soft);margin-bottom:10px}
+  .wzbignum b{display:block;font-size:clamp(62px,21vw,96px);font-weight:800;line-height:.95;
+    letter-spacing:-.05em;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,var(--accent-soft));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .wzbignum span{display:block;font-size:var(--fs-6);color:var(--on-pitch-soft);margin-top:8px}
+  .wzcalc{margin-top:26px;text-align:left;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:14px 16px}
   .wzrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-    font-size:var(--fs-5);padding:5px 0;color:var(--ink-soft)}
-  .wzrow b{font-family:"Sometype Mono",monospace;color:var(--ink);flex:none}
-  .wzrow.tot{border-top:1px solid var(--line-2);margin-top:5px;padding-top:9px;color:var(--ink)}
-  .wzrow.tot b{color:var(--accent);font-weight:700}
-  /* Interruptor del ciclo menstrual: se pregunta, ya no se infiere del sexo */
-  .wzopt{display:flex;align-items:flex-start;gap:12px;margin-top:20px;background:var(--surface-2);
-    border:1px solid var(--line);border-radius:13px;padding:12px 14px}
+    font-size:var(--fs-5);padding:6px 0;color:var(--on-pitch-soft)}
+  .wzrow b{font-family:"Sometype Mono",monospace;color:var(--on-pitch);flex:none}
+  .wzrow.tot{border-top:1px solid rgba(255,255,255,.14);margin-top:6px;padding-top:10px;color:#fff}
+  .wzrow.tot b{color:var(--accent-soft);font-weight:700}
+  /* Interruptor del ciclo: se pregunta, ya no se infiere del sexo */
+  .wzopt{display:flex;align-items:flex-start;gap:12px;margin-top:22px;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.13);border-radius:15px;padding:13px 15px}
   .wzoptx{flex:1}
   .wzoptx b{display:block;font-size:var(--fs-6)}
-  .wzoptx span{display:block;font-size:var(--fs-4);color:var(--ink-soft);margin-top:3px;line-height:1.35}
-  .wzsw{flex:none;width:46px;height:28px;border-radius:99px;border:1px solid var(--line-2);
-    background:var(--bg);cursor:pointer;padding:0;position:relative;transition:background .16s,border-color .16s}
-  .wzsw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
-    background:var(--ink-faint);transition:transform .16s,background .16s}
+  .wzoptx span{display:block;font-size:var(--fs-4);color:var(--on-pitch-soft);margin-top:4px;line-height:1.4}
+  .wzsw{flex:none;width:48px;height:29px;border-radius:99px;border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.08);cursor:pointer;padding:0;position:relative;
+    transition:background .16s,border-color .16s}
+  .wzsw i{position:absolute;top:2px;left:2px;width:23px;height:23px;border-radius:50%;
+    background:rgba(255,255,255,.5);transition:transform .16s,background .16s}
   .wzsw.on{background:var(--accent);border-color:var(--accent)}
-  .wzsw.on i{transform:translateX(18px);background:var(--on-accent)}
+  .wzsw.on i{transform:translateX(19px);background:#fff}
   @media (prefers-reduced-motion:reduce){.wzsw,.wzsw i{transition:none}}
-  /* Zona de borrado de cuenta: se distingue del resto del perfil a propósito,
-     porque es la única acción irreversible de toda la app. */
-  .card.zona-roja{border-color:var(--bad-line)}
-  .act.peligro{background:var(--red);border-color:var(--red);color:#fff}
-  .act.ghost.peligro{background:transparent;border-color:var(--bad-line);color:var(--red)}
-  .act.peligro:disabled{opacity:.45;cursor:default}
+  /* El editor del plan del paso 7, sobre fondo oscuro */
+  #onboardView .note{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.13);color:var(--on-pitch-soft)}
+  #onboardView .pe-row{border-color:rgba(255,255,255,.12)}
+  #onboardView .pe-day{color:var(--on-pitch-soft)}
+  #onboardView .dep{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);color:var(--on-pitch)}
+  #onboardView .dep.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .lgbox{width:13px;height:13px;border-radius:4px;border:1px solid var(--line-2)}
   .lgbox.done{background:var(--ok-bg);border-color:var(--ok-line)}
   .lgbox.miss{background:var(--bad-bg);border-color:var(--bad-line)}
@@ -785,15 +818,17 @@
   <!-- Onboarding: una pregunta por pantalla, con el objetivo calórico como premio
        en el paso 6. Ver appentreno-docs/DISENO-ONBOARDING.md -->
   <section id="onboardView" hidden>
-    <div class="wzbar"><span id="wzFill"></span></div>
-    <div class="wztop">
-      <button id="wzBack" aria-label="Volver al paso anterior">‹</button>
-      <span class="wzcount" id="wzCount"></span>
-    </div>
-    <div class="wzstep" id="wzStep"></div>
-    <div class="wzfoot">
-      <button class="act" id="wzNext">Seguir</button>
-      <button class="wzskip" id="wzSkip" hidden>Prefiero no decirlo</button>
+    <div class="wzwrap">
+      <div class="wzbar" id="wzBar"></div>
+      <div class="wztop">
+        <button id="wzBack" aria-label="Volver al paso anterior">‹</button>
+        <span class="wzcount" id="wzCount"></span>
+      </div>
+      <div class="wzstep" id="wzStep"></div>
+      <div class="wzfoot">
+        <button class="act" id="wzNext">Seguir</button>
+        <button class="wzskip" id="wzSkip" hidden>Prefiero no decirlo</button>
+      </div>
     </div>
   </section>
 
@@ -2049,7 +2084,11 @@ async function volverAlPlanBase(){
    revela el objetivo calórico con su desglose. Ése es el punto: que la persona vea
    para qué sirvió lo que cargó. Ver appentreno-docs/DISENO-ONBOARDING.md */
 const OB_PASOS=7;
-let ob={paso:1,nombre:"",sexo:null,nac:"",alt:"",peso:"",pesoSalteado:false,
+/* `nacD/M/Y` guardan cada selector por separado, no sólo la fecha compuesta.
+   Hace falta: readDateSelects() devuelve "" hasta que están los tres, así que si
+   sólo se guardara la fecha armada, elegir el día borraría el día al re-renderizar.
+   Era exactamente el bug que impedía completar el nacimiento. */
+let ob={paso:1,nombre:"",sexo:null,nac:"",nacD:"",nacM:"",nacY:"",alt:"",peso:"",pesoSalteado:false,
         factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false};
 let obPlan=null;   // lo usa buildEditor/syncEditor con el prefijo "ob_"
 
@@ -2071,7 +2110,7 @@ const OB_OBJETIVOS=[
 function startOnboarding(){
   setConn("ok","Cuenta creada");
   el("headEyebrow").textContent="¡bienvenido/a!";
-  ob={paso:1,nombre:"",sexo:null,nac:"",alt:"",peso:"",pesoSalteado:false,
+  ob={paso:1,nombre:"",sexo:null,nac:"",nacD:"",nacM:"",nacY:"",alt:"",peso:"",pesoSalteado:false,
       factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false};
   obPlan=null;
   showOnly("onboardView");
@@ -2124,7 +2163,7 @@ function obPaso2(){
   let h='<div class="wzq"><h1>Contanos de vos</h1>'+
     '<p>El sexo y la edad entran en el cálculo de cuántas calorías gastás en reposo. Son los dos únicos datos que la fórmula necesita de acá.</p>'+
     '<label class="fld">Sexo</label><div class="chips" id="obSexoC"></div>'+
-    '<label class="fld">Fecha de nacimiento</label><div class="dsel" id="obNacC"></div>';
+    '<label class="fld">Fecha de nacimiento</label><div class="dsel" id="obNacC"></div><div class="wzerr2" id="obNacErr"></div>';
   if(ob.sexo==="F"){
     // Antes `registra_periodo` se activaba sola para todo perfil con sexo = F.
     // Es seguimiento de salud íntima habilitado por inferencia: que lo elija ella.
@@ -2211,7 +2250,8 @@ function obAnimarNumero(destino){
 }
 function renderOb(){
   const n=ob.paso;
-  el("wzFill").style.width=Math.round((n/OB_PASOS)*100)+"%";
+  let barra="";for(let i=1;i<=OB_PASOS;i++)barra+='<i class="'+(i<=n?"on":"")+'"></i>';
+  el("wzBar").innerHTML=barra;
   el("wzCount").textContent=n+" de "+OB_PASOS;
   el("wzBack").hidden=(n===1);
   const cont=el("wzStep");
@@ -2240,8 +2280,20 @@ function obEnganchar(n){
   if(n===2){
     chipGroup("obSexoC",[["M","Hombre"],["F","Mujer"]],ob.sexo,v=>{ob.sexo=v;renderOb();});
     buildDateSelects("obNacC");
-    if(ob.nac&&ob.nac!=="INVALIDA")setDateSelects("obNacC",ob.nac);
-    ["_d","_m","_y"].forEach(s=>{const e=el("obNacC"+s);if(e)e.onchange=()=>{ob.nac=readDateSelects("obNacC");renderOb();};});
+    // Se restauran las tres partes por separado. Un re-render (al elegir sexo, por
+    // ejemplo) reconstruye los selects, y sin esto se perdería lo ya elegido.
+    const sd=el("obNacC_d"),sm=el("obNacC_m"),sy=el("obNacC_y");
+    if(sd)sd.value=ob.nacD;if(sm)sm.value=ob.nacM;if(sy)sy.value=ob.nacY;
+    const alCambiar=()=>{
+      ob.nacD=sd?sd.value:"";ob.nacM=sm?sm.value:"";ob.nacY=sy?sy.value:"";
+      ob.nac=readDateSelects("obNacC");
+      // No se re-renderiza: rehacer los selects acá borraría lo que se acaba de
+      // elegir, porque readDateSelects devuelve "" hasta tener los tres.
+      revalidar();
+      const err=el("obNacErr");
+      if(err)err.textContent=(ob.nac==="INVALIDA")?"Esa fecha no existe, revisala":"";
+    };
+    [sd,sm,sy].forEach(e=>{if(e)e.onchange=alCambiar;});
     const c=el("obCiclo");if(c)c.onclick=()=>{ob.ciclo=!ob.ciclo;renderOb();};
   }
   if(n===3){
