@@ -1970,7 +1970,8 @@ function renderStats(){
       " días planificados sin registrar, así que todavía no se puede calcular una adherencia que signifique algo.";
   }else{
     const pct=Math.round((Math.min(md,ad.conRegistro)/ad.conRegistro)*100);
-    el("stMonthSub").textContent="de "+ad.conRegistro+" registrados · "+pct+"%";
+    // Texto corto: en 390 px, "de 16 registrados · 100%" se parte en tres líneas
+    el("stMonthSub").textContent=ad.conRegistro+" reg · "+pct+"%";
     em.className=pct>=80?"good":(pct<50?"bad":"");
     el("statMonth").title="Cumpliste "+md+" de los "+ad.conRegistro+" días planificados que registraste en "+
       nombreMes+" ("+pct+"% de adherencia)."+
