@@ -385,16 +385,68 @@
   .planrow .pi{font-size:var(--fs-9);width:26px;text-align:center}
   .planrow .pt{font-weight:600;font-size:var(--fs-7)}
   .planrow .ps{font-size:var(--fs-5);color:var(--ink-soft)}
-  .tabbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:none;z-index:40;padding-bottom:env(safe-area-inset-bottom)}
+  /* ---------- Los indicadores del Calendario se montan sobre el bloque verde ----------
+     El gesto que hace que una app se vea cara: las tarjetas flotan sobre la
+     identidad en vez de quedar sueltas sobre el fondo claro.
+
+     Se resuelve con :has() y no con una clase puesta por JS porque hay seis
+     lugares distintos que cambian de vista (showOnly, el click del tabbar,
+     showSub, showSubDiario, el cambio diario/historia y irACargarRecuerdo), y
+     mantener una clase sincronizada en los seis es una fuente de bugs. Con :has()
+     el estilo sigue al estado y no hay nada que sincronizar.
+
+     Sólo aplica al Calendario: en Progreso los indicadores están a media página y
+     no tienen nada sobre lo cual montarse. */
+  body:has(#v-cal.active) header{padding-bottom:52px}
+  #v-cal .stats-row{margin-top:-58px;position:relative;z-index:5}
+  #v-cal .stats-row .stat{
+    box-shadow:0 14px 34px -16px rgba(20,53,39,.6),0 1px 2px rgba(20,40,30,.06)}
+  /* Sin :has() el encabezado no crece y las tarjetas taparían la barra de la
+     semana. En ese caso no se solapa: se pierde el efecto, no la lectura. */
+  @supports not selector(:has(*)){
+    #v-cal .stats-row{margin-top:0}
+  }
+
+  /* ---------- Barra inferior ----------
+     Toma el mismo lenguaje: la pestaña activa se apoya en una pastilla con el
+     color de acento, y el botón central suma un halo naranja como el del CTA del
+     onboarding. */
+  .tabbar{position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);
+    background:color-mix(in srgb,var(--surface) 88%,transparent);
+    backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);
+    border-top:1px solid var(--line);display:none;z-index:40;
+    padding-bottom:env(safe-area-inset-bottom);overflow:visible}
   .tabbar.show{display:flex}
-  .tabbar{overflow:visible}
-  .tabbar button{flex:1;background:none;border:none;padding:11px 4px 13px;cursor:pointer;color:var(--ink-faint);font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.03em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:3px}
-  .tabbar button .i{font-size:var(--fs-10);line-height:1;filter:grayscale(.5);opacity:.6}
-  .tabbar button.on{color:var(--accent)}.tabbar button.on .i{filter:none;opacity:1}
+  .tabbar button{flex:1;background:none;border:none;padding:9px 4px 11px;cursor:pointer;
+    color:var(--ink-faint);font-family:"Sometype Mono",monospace;font-size:var(--fs-1);
+    letter-spacing:.08em;text-transform:uppercase;display:flex;flex-direction:column;
+    align-items:center;gap:4px;position:relative;transition:color .16s ease}
+  /* La pastilla de la pestaña activa, detrás del ícono */
+  .tabbar button .i{font-size:var(--fs-9);line-height:1;filter:grayscale(.55);opacity:.55;
+    width:42px;height:28px;display:flex;align-items:center;justify-content:center;
+    border-radius:99px;transition:background .18s ease,opacity .18s ease,filter .18s ease}
+  .tabbar button.on{color:var(--accent);font-weight:600}
+  .tabbar button.on .i{filter:none;opacity:1;
+    background:var(--accent-bg-2);
+    background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  .tabbar button:active .i{transform:scale(.92)}
+  /* El botón central: más grande, con halo naranja y anillo que lo despega */
   .tabbar button.center{position:relative}
-  .tabbar button.center .i{width:52px;height:52px;margin-top:-24px;margin-bottom:1px;border-radius:50%;background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(20,53,39,.6);border:3px solid var(--bg);filter:none;opacity:1}
+  .tabbar button.center .i{width:56px;height:56px;margin-top:-26px;margin-bottom:1px;
+    border-radius:50%;background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));
+    box-shadow:0 8px 20px -6px rgba(20,53,39,.65);border:3px solid var(--bg);
+    filter:none;opacity:1;font-size:var(--fs-10);
+    transition:transform .18s cubic-bezier(.2,0,0,1),box-shadow .18s ease}
   .tabbar button.center.on{color:var(--pitch)}
-  .tabbar button.center.on .i{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep))}
+  .tabbar button.center.on .i{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));
+    box-shadow:0 8px 22px -6px rgba(20,53,39,.7),0 0 0 4px rgba(226,100,58,.22);
+    box-shadow:0 8px 22px -6px rgba(20,53,39,.7),0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+  .tabbar button.center:active .i{transform:scale(.94)}
+  @media (prefers-reduced-motion:reduce){
+    .tabbar button,.tabbar button .i{transition:none}
+    .tabbar button:active .i,.tabbar button.center:active .i{transform:none}
+  }
   .frow{display:flex;gap:10px}.frow>div{flex:1}
   svg.chart{width:100%;height:150px;display:block;margin-top:8px}
   table{width:100%;border-collapse:collapse;font-size:var(--fs-6);margin-top:6px}
