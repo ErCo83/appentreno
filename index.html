@@ -5055,7 +5055,11 @@ function delta(actual,previo,inverso){
   if(Math.abs(d)<0.05)return '<span class="d flat">= igual que el mes anterior</span>';
   const mejor=inverso?(d<0):(d>0);
   const signo=d>0?"+":"";
-  const num=Math.abs(d)<10?d.toFixed(1):Math.round(d);
+  /* El decimal es para los promedios (kcal, ml), no para los conteos: "días
+     con alcohol 4 ▲ +4.0" no quiere decir nada. Si los dos valores son enteros,
+     la diferencia también lo es. */
+  const num=(Number.isInteger(actual)&&Number.isInteger(previo))?d
+           :(Math.abs(d)<10?d.toFixed(1):Math.round(d));
   return '<span class="d '+(mejor?"up":"down")+'">'+(d>0?"▲":"▼")+" "+signo+num+" vs mes anterior</span>";
 }
 function kpi(label,valor,extra){
