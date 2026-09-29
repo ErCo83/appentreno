@@ -982,6 +982,7 @@
       <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
       <label class="fld">Peso inicial (kg)</label><input type="number" id="pPesoIni" step="0.1" inputmode="decimal">
       <p class="muted" style="font-size:var(--fs-4);margin-top:5px">Es tu punto de partida, no tu peso de hoy: no hace falta actualizarlo. Tu peso actual se registra en <b>Progreso</b>, y ahí queda la evolución.</p>
+      <div class="note" style="margin-top:12px;font-size:var(--fs-4)">✏️ Nacimiento, altura y peso inicial se pueden editar <b>para corregir un error</b>, no para irlos actualizando: son el punto de partida de todos tus cálculos.</div>
       <label class="fld">Nivel de actividad</label><div class="chips" id="pFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="pObjetivo"></div>
       <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="pAjuste" inputmode="numeric">
@@ -1003,6 +1004,7 @@
       <div class="fnrow"><span><span class="fl">🌿 Fumar</span><br><span class="fs">Tabaco, THC o CBD</span></span><div class="acts"><button class="actbtn" id="fFumSi">Sí</button><button class="actbtn" id="fFumNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl">✍️ Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
       <div class="fnrow" id="fnrowPeriodo" style="display:none"><span><span class="fl">🩸 Período</span><br><span class="fs">Días de flujo y estimación del ciclo</span></span><div class="acts"><button class="actbtn" id="fPerSi">Sí</button><button class="actbtn" id="fPerNo">No</button></div></div>
+      <div class="note" id="avisoMenor" style="display:none;margin-top:12px"></div>
       <p class="muted" style="font-size:var(--fs-5);margin-top:12px">Al desactivar, la sección se oculta; lo ya registrado no se borra.</p>
     </div>
     <div class="card notifcard" id="notifCard">
@@ -4188,6 +4190,18 @@ function renderPerfil(){
   el("pPrefComida").value=perfil.preferencias_comida||"";
   refreshPerfilChips();
   el("targetPreview").innerHTML="🎯 Objetivo calórico actual: <b>~"+calorieTarget()+" kcal/día</b>";
+  /* La app oculta alcohol y fumar en perfiles de menores de 18 (permiteAlcohol /
+     permiteFumar). Hasta ahora lo hacía en silencio: el interruptor decía «Sí» y la
+     sección no aparecía nunca, sin ninguna explicación. */
+  const av=el("avisoMenor");
+  if(av){
+    if(esMenor()){
+      av.style.display="";
+      av.innerHTML="🔞 Según la fecha de nacimiento cargada, este perfil es de "+age()+" años. "+
+        "Por eso <b>alcohol y fumar no aparecen</b> en el registro diario, aunque los actives acá. "+
+        "Si la fecha está mal, corregila arriba.";
+    }else av.style.display="none";
+  }
   el("btnSavePerfil").onclick=()=>conBoton("btnSavePerfil",savePerfil);
 }
 function refreshPerfilChips(){
@@ -4219,6 +4233,18 @@ async function savePerfil(){
     const td=el("tabDiario");if(td)td.style.display=perfil.registra_diario?"":"none";
     renderAll();renderPerfil();
     el("targetPreview").innerHTML="🎯 Objetivo calórico actual: <b>~"+calorieTarget()+" kcal/día</b>";
+  /* La app oculta alcohol y fumar en perfiles de menores de 18 (permiteAlcohol /
+     permiteFumar). Hasta ahora lo hacía en silencio: el interruptor decía «Sí» y la
+     sección no aparecía nunca, sin ninguna explicación. */
+  const av=el("avisoMenor");
+  if(av){
+    if(esMenor()){
+      av.style.display="";
+      av.innerHTML="🔞 Según la fecha de nacimiento cargada, este perfil es de "+age()+" años. "+
+        "Por eso <b>alcohol y fumar no aparecen</b> en el registro diario, aunque los actives acá. "+
+        "Si la fecha está mal, corregila arriba.";
+    }else av.style.display="none";
+  }
     toast("Perfil guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
