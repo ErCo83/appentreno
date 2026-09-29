@@ -24,11 +24,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{color-scheme:light;--bg:#eef0ec;--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--green:#2f8f5b;--red:#c2452e;--blue:#3a6ea5;--fs-1:.55rem;--fs-2:.62rem;--fs-3:.68rem;--fs-4:.74rem;--fs-5:.8rem;--fs-6:.86rem;--fs-7:.92rem;--fs-8:1rem;--fs-9:1.1rem;--fs-10:1.2rem;--fs-11:1.35rem;--fs-12:1.5rem;--fs-13:2rem;--fs-14:2.4rem;--fs-15:3rem;--rest:#e7e9e4;--rest-2:#e3e6e1;--ok-bg:#e2f0e8;--ok-line:#a9d4bc;--ok-ink:#20603c;--bad-bg:#fbeae5;--bad-line:#efb9a6;--bad-ink:#8c3b20;--warn-bg:#fdf2e9;--warn-line:#d9cfa9;--warn-ink:#8c5a20;--info-bg:#eef4f8;--info-line:#c6dced;--info-ink:#2b6a97;--info-bar:#d8e6f0;--info-soft:#4a95c9;--accent-bg:#fdf6f1;--accent-bg-2:#f8e9de;--on-pitch:#eef3ef;--on-pitch-soft:#aec1b4;--pitch-ok:#62d39a;--pitch-bad:#ef9b85;--deco-1:#f3ede4;--deco-2:#eef2ec;--on-accent:#fff;--dot-comida:#e2643a;--dot-agua:#3a6ea5;--dot-alcohol:#9c3357;--dot-diario:#7b5ea7;--dot-periodo:#d6336c;--dot-a1:#c2452e;--dot-a2:#dd8452;--dot-a3:#d9a441;--dot-a4:#7fb069;--dot-a5:#2f8f5b;--r:18px;--shadow:0 1px 2px rgba(20,40,30,.04),0 12px 28px -22px rgba(20,53,39,.4)}
+  :root{color-scheme:light;--bg:#eef0ec;--elev:#fff;--elev-2:#f7f8f6;--elev-line:#e7e9e5;--elev-shadow:0 14px 34px -16px rgba(20,53,39,.55),0 1px 2px rgba(20,40,30,.06);--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--green:#2f8f5b;--red:#c2452e;--blue:#3a6ea5;--fs-1:.55rem;--fs-2:.62rem;--fs-3:.68rem;--fs-4:.74rem;--fs-5:.8rem;--fs-6:.86rem;--fs-7:.92rem;--fs-8:1rem;--fs-9:1.1rem;--fs-10:1.2rem;--fs-11:1.35rem;--fs-12:1.5rem;--fs-13:2rem;--fs-14:2.4rem;--fs-15:3rem;--rest:#e7e9e4;--rest-2:#e3e6e1;--ok-bg:#e2f0e8;--ok-line:#a9d4bc;--ok-ink:#20603c;--bad-bg:#fbeae5;--bad-line:#efb9a6;--bad-ink:#8c3b20;--warn-bg:#fdf2e9;--warn-line:#d9cfa9;--warn-ink:#8c5a20;--info-bg:#eef4f8;--info-line:#c6dced;--info-ink:#2b6a97;--info-bar:#d8e6f0;--info-soft:#4a95c9;--accent-bg:#fdf6f1;--accent-bg-2:#f8e9de;--on-pitch:#eef3ef;--on-pitch-soft:#aec1b4;--pitch-ok:#62d39a;--pitch-bad:#ef9b85;--deco-1:#f3ede4;--deco-2:#eef2ec;--on-accent:#fff;--dot-comida:#e2643a;--dot-agua:#3a6ea5;--dot-alcohol:#9c3357;--dot-diario:#7b5ea7;--dot-periodo:#d6336c;--dot-a1:#c2452e;--dot-a2:#dd8452;--dot-a3:#d9a441;--dot-a4:#7fb069;--dot-a5:#2f8f5b;--r:18px;--shadow:0 1px 2px rgba(20,40,30,.04),0 12px 28px -22px rgba(20,53,39,.4)}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:var(--fs-8);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:80px;min-height:100vh}
   h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.08}
-  header{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));color:var(--on-pitch);padding:20px 18px 18px;position:relative;overflow:hidden;border-radius:0 0 24px 24px}
+  /* El fondo va a todo lo ancho, pero el CONTENIDO se alinea con <main>. Sin
+     esto, en una pantalla de escritorio el encabezado y la barra de la semana
+     se estiraban a 1900 px mientras el resto vivía en una columna de 600, y las
+     celdas de la semana quedaban enormes con un emoji diminuto adentro. */
+  header{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));color:var(--on-pitch);padding:20px 0 18px;position:relative;overflow:hidden;border-radius:0 0 24px 24px}
+  header .toprow,header .conn,header .weekbar{max-width:600px;margin-left:auto;margin-right:auto;padding-left:16px;padding-right:16px}
   header::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);pointer-events:none}
   header .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:2}
   header .eyebrow{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);letter-spacing:.22em;text-transform:uppercase;color:var(--accent-soft)}
@@ -72,9 +77,13 @@
      El número NO lleva degradé a propósito: su color significa algo (verde va
      bien, rojo va mal) y un degradé se comería ese significado. */
   .stats-row{display:flex;gap:9px;margin-bottom:16px}
-  .stat{flex:1;min-width:0;background:linear-gradient(170deg,var(--surface),var(--surface-2));
-    border:1px solid var(--line);border-radius:18px;padding:15px 9px 13px;text-align:center;
-    box-shadow:var(--shadow);position:relative;overflow:hidden}
+  /* Usa los tokens de elevación y no --surface: en tema oscuro la superficie
+     normal queda casi igual que el verde del encabezado y las tarjetas
+     desaparecían. En oscuro se levanta con una superficie MÁS CLARA, no con una
+     sombra más oscura — una sombra oscura sobre fondo oscuro no se ve. */
+  .stat{flex:1;min-width:0;background:linear-gradient(170deg,var(--elev),var(--elev-2));
+    border:1px solid var(--elev-line);border-radius:18px;padding:15px 9px 13px;text-align:center;
+    box-shadow:var(--elev-shadow);position:relative;overflow:hidden}
   /* Hilo de acento arriba, el mismo gesto que el halo del onboarding */
   .stat::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;
     background:linear-gradient(90deg,transparent,var(--accent-soft),transparent);opacity:.75}
@@ -399,8 +408,7 @@
      no tienen nada sobre lo cual montarse. */
   body:has(#v-cal.active) header{padding-bottom:52px}
   #v-cal .stats-row{margin-top:-58px;position:relative;z-index:5}
-  #v-cal .stats-row .stat{
-    box-shadow:0 14px 34px -16px rgba(20,53,39,.6),0 1px 2px rgba(20,40,30,.06)}
+  #v-cal .stats-row .stat{box-shadow:var(--elev-shadow)}
   /* Sin :has() el encabezado no crece y las tarjetas taparían la barra de la
      semana. En ese caso no se solapa: se pierde el efecto, no la lectura. */
   @supports not selector(:has(*)){
@@ -811,6 +819,7 @@
      que falla si se desincronizan. */
   :root[data-theme="dark"]{
       color-scheme:dark;
+      --elev:#26302a;--elev-2:#2d3830;--elev-line:#3d4a43;--elev-shadow:0 16px 32px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05);
       --bg:#111613;--surface:#1a211d;--surface-2:#212a25;
       --ink:#e6ebe7;--ink-soft:#a2aca6;--ink-faint:#7b857f;
       --line:#28312b;--line-2:#354039;
@@ -831,6 +840,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       color-scheme:dark;
+      --elev:#26302a;--elev-2:#2d3830;--elev-line:#3d4a43;--elev-shadow:0 16px 32px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05);
       --bg:#111613;--surface:#1a211d;--surface-2:#212a25;
       --ink:#e6ebe7;--ink-soft:#a2aca6;--ink-faint:#7b857f;
       --line:#28312b;--line-2:#354039;
