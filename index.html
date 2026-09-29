@@ -72,6 +72,21 @@
   #v-cal .stats-row .stat:first-child b{font-size:clamp(26px,9vw,38px)}
   #v-cal .stats-row .stat:first-child::before{left:16%;right:16%;height:3px;opacity:1}
   main{padding:18px 16px 26px;max-width:600px;margin:0 auto}
+  /* ---------- Escritorio ----------
+     La app es una columna con forma de teléfono, y eso está bien: el calendario
+     y la barra de la semana se leen mejor angostos. El espacio de más no se
+     rellena por rellenar, se usa SÓLO donde hay contenido genuinamente paralelo:
+     las tarjetas independientes de Progreso (15) y de Perfil (5), que en
+     escritorio obligaban a un scroll larguísimo.
+
+     Se ensanchan saliéndose de la columna: el contenido de <main> mide
+     600 − 32 de padding = 568 px, así que para llegar a 940 centrados hacen falta
+     (568 − 940) / 2 = −186 px de margen a cada lado. El umbral es 1040 px para
+     que los 940 entren con aire a los costados. */
+  @media (min-width:1040px){
+    #v-prog,#v-perfil{margin-inline:-186px;column-count:2;column-gap:20px}
+    #v-prog>.card,#v-perfil>.card{break-inside:avoid}
+  }
   /* La app oculta vistas y controles con el atributo `hidden` (showOnly, el
      encabezado, los botones del wizard). El `[hidden]{display:none}` del
      navegador es una regla del user-agent, así que CUALQUIER regla nuestra que
