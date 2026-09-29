@@ -138,13 +138,25 @@
   .cell.done .num{color:var(--green);font-weight:700}.cell.miss .num{color:var(--red)}
   /* Registros del día: íconos en una grilla de hasta 3 por fila, anclada abajo.
      Los puntos de color no se recordaban; el ícono se reconoce sin leyenda. */
-  .cell .inds{margin-top:auto;padding-top:2px;display:grid;grid-template-columns:repeat(3,auto);justify-content:center;gap:1px 0;line-height:1}
-  .cell .inds .ri{font-size:.6rem;line-height:1;width:1.05em;text-align:center}
+  /* Con tope de 3 ya no hace falta la grilla de dos filas: entran en una,
+     con algo más de aire y de tamaño, que es lo que les faltaba para leerse. */
+  .cell .inds{margin-top:auto;padding-top:3px;display:flex;justify-content:center;
+    align-items:center;gap:1.5px;line-height:1}
+  .cell .inds .ri{font-size:.68rem;line-height:1;text-align:center}
+  .cell .inds .ri.mas{font-family:"Sometype Mono",monospace;font-size:.56rem;font-weight:700;
+    color:var(--ink-faint);letter-spacing:-.02em}
   /* Balance calórico del día: flecha arriba/abajo del objetivo, verde si juega a favor */
   .cell .bal{font-size:.5rem;font-weight:800;line-height:1}
   .bal.ok,.wk.ok{color:var(--green)}.bal.no,.wk.no{color:var(--red)}
   .cell .bal.hoy{opacity:.5}
   .legend{margin-top:14px;font-size:var(--fs-4);color:var(--ink-soft)}
+  .legtog{width:100%;background:none;border:none;cursor:pointer;display:flex;
+    align-items:center;justify-content:space-between;gap:8px;padding:9px 0 0;
+    font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ink-faint);border-top:1px solid var(--line)}
+  .legtog i{font-style:normal;font-size:var(--fs-5);line-height:1}
+  .legtog.on{color:var(--ink-soft)}
+  .legbody .legrow:first-child{border-top:none}
   .legrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
   .legrow:first-child{border-top:none}
   .legrow span{display:flex;align-items:center;gap:4px}
@@ -1712,8 +1724,21 @@ function renderLegend(){
     h+='</div>';
     h+='<div class="legnote">La flecha de arriba a la derecha es el balance del día. La columna de la derecha suma la semana: tocala para ver el detalle.</div>';
   }
-  el("calLegend").innerHTML=h;
+  /* La leyenda es andamiaje: sirve las primeras veces y después ocupa lugar
+     permanentemente. Se pliega, y recuerda la elección en este dispositivo —es
+     una preferencia de lectura, no del usuario, así que va en localStorage y no
+     en `perfiles`, igual que el tema. */
+  const abierta=leyendaAbierta();
+  el("calLegend").innerHTML=
+    '<button class="legtog'+(abierta?" on":"")+'" id="legToggle" aria-expanded="'+(abierta?"true":"false")+'">'+
+    (abierta?"Ocultar referencias":"¿Qué significan los colores?")+'<i>'+(abierta?"▴":"▾")+'</i></button>'+
+    '<div class="legbody"'+(abierta?"":" hidden")+'>'+h+'</div>';
+  el("legToggle").onclick=()=>{guardarLeyenda(!leyendaAbierta());renderLegend();};
 }
+function leyendaAbierta(){
+  try{return localStorage.getItem("entreno_leyenda")!=="0";}catch(e){return true;}
+}
+function guardarLeyenda(v){try{localStorage.setItem("entreno_leyenda",v?"1":"0");}catch(e){}}
 function renderWeekbar(){
   const wb=el("weekbar");wb.innerHTML="";
   const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-weekdayMon(now));
@@ -1799,18 +1824,30 @@ function makeCell(d,otroMes){
     else if(hizoDep){const dp=actsDe(k).find(x=>x.categoria==="deporte");
       center=(p.tipo==="deporte"&&(!dp||dp.planificada))?iconFor(p):(dp?iconActividad(dp):"🏃");}
     else center=(p.tipo!=="descanso"?iconFor(p):"");
-    // Registros del día como íconos, hasta 3 por fila. Los puntos de color
-    // obligaban a memorizar la leyenda; el ícono se reconoce solo.
-    let ind="";
-    const icono=(ic,tit)=>'<span class="ri" title="'+escA(tit)+'">'+ic+'</span>';
+    /* Registros del día como íconos. Se muestran hasta 3, y si hay más aparece
+       un «+N»: en 34 px, seis emojis se leen como manchitas y dejan de informar.
+
+       El orden NO es el de siempre sino por rareza: ánimo, comida y agua se
+       registran casi todos los días, así que verlos no distingue un día de otro;
+       período, alcohol y una nota en el diario son los que hacen que un día valga
+       la pena mirarlo. Son los que ganan el lugar.
+
+       Nada se pierde: el «+N» avisa que hay más, el title los lista todos y al
+       tocar el día se ve el detalle completo. */
+    const regs=[];
     const b=bien[k];
-    if(b&&b.animo)ind+=icono(EMO.animo[b.animo-1],"Ánimo: "+EMOTXT[b.animo-1]);
-    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))ind+=icono("🍴","Comida registrada");
-    if(aguaDe(k)>0)ind+=icono("💧","Agua: "+aguaDe(k)+" ml");
-    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)ind+=icono("🍷","Alcohol");
-    if(perfil.registra_diario&&dia[k]&&dia[k].length)ind+=icono("📝","Nota en el diario");
-    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)ind+=icono("🩸","Período: "+ciclo[k].flujo);
-    const inds=ind?'<div class="inds">'+ind+'</div>':"";
+    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)regs.push(["🩸","Período: "+ciclo[k].flujo]);
+    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)regs.push(["🍷","Alcohol"]);
+    if(perfil.registra_diario&&dia[k]&&dia[k].length)regs.push(["📝","Nota en el diario"]);
+    if(b&&b.animo)regs.push([EMO.animo[b.animo-1],"Ánimo: "+EMOTXT[b.animo-1]]);
+    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))regs.push(["🍴","Comida registrada"]);
+    if(aguaDe(k)>0)regs.push(["💧","Agua: "+aguaDe(k)+" ml"]);
+    const TOPE_REGS=3;
+    const visibles=regs.slice(0,TOPE_REGS),ocultos=regs.length-visibles.length;
+    const todos=regs.map(r=>r[1]).join(" · ");
+    let ind=visibles.map(r=>'<span class="ri" title="'+escA(r[1])+'">'+r[0]+'</span>').join("");
+    if(ocultos>0)ind+='<span class="ri mas" title="'+escA(todos)+'">+'+ocultos+'</span>';
+    const inds=ind?'<div class="inds" title="'+escA(todos)+'">'+ind+'</div>':"";
     const plus=hasExtra?'<span class="extra">＋</span>':"";
     // Balance calórico del día; el de hoy va atenuado porque el día no terminó
     const bd=balDias([k]);
