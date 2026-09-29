@@ -26,7 +26,11 @@
 <style>
   :root{color-scheme:light;--bg:#eef0ec;--elev:#fff;--elev-2:#f7f8f6;--elev-line:#e7e9e5;--elev-shadow:0 14px 34px -16px rgba(20,53,39,.55),0 1px 2px rgba(20,40,30,.06);--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--green:#2f8f5b;--red:#c2452e;--blue:#3a6ea5;--fs-1:.55rem;--fs-2:.62rem;--fs-3:.68rem;--fs-4:.74rem;--fs-5:.8rem;--fs-6:.86rem;--fs-7:.92rem;--fs-8:1rem;--fs-9:1.1rem;--fs-10:1.2rem;--fs-11:1.35rem;--fs-12:1.5rem;--fs-13:2rem;--fs-14:2.4rem;--fs-15:3rem;--rest:#e7e9e4;--rest-2:#e3e6e1;--ok-bg:#e2f0e8;--ok-line:#a9d4bc;--ok-ink:#20603c;--bad-bg:#fbeae5;--bad-line:#efb9a6;--bad-ink:#8c3b20;--warn-bg:#fdf2e9;--warn-line:#d9cfa9;--warn-ink:#8c5a20;--info-bg:#eef4f8;--info-line:#c6dced;--info-ink:#2b6a97;--info-bar:#d8e6f0;--info-soft:#4a95c9;--accent-bg:#fdf6f1;--accent-bg-2:#f8e9de;--on-pitch:#eef3ef;--on-pitch-soft:#aec1b4;--pitch-ok:#62d39a;--pitch-bad:#ef9b85;--deco-1:#f3ede4;--deco-2:#eef2ec;--on-accent:#fff;--dot-comida:#e2643a;--dot-agua:#3a6ea5;--dot-alcohol:#9c3357;--dot-diario:#7b5ea7;--dot-periodo:#d6336c;--dot-a1:#c2452e;--dot-a2:#dd8452;--dot-a3:#d9a441;--dot-a4:#7fb069;--dot-a5:#2f8f5b;--r:18px;--shadow:0 1px 2px rgba(20,40,30,.04),0 12px 28px -22px rgba(20,53,39,.4)}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:var(--fs-8);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:80px;min-height:100vh}
+  body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:var(--fs-8);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+    /* La barra mide ~60px y el botón central sobresale 26px por encima: sin esto
+       la última fila de cada pantalla queda debajo del círculo. El safe-area va
+       sumado porque la propia barra lo agrega a su alto. */
+    padding-bottom:calc(104px + env(safe-area-inset-bottom))}
   h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.08}
   /* El fondo va a todo lo ancho, pero el CONTENIDO se alinea con <main>. Sin
      esto, en una pantalla de escritorio el encabezado y la barra de la semana
@@ -157,7 +161,9 @@
      con algo más de aire y de tamaño, que es lo que les faltaba para leerse. */
   .cell .inds{margin-top:auto;padding-top:3px;display:flex;justify-content:center;
     align-items:center;gap:1.5px;line-height:1}
-  .cell .inds .ri{font-size:.68rem;line-height:1;text-align:center}
+  .cell .inds .ri{font-size:.68rem;line-height:1;text-align:center;display:inline-flex;
+    align-items:center;justify-content:center}
+  .cell .inds .ri svg{width:11px;height:11px;display:block}
   .cell .inds .ri.mas{font-family:"Sometype Mono",monospace;font-size:.56rem;font-weight:700;
     color:var(--ink-faint);letter-spacing:-.02em}
   /* Balance calórico del día: flecha arriba/abajo del objetivo, verde si juega a favor */
@@ -175,6 +181,8 @@
   .legrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
   .legrow:first-child{border-top:none}
   .legrow span{display:flex;align-items:center;gap:4px}
+  .legico{display:inline-flex;vertical-align:-2px}
+  .legico svg{width:13px;height:13px;display:block}
   .legcap{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);width:60px;flex:none}
   /* ---------- Onboarding: una pregunta por pantalla ----------
      Ver appentreno-docs/DISENO-ONBOARDING.md.
@@ -802,6 +810,8 @@
   /* Panel rápido de hidratación desde el calendario */
   .quickrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
   .quickrow .rquickbtn{flex:0 1 auto}
+  .rquickbtn .qi{line-height:0;flex:none}
+  .rquickbtn .qi svg{width:15px;height:15px;display:block}
   .aguaov{position:fixed;inset:0;background:rgba(20,40,30,.5);display:none;align-items:flex-end;justify-content:center;z-index:55;backdrop-filter:blur(2px)}
   .aguaov.show{display:flex}
   .aguasheet{background:var(--bg);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:8px 16px 26px;animation:up .3s cubic-bezier(.2,.8,.2,1)}
@@ -882,7 +892,8 @@
       --info-bg:#16242f;--info-line:#2e4a5e;--info-ink:#93c3e2;--info-bar:#25384a;--info-soft:#5aa3d6;
       --accent-bg:#2a1d16;--accent-bg-2:#38251a;
       --deco-1:#232a24;--deco-2:#1b231e;
-      --dot-alcohol:#d1638c;--dot-diario:#a98fd0;--dot-periodo:#f0629a;
+      --dot-alcohol:#d1638c;
+      --dot-comida:#f0764a;--dot-agua:#5f97cf;--dot-diario:#a98fd0;--dot-periodo:#f0629a;
       --dot-a1:#e2705a;--dot-a2:#e9a074;--dot-a3:#e5c064;--dot-a4:#8fc47c;--dot-a5:#4fb87c;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
   }
@@ -903,7 +914,8 @@
       --info-bg:#16242f;--info-line:#2e4a5e;--info-ink:#93c3e2;--info-bar:#25384a;--info-soft:#5aa3d6;
       --accent-bg:#2a1d16;--accent-bg-2:#38251a;
       --deco-1:#232a24;--deco-2:#1b231e;
-      --dot-alcohol:#d1638c;--dot-diario:#a98fd0;--dot-periodo:#f0629a;
+      --dot-alcohol:#d1638c;
+      --dot-comida:#f0764a;--dot-agua:#5f97cf;--dot-diario:#a98fd0;--dot-periodo:#f0629a;
       --dot-a1:#e2705a;--dot-a2:#e9a074;--dot-a3:#e5c064;--dot-a4:#8fc47c;--dot-a5:#4fb87c;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
     }
@@ -973,7 +985,7 @@
       <div class="dow" id="calDow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span><span id="calDowSem" title="Balance calórico de la semana">Sem</span></div>
       <div class="grid" id="calGrid"></div>
       <div class="legend" id="calLegend"></div>
-      <div class="quickrow"><button class="rquickbtn" id="btnQuickAgua">💧 Cargar agua</button><button class="rquickbtn" id="btnQuickRec">🕰️ Cargar un recuerdo</button></div>
+      <div class="quickrow"><button class="rquickbtn" id="btnQuickAgua"><span class="qi" id="qiAgua"></span>Cargar agua</button><button class="rquickbtn" id="btnQuickRec"><span class="qi" id="qiRec"></span>Cargar un recuerdo</button></div>
     </div>
   </section>
 
@@ -1732,10 +1744,11 @@ function renderLegend(){
   h+='<span><i class="swg"></i> Gym</span><span><i class="swf"></i> Deporte</span><span><i class="lgbox rest"></i> Libre</span>';
   h+='</div>';
   // Registros (íconos, en el mismo orden en que aparecen en la celda)
-  let mini='<span>🙂 Ánimo</span><span>🍴 Comida</span><span>💧 Agua</span>';
-  if(permiteAlcohol())mini+='<span>🍷 Alcohol</span>';
-  if(perfil.registra_diario)mini+='<span>📝 Nota</span>';
-  if(perfil.registra_periodo)mini+='<span>🩸 Período</span>';
+  const legIco=(s)=>'<span class="legico">'+s+'</span>';
+  let mini='<span>'+legIco(icoAnimo(4))+' Ánimo</span><span>'+legIco(ICO_REG.comida)+' Comida</span><span>'+legIco(ICO_REG.agua)+' Agua</span>';
+  if(permiteAlcohol())mini+='<span>'+legIco(ICO_REG.alcohol)+' Alcohol</span>';
+  if(perfil.registra_diario)mini+='<span>'+legIco(ICO_REG.nota)+' Nota</span>';
+  if(perfil.registra_periodo)mini+='<span>'+legIco(ICO_REG.periodo)+' Período</span>';
   h+='<div class="legrow"><span class="legcap">Registros</span>'+mini+'</div>';
   if(!conocerme){
     h+='<div class="legrow"><span class="legcap">Calorías</span>';
@@ -1754,6 +1767,10 @@ function renderLegend(){
     (abierta?"Ocultar referencias":"¿Qué significan los colores?")+'<i>'+(abierta?"▴":"▾")+'</i></button>'+
     '<div class="legbody"'+(abierta?"":" hidden")+'>'+h+'</div>';
   el("legToggle").onclick=()=>{guardarLeyenda(!leyendaAbierta());renderLegend();};
+  /* Los dos botones de abajo comparten la tarjeta con la leyenda, así que toman
+     acá sus íconos: el del agua es el mismo que en el calendario. */
+  const qa=el("qiAgua");if(qa)qa.innerHTML=ICO_REG.agua;
+  const qr=el("qiRec");if(qr)qr.innerHTML=ICO_REG.recuerdo;
 }
 function leyendaAbierta(){
   try{return localStorage.getItem("entreno_leyenda")!=="0";}catch(e){return true;}
@@ -1822,6 +1839,48 @@ function makeWeekCell(ds){
   w.onclick=()=>toast(detalle);
   return w;
 }
+/* Íconos de registro de la celda del calendario.
+   Antes eran emojis de ~11 px, donde se leen como manchitas y, peor, cada
+   plataforma los dibuja distinto. En SVG además ganan algo que el emoji no puede
+   dar: color semántico propio, con los tokens --dot-* que ya existían del diseño
+   viejo de puntos. Así el agua es azul y el período rosa en cualquier teléfono.
+
+   Se dibujan a 16 y se muestran a 11: rellenos y no de trazo, porque a ese tamaño
+   una línea de 1,5 px desaparece. */
+function svgReg(color,cuerpo){
+  return '<svg viewBox="0 0 16 16" fill="var('+color+')" aria-hidden="true">'+cuerpo+'</svg>';
+}
+const ICO_REG={
+  comida: svgReg('--dot-comida',
+    '<path d="M4 2h1.1v4.2h.9V2h1.1v4.4a2 2 0 0 1-1.4 1.9V14H5.4V8.3A2 2 0 0 1 4 6.4V2z"/>'+
+    '<path d="M11.4 2c.9 0 1.6 1.4 1.6 3.2 0 1.4-.4 2.5-1 2.9V14h-1.2V8.1c-.6-.4-1-1.5-1-2.9C9.8 3.4 10.5 2 11.4 2z"/>'),
+  agua: svgReg('--dot-agua',
+    '<path d="M8 1.6s4.3 4.6 4.3 7.5A4.3 4.3 0 0 1 8 14.4 4.3 4.3 0 0 1 3.7 9.1C3.7 6.2 8 1.6 8 1.6z"/>'),
+  alcohol: svgReg('--dot-alcohol',
+    '<path d="M4 2h8l-.5 3.4A3.6 3.6 0 0 1 8.6 8.6v3.6h2.2v1.2H5.2v-1.2h2.2V8.6A3.6 3.6 0 0 1 4.5 5.4L4 2z"/>'),
+  nota: svgReg('--dot-diario',
+    '<path d="M3.4 2h6.2l3 3v9H3.4V2zm5.8.9V5h2.1L9.2 2.9zM5 7.4h6v1.1H5V7.4zm0 2.6h6v1.1H5V10z"/>'),
+  recuerdo: svgReg('--accent',
+    '<path fill-rule="evenodd" d="M8 1.2a6.8 6.8 0 1 0 0 13.6A6.8 6.8 0 0 0 8 1.2zm0 1.3a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/>'+
+    '<path d="M7.4 4.3h1.2v4l2.6 1.5-.6 1-3.2-1.9V4.3z"/>'),
+  periodo: svgReg('--dot-periodo',
+    '<path d="M8 1.4c2.6 2.9 4.1 5.2 4.1 7.2A4.1 4.1 0 0 1 8 12.7 4.1 4.1 0 0 1 3.9 8.6c0-2 1.5-4.3 4.1-7.2z"/>'),
+};
+/* El ánimo en la celda: una carita, pero propia y coloreada por nivel.
+   Se probó dejarla como emoji junto a los íconos nuevos y no funciona: la carita
+   amarilla es lo más llamativo de la celda y choca con los íconos planos.
+   Dibujada, conserva lo que la hacía buena —una cara se reconoce de un vistazo—
+   y suma algo que el emoji no daba: el color codifica el nivel, con la misma
+   escala --dot-a1..a5 que ya existía. */
+const BOCAS=["M5.1 11.3Q8 8.5 10.9 11.3","M5.2 10.9Q8 9.3 10.8 10.9",
+  "M5.4 10.3h5.2","M5.2 9.5Q8 11.5 10.8 9.5","M4.9 9.1Q8 12.2 11.1 9.1"];
+function icoAnimo(n){
+  const i=Math.min(5,Math.max(1,n))-1;
+  return '<svg viewBox="0 0 16 16" aria-hidden="true">'+
+    '<circle cx="8" cy="8" r="7" fill="var(--dot-a'+(i+1)+')"/>'+
+    '<circle cx="5.9" cy="6.3" r="1" fill="#fff"/><circle cx="10.1" cy="6.3" r="1" fill="#fff"/>'+
+    '<path d="'+BOCAS[i]+'" fill="none" stroke="#fff" stroke-width="1.15" stroke-linecap="round"/></svg>';
+}
 function makeCell(d,otroMes){
     const k=ymd(d);const p=planFor(d);
     const a=act[k]||{};const es=estadoDia(k);
@@ -1856,12 +1915,12 @@ function makeCell(d,otroMes){
        tocar el día se ve el detalle completo. */
     const regs=[];
     const b=bien[k];
-    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)regs.push(["🩸","Período: "+ciclo[k].flujo]);
-    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)regs.push(["🍷","Alcohol"]);
-    if(perfil.registra_diario&&dia[k]&&dia[k].length)regs.push(["📝","Nota en el diario"]);
-    if(b&&b.animo)regs.push([EMO.animo[b.animo-1],"Ánimo: "+EMOTXT[b.animo-1]]);
-    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))regs.push(["🍴","Comida registrada"]);
-    if(aguaDe(k)>0)regs.push(["💧","Agua: "+aguaDe(k)+" ml"]);
+    if(perfil.registra_periodo&&ciclo[k]&&ciclo[k].flujo)regs.push([ICO_REG.periodo,"Período: "+ciclo[k].flujo]);
+    if(permiteAlcohol()&&alim[k]&&alim[k].alcohol)regs.push([ICO_REG.alcohol,"Alcohol"]);
+    if(perfil.registra_diario&&dia[k]&&dia[k].length)regs.push([ICO_REG.nota,"Nota en el diario"]);
+    if(b&&b.animo)regs.push([icoAnimo(b.animo),"Ánimo: "+EMOTXT[b.animo-1]]);
+    if(consumedFor(k)!=null||(comi[k]&&comi[k].length))regs.push([ICO_REG.comida,"Comida registrada"]);
+    if(aguaDe(k)>0)regs.push([ICO_REG.agua,"Agua: "+aguaDe(k)+" ml"]);
     const TOPE_REGS=3;
     const visibles=regs.slice(0,TOPE_REGS),ocultos=regs.length-visibles.length;
     const todos=regs.map(r=>r[1]).join(" · ");
