@@ -88,6 +88,15 @@
      (568 − 940) / 2 = −186 px de margen a cada lado. El umbral es 1040 px para
      que los 940 entren con aire a los costados. */
   @media (min-width:1040px){
+    /* El calendario no se parte en dos columnas —la grilla es una sola cosa—
+       pero sí se ensancha: es la pantalla principal y era la única que dejaba
+       400px de aire a cada lado con las celdas apretadas. */
+    #v-cal{margin-inline:-120px}
+    /* Y el encabezado lo acompaña, si no la barra de días queda a 600px sobre
+       un calendario de 840. Alineados, cada pastilla cae sobre su columna. */
+    body:has(#v-cal.active) header .toprow,
+    body:has(#v-cal.active) header .conn,
+    body:has(#v-cal.active) header .weekbar{max-width:840px}
     #v-prog,#v-perfil{margin-inline:-186px;column-count:2;column-gap:20px}
     #v-prog>.card,#v-perfil>.card{break-inside:avoid}
   }
@@ -493,6 +502,12 @@
     border-top:1px solid var(--line);display:none;z-index:40;
     padding-bottom:env(safe-area-inset-bottom);overflow:visible}
   .tabbar.show{display:flex}
+  /* En escritorio la barra medía 1440px y "Progreso" quedaba a 1300px de
+     "Perfil": un patrón de celular estirado. La superficie sigue de borde a
+     borde, que es lo que la hace leer como pie, pero los botones se agrupan
+     al ancho del contenido. En celular el tope nunca se alcanza. */
+  .tabbar{justify-content:center}
+  .tabbar button{max-width:124px}
   .tabbar button{flex:1;background:none;border:none;padding:9px 4px 11px;cursor:pointer;
     color:var(--ink-faint);font-family:"Sometype Mono",monospace;font-size:var(--fs-1);
     letter-spacing:.08em;text-transform:uppercase;display:flex;flex-direction:column;
