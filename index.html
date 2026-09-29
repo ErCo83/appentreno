@@ -59,20 +59,34 @@
   .view{display:none;animation:fade .3s ease}.view.active{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
-  .card h2{font-size:var(--fs-9);font-weight:700}
+  .card h2{font-size:var(--fs-10);font-weight:800;letter-spacing:-.02em}
   .muted{color:var(--ink-soft)}
   .tag{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
   .note{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:12px 0;font-size:var(--fs-7);color:var(--ink-soft)}
   .msg{display:none;border-radius:12px;padding:11px 13px;font-size:var(--fs-6);margin-bottom:14px}
   .msg.err{display:block;background:var(--bad-bg);border:1px solid var(--bad-line);color:var(--bad-ink)}
   .msg.ok{display:block;background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink)}
-  .stats-row{display:flex;gap:10px;margin-bottom:14px}
-  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 8px;text-align:center;box-shadow:var(--shadow)}
-  .stat b{font-family:"Bricolage Grotesque",sans-serif;font-size:var(--fs-12);font-weight:800;display:block;line-height:1}
-  .stat span{font-family:"Sometype Mono",monospace;font-size:var(--fs-1);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint)}
+  /* Indicadores. Toman el lenguaje del onboarding: el número manda, con tipografía
+     grande y ajustada, y la etiqueta baja a dato de apoyo. Es el mismo componente
+     en Calendario y en Progreso, así que mejorarlo alcanza a las dos pantallas.
+     El número NO lleva degradé a propósito: su color significa algo (verde va
+     bien, rojo va mal) y un degradé se comería ese significado. */
+  .stats-row{display:flex;gap:9px;margin-bottom:16px}
+  .stat{flex:1;min-width:0;background:linear-gradient(170deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);border-radius:18px;padding:15px 9px 13px;text-align:center;
+    box-shadow:var(--shadow);position:relative;overflow:hidden}
+  /* Hilo de acento arriba, el mismo gesto que el halo del onboarding */
+  .stat::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent-soft),transparent);opacity:.75}
+  .stat b{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(22px,7.4vw,32px);
+    font-weight:800;display:block;line-height:.98;letter-spacing:-.035em;
+    font-variant-numeric:tabular-nums}
+  .stat span{display:block;font-family:"Sometype Mono",monospace;font-size:var(--fs-1);
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:7px}
   .stat b.good{color:var(--green)}
   .stat b.bad{color:var(--red)}
-  .stat i{display:block;font-style:normal;font-family:"Sometype Mono",monospace;font-size:var(--fs-1);line-height:1.35;color:var(--ink-faint);margin-top:5px;min-height:1.35em}
+  .stat i{display:block;font-style:normal;font-family:"Sometype Mono",monospace;font-size:var(--fs-1);
+    line-height:1.35;color:var(--ink-faint);margin-top:4px;min-height:1.35em}
   .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .calhead button{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;width:38px;height:38px;font-size:var(--fs-9);color:var(--ink);cursor:pointer}
   .calhead h2{font-size:var(--fs-9);text-transform:capitalize}
@@ -239,7 +253,11 @@
   input,textarea{width:100%;font-family:"Hanken Grotesk",sans-serif;font-size:var(--fs-8);padding:12px;border:1px solid var(--line-2);border-radius:11px;background:var(--surface);color:var(--ink)}
   input:focus,textarea:focus{outline:none;border-color:var(--accent)}
   textarea{resize:vertical;min-height:64px}
-  button.act{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:var(--fs-7);padding:13px 16px;border:none;border-radius:13px;background:var(--accent);color:var(--on-accent);cursor:pointer;width:100%}
+  button.act{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:var(--fs-7);padding:14px 16px;border:none;border-radius:14px;background:var(--accent);color:var(--on-accent);cursor:pointer;width:100%;
+    box-shadow:0 8px 20px -12px rgba(226,100,58,.85);transition:transform .12s ease,box-shadow .12s ease}
+  button.act:active{transform:translateY(1px);box-shadow:0 4px 12px -10px rgba(226,100,58,.85)}
+  button.act.ghost{box-shadow:none}
+  @media (prefers-reduced-motion:reduce){button.act{transition:none}button.act:active{transform:none}}
   button.act:disabled{opacity:.55;cursor:wait}
   button.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
   .google{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:var(--fs-8);width:100%;padding:13px 16px;border-radius:13px;cursor:pointer}
