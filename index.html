@@ -42,17 +42,35 @@
   .conn{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);margin-top:6px;color:var(--on-pitch-soft)}
   .conn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ink-faint);margin-right:5px;vertical-align:middle}
   .conn.ok .dot{background:var(--pitch-ok)}.conn.bad .dot{background:var(--pitch-bad)}
-  .weekbar{display:flex;gap:5px;margin-top:14px;position:relative;z-index:2}
-  .wb{flex:1;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 2px;font:inherit;color:inherit;cursor:pointer;display:block;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
+  /* La semana es contexto, no protagonista: se achica para que el ojo caiga en
+     los indicadores, que es el dato que se mira todos los días. Antes ocupaba
+     casi tanto alto como ellos y decía mucho menos. */
+  .weekbar{display:flex;gap:4px;margin-top:12px;position:relative;z-index:2}
+  .wb{flex:1;min-width:0;text-align:center;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px 2px 6px;
+    font:inherit;color:inherit;cursor:pointer;display:block;
+    -webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
   .wb:active{transform:scale(.94)}
   .wb:hover{background:rgba(255,255,255,.14)}
   .wb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .wb .d{display:block;font-family:"Sometype Mono",monospace;font-size:var(--fs-1);letter-spacing:.05em;color:var(--accent-soft);text-transform:uppercase}
-  .wb .m{display:block;font-size:var(--fs-8);margin-top:3px}
+  .wb .d{display:block;font-family:"Sometype Mono",monospace;font-size:var(--fs-1);
+    letter-spacing:.04em;color:var(--on-pitch-soft);text-transform:uppercase;line-height:1}
+  .wb .m{display:block;font-size:var(--fs-7);margin-top:2px;line-height:1.1}
   .wb.done{background:rgba(98,211,154,.26);border-color:rgba(98,211,154,.5)}
   .wb.miss{background:rgba(239,155,133,.24);border-color:rgba(239,155,133,.5)}
   .wb.recov{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
-  .wb.today{box-shadow:0 0 0 2px var(--accent)}
+  /* Hoy: antes era un aro del mismo grosor que el borde de los demás y se perdía.
+     Ahora la letra se enciende en naranja y el aro es más marcado. */
+  .wb.today{box-shadow:0 0 0 2px var(--accent);background:rgba(226,100,58,.14);
+    border-color:transparent}
+  .wb.today .d{color:var(--accent-soft);font-weight:700}
+
+  /* Los tres indicadores no valen lo mismo: el balance calórico es el que se
+     mira todos los días y los otros dos son contexto. Se le da más ancho y más
+     cuerpo. En Progreso la fila sigue siendo flex, con dos indicadores parejos. */
+  #v-cal .stats-row{display:grid;grid-template-columns:1.35fr 1fr 1fr;align-items:stretch}
+  #v-cal .stats-row .stat:first-child b{font-size:clamp(26px,9vw,38px)}
+  #v-cal .stats-row .stat:first-child::before{left:16%;right:16%;height:3px;opacity:1}
   main{padding:18px 16px 26px;max-width:600px;margin:0 auto}
   /* La app oculta vistas y controles con el atributo `hidden` (showOnly, el
      encabezado, los botones del wizard). El `[hidden]{display:none}` del
