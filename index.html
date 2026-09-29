@@ -978,11 +978,6 @@
       <span class="tag">Perfil</span><h2 style="margin:3px 0 6px">Tus datos</h2>
       <p class="muted" style="font-size:var(--fs-6)">Alimentan tu objetivo calórico. Los cambios rigen de acá en adelante, tu historial no se toca.</p>
       <label class="fld">Nombre</label><input type="text" id="pNombre">
-      <label class="fld">Sexo</label><div class="chips" id="pSexo"></div>
-      <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
-      <label class="fld">Peso inicial (kg)</label><input type="number" id="pPesoIni" step="0.1" inputmode="decimal">
-      <p class="muted" style="font-size:var(--fs-4);margin-top:5px">Es tu punto de partida, no tu peso de hoy: no hace falta actualizarlo. Tu peso actual se registra en <b>Progreso</b>, y ahí queda la evolución.</p>
-      <div class="note" style="margin-top:12px;font-size:var(--fs-4)">✏️ Nacimiento, altura y peso inicial se pueden editar <b>para corregir un error</b>, no para irlos actualizando: son el punto de partida de todos tus cálculos.</div>
       <label class="fld">Nivel de actividad</label><div class="chips" id="pFactor"></div>
       <label class="fld">Objetivo</label><div class="chips" id="pObjetivo"></div>
       <label class="fld">Ajuste calórico diario (kcal)</label><input type="number" id="pAjuste" inputmode="numeric">
@@ -992,6 +987,22 @@
       <p class="muted" style="font-size:var(--fs-5);margin-top:4px">Negativo = déficit (bajar grasa) · positivo = superávit (ganar músculo). Se sugiere solo al cambiar el objetivo.</p>
       <div class="note" id="targetPreview" style="margin-top:14px"></div>
       <button class="act" id="btnSavePerfil">Guardar perfil</button>
+    </div>
+    <!-- Los datos de base van en su propia tarjeta y plegados: no cambian con el
+         tiempo, se editan sólo para corregir un error, y tenerlos a la vista
+         invita a irlos actualizando, que es justo lo que rompe los cálculos. -->
+    <div class="card">
+      <span class="tag">Datos de base</span><h2 style="margin:3px 0 6px">Sexo, nacimiento y altura</h2>
+      <p class="muted" style="font-size:var(--fs-5)">El punto de partida de todos tus cálculos. No cambian con el tiempo: se editan <b>para corregir un error</b>, no para irlos actualizando.</p>
+      <button class="act ghost" id="btnAbrirBase" style="margin-top:12px">✏️ Corregir mis datos de base</button>
+      <div id="baseCampos" hidden>
+        <label class="fld">Sexo</label><div class="chips" id="pSexo"></div>
+        <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
+        <label class="fld">Peso inicial (kg)</label><input type="number" id="pPesoIni" step="0.1" inputmode="decimal">
+        <p class="muted" style="font-size:var(--fs-4);margin-top:5px">Es tu punto de partida, no tu peso de hoy. Tu peso actual se registra en <b>Progreso</b>, y ahí queda la evolución.</p>
+        <button class="act" id="btnSaveBase" style="margin-top:14px">Guardar datos de base</button>
+        <button class="act ghost" id="btnCerrarBase" style="margin-top:8px">Cerrar</button>
+      </div>
     </div>
     <div class="card">
       <span class="tag">Apariencia</span><h2 style="margin:3px 0 4px">Tema</h2>
@@ -4199,20 +4210,46 @@ function renderPerfil(){
       av.style.display="";
       av.innerHTML="🔞 Según la fecha de nacimiento cargada, este perfil es de "+age()+" años. "+
         "Por eso <b>alcohol y fumar no aparecen</b> en el registro diario, aunque los actives acá. "+
-        "Si la fecha está mal, corregila arriba.";
+        "Si la fecha está mal, corregila en <b>Datos de base</b>.";
     }else av.style.display="none";
   }
   el("btnSavePerfil").onclick=()=>conBoton("btnSavePerfil",savePerfil);
+  el("btnAbrirBase").onclick=()=>{el("baseCampos").hidden=false;el("btnAbrirBase").hidden=true;};
+  el("btnCerrarBase").onclick=()=>{el("baseCampos").hidden=true;el("btnAbrirBase").hidden=false;};
+  el("btnSaveBase").onclick=()=>conBoton("btnSaveBase",savePerfil);
 }
 function refreshPerfilChips(){
   chipGroup("pSexo",[["M","Hombre"],["F","Mujer"]],pfSexo,v=>{pfSexo=v;refreshPerfilChips();});
   chipGroup("pFactor",FACTORES,pfFactor,v=>{pfFactor=v;refreshPerfilChips();});
   chipGroup("pObjetivo",OBJETIVOS,pfObjetivo,v=>{pfObjetivo=v;el("pAjuste").value=SUGERIDO[v];refreshPerfilChips();});
-  flagPair("fAlcSi","fAlcNo",pfAlc,v=>{pfAlc=v;refreshPerfilChips();});
-  flagPair("fFumSi","fFumNo",pfFum,v=>{pfFum=v;refreshPerfilChips();});
-  flagPair("fDiaSi","fDiaNo",pfDia,v=>{pfDia=v;refreshPerfilChips();});
+  // Estos cuatro se guardan al tocarlos, no con «Guardar perfil». Ese botón vive
+  // en OTRA tarjeta, más arriba, así que quien activaba «Fumar» acá y volvía al
+  // calendario no había guardado nada y la sección no aparecía nunca. Un
+  // interruptor que parece instantáneo tiene que serlo.
+  flagPair("fAlcSi","fAlcNo",pfAlc,v=>{pfAlc=v;refreshPerfilChips();guardarFlag("registra_alcohol",v);});
+  flagPair("fFumSi","fFumNo",pfFum,v=>{pfFum=v;refreshPerfilChips();guardarFlag("registra_fumar",v);});
+  flagPair("fDiaSi","fDiaNo",pfDia,v=>{pfDia=v;refreshPerfilChips();guardarFlag("registra_diario",v);});
   el("fnrowPeriodo").style.display=(pfSexo==="F")?"":"none";
-  if(pfSexo==="F")flagPair("fPerSi","fPerNo",pfPer,v=>{pfPer=v;refreshPerfilChips();});
+  if(pfSexo==="F")flagPair("fPerSi","fPerNo",pfPer,v=>{pfPer=v;refreshPerfilChips();guardarFlag("registra_periodo",v);});
+}
+/* Guarda un solo interruptor de «Qué registrás» y refresca lo que dependa de él.
+   Si la escritura falla se revierte, para que lo que se ve sea lo que hay. */
+async function guardarFlag(campo,valor){
+  const antes=perfil[campo];
+  perfil[campo]=valor;
+  const td=el("tabDiario");if(td)td.style.display=perfil.registra_diario?"":"none";
+  renderAll();
+  try{
+    const r=await sb.from("perfiles").update({[campo]:valor}).eq("user_id",user.id);
+    if(r.error)throw r.error;
+    toast(valor?"Activado ✓":"Desactivado");
+  }catch(e){
+    perfil[campo]=antes;
+    pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;
+    pfDia=!!perfil.registra_diario;pfPer=!!perfil.registra_periodo;
+    refreshPerfilChips();renderAll();
+    toast("No se pudo guardar: "+traducir(e));
+  }
 }
 async function savePerfil(){
   const nac=readDateSelects("pNac"),alt=parseInt(el("pAlt").value);
@@ -4223,8 +4260,11 @@ async function savePerfil(){
     peso_inicial_kg:el("pPesoIni").value!==""?parseFloat(el("pPesoIni").value):null,
     factor_actividad:parseFloat(pfFactor),objetivo:pfObjetivo,
     ajuste_kcal:el("pAjuste").value!==""?parseInt(el("pAjuste").value):0,
-    registra_alcohol:pfAlc,registra_fumar:pfFum,registra_diario:pfDia,registra_periodo:(pfSexo==="F"&&pfPer),
     preferencias_comida:(el("pPrefComida").value||"").trim()||null};
+  // Los interruptores de «Qué registrás» NO viajan acá: se guardan solos al
+  // tocarlos. Mandarlos de nuevo pisaría con un estado viejo lo recién cambiado.
+  // Excepción: si el sexo deja de ser F, el ciclo se apaga por coherencia.
+  if(pfSexo!=="F"&&perfil.registra_periodo)payload.registra_periodo=false;
   try{
     const r=await sb.from("perfiles").update(payload).eq("user_id",user.id);
     if(r.error)throw r.error;
@@ -4233,18 +4273,6 @@ async function savePerfil(){
     const td=el("tabDiario");if(td)td.style.display=perfil.registra_diario?"":"none";
     renderAll();renderPerfil();
     el("targetPreview").innerHTML="🎯 Objetivo calórico actual: <b>~"+calorieTarget()+" kcal/día</b>";
-  /* La app oculta alcohol y fumar en perfiles de menores de 18 (permiteAlcohol /
-     permiteFumar). Hasta ahora lo hacía en silencio: el interruptor decía «Sí» y la
-     sección no aparecía nunca, sin ninguna explicación. */
-  const av=el("avisoMenor");
-  if(av){
-    if(esMenor()){
-      av.style.display="";
-      av.innerHTML="🔞 Según la fecha de nacimiento cargada, este perfil es de "+age()+" años. "+
-        "Por eso <b>alcohol y fumar no aparecen</b> en el registro diario, aunque los actives acá. "+
-        "Si la fecha está mal, corregila arriba.";
-    }else av.style.display="none";
-  }
     toast("Perfil guardado ✓");
   }catch(e){toast("No se guardó: "+traducir(e));}
 }
