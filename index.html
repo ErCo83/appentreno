@@ -182,6 +182,20 @@
   .legrow:first-child{border-top:none}
   .legrow span{display:flex;align-items:center;gap:4px}
   .legico{display:inline-flex;vertical-align:-2px}
+  /* Los íconos de cromo (data-ic). Van en em para que sigan al texto que
+     acompañan: el mismo ícono mide más en un botón grande que en una fila de
+     ajustes, sin una clase por tamaño. El flex:none evita que se aplasten
+     cuando la etiqueta de al lado es larga y la fila se queda corta. */
+  .ic{display:inline-flex;align-items:center;justify-content:center;
+    width:1.15em;height:1.15em;flex:none;vertical-align:-.2em;margin-right:.45em}
+  .ic svg{width:100%;height:100%;display:block}
+  .ic:empty{display:none}
+  .ic.solo{margin-right:0}
+  /* Un placeholder no admite SVG, así que la lupa se superpone al campo. */
+  .searchbox{position:relative;flex:1;min-width:140px;display:flex}
+  .searchbox input{flex:1;padding-left:38px}
+  .searchbox .sic{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    margin:0;width:16px;height:16px;color:var(--ink-faint);pointer-events:none}
   .legico svg{width:13px;height:13px;display:block}
   .legcap{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);width:60px;flex:none}
   /* ---------- Onboarding: una pregunta por pantalla ----------
@@ -595,7 +609,7 @@
   .planpick{margin-top:8px}
   .planpick select{margin-top:5px}
   .diaryhead{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  .diaryhead input{flex:1;min-width:140px}
+  .diaryhead>input{flex:1;min-width:140px}
   .diarystat{display:flex;gap:10px;margin-bottom:14px}
   .dstat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
   .dstat b{font-family:"Bricolage Grotesque",sans-serif;font-size:var(--fs-11);font-weight:800;display:block;line-height:1}
@@ -992,8 +1006,8 @@
   <section class="view" id="v-plan">
     <div class="card">
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="actbtn" id="subRutinas2">🏋️ Rutinas</button>
-        <button class="actbtn on" id="subPlan2">🗓️ Plan semanal</button>
+        <button class="actbtn" id="subRutinas2"><span class="ic" data-ic="pesa"></span>Rutinas</button>
+        <button class="actbtn on" id="subPlan2"><span class="ic" data-ic="calendario"></span>Plan semanal</button>
       </div>
       <span class="tag">Tu semana</span><h2 style="margin:3px 0 10px">Plan de actividad</h2>
       <div class="note" id="planReco" style="margin-top:4px"></div>
@@ -1011,9 +1025,9 @@
         <input type="date" id="planDesde">
         <div class="note" id="planDesdeHint" style="margin-top:8px"></div>
       </div>
-      <button class="act ghost" id="btnTpl" style="margin-top:14px">✨ Usar plan sugerido según mi objetivo</button>
+      <button class="act ghost" id="btnTpl" style="margin-top:14px"><span class="ic" data-ic="chispa"></span>Usar plan sugerido según mi objetivo</button>
       <button class="act" id="btnSavePlan" style="margin-top:10px">Guardar plan</button>
-      <button class="act ghost" id="btnCorregir" style="margin-top:10px;display:none">✏️ Corregir el plan vigente, sin crear una versión</button>
+      <button class="act ghost" id="btnCorregir" style="margin-top:10px;display:none"><span class="ic" data-ic="lapiz"></span>Corregir el plan vigente, sin crear una versión</button>
       <button class="act ghost" id="btnVolverBase" style="margin-top:10px;display:none">↺ Que esta semana vuelva al plan base</button>
     </div>
   </section>
@@ -1021,8 +1035,8 @@
   <section class="view" id="v-rutinas">
     <div class="card">
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="actbtn on" id="subRutinas">🏋️ Rutinas</button>
-        <button class="actbtn" id="subPlan">🗓️ Plan semanal</button>
+        <button class="actbtn on" id="subRutinas"><span class="ic" data-ic="pesa"></span>Rutinas</button>
+        <button class="actbtn" id="subPlan"><span class="ic" data-ic="calendario"></span>Plan semanal</button>
       </div>
       <span class="tag">Rutinas</span><h2 style="margin:3px 0 6px">Tus rutinas de gimnasio</h2>
       <p class="muted" style="font-size:var(--fs-6)">Creá rutinas con nombre (ej: "Sesión A · full body") y asignalas a tus días de gym. Al abrir un día de gym, sus ejercicios aparecen precargados.</p>
@@ -1037,12 +1051,12 @@
 
   <section class="view" id="v-prog">
     <div class="card" style="padding:14px">
-      <button class="act" id="btnReporte">📄 Ver reporte del mes</button>
+      <button class="act" id="btnReporte"><span class="ic" data-ic="documento"></span>Ver reporte del mes</button>
     </div>
     <div class="stats-row">
       <div class="stat"><b id="cBal">0</b><span>En objetivo / mes</span></div>
-      <div class="stat" id="statAlc"><b id="cAlc">0</b><span>Días s/alcohol</span></div>
-      <div class="stat" id="statFum"><b id="cFum">0</b><span>Días s/fumar</span></div>
+      <div class="stat" id="statAlc"><b id="cAlc">0</b><span id="lAlc">Días s/alcohol</span></div>
+      <div class="stat" id="statFum"><b id="cFum">0</b><span id="lFum">Días s/fumar</span></div>
     </div>
     <div class="card">
       <span class="tag">Registro corporal</span><h2 style="margin:3px 0 13px">Peso y cintura</h2>
@@ -1136,7 +1150,7 @@
     <div class="card">
       <span class="tag">Datos de base</span><h2 style="margin:3px 0 6px">Sexo, nacimiento y altura</h2>
       <p class="muted" style="font-size:var(--fs-5)">El punto de partida de todos tus cálculos. No cambian con el tiempo: se editan <b>para corregir un error</b>, no para irlos actualizando.</p>
-      <button class="act ghost" id="btnAbrirBase" style="margin-top:12px">✏️ Corregir mis datos de base</button>
+      <button class="act ghost" id="btnAbrirBase" style="margin-top:12px"><span class="ic" data-ic="lapiz"></span>Corregir mis datos de base</button>
       <div id="baseCampos" hidden>
         <label class="fld">Sexo</label><div class="chips" id="pSexo"></div>
         <div class="frow" style="margin-top:14px"><div><label class="fld" style="margin-top:0">Nacimiento</label><div class="dsel" id="pNac"></div></div><div><label class="fld" style="margin-top:0">Altura (cm)</label><input type="number" id="pAlt" inputmode="numeric"></div></div>
@@ -1153,26 +1167,26 @@
     </div>
     <div class="card">
       <span class="tag">Funcionalidades</span><h2 style="margin:3px 0 10px">Qué registrás</h2>
-      <div class="fnrow"><span><span class="fl">🍷 Alcohol</span><br><span class="fs">Check diario y seguimiento</span></span><div class="acts"><button class="actbtn" id="fAlcSi">Sí</button><button class="actbtn" id="fAlcNo">No</button></div></div>
-      <div class="fnrow"><span><span class="fl">🌿 Fumar</span><br><span class="fs">Tabaco, THC o CBD</span></span><div class="acts"><button class="actbtn" id="fFumSi">Sí</button><button class="actbtn" id="fFumNo">No</button></div></div>
-      <div class="fnrow"><span><span class="fl">✍️ Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
-      <div class="fnrow" id="fnrowPeriodo" style="display:none"><span><span class="fl">🩸 Período</span><br><span class="fs">Días de flujo y estimación del ciclo</span></span><div class="acts"><button class="actbtn" id="fPerSi">Sí</button><button class="actbtn" id="fPerNo">No</button></div></div>
+      <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="alcohol"></span>Alcohol</span><br><span class="fs">Check diario y seguimiento</span></span><div class="acts"><button class="actbtn" id="fAlcSi">Sí</button><button class="actbtn" id="fAlcNo">No</button></div></div>
+      <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="hoja"></span>Fumar</span><br><span class="fs">Tabaco, THC o CBD</span></span><div class="acts"><button class="actbtn" id="fFumSi">Sí</button><button class="actbtn" id="fFumNo">No</button></div></div>
+      <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="nota"></span>Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
+      <div class="fnrow" id="fnrowPeriodo" style="display:none"><span><span class="fl"><span class="ic" data-ic="periodo"></span>Período</span><br><span class="fs">Días de flujo y estimación del ciclo</span></span><div class="acts"><button class="actbtn" id="fPerSi">Sí</button><button class="actbtn" id="fPerNo">No</button></div></div>
       <div class="note" id="avisoMenor" style="display:none;margin-top:12px"></div>
       <p class="muted" style="font-size:var(--fs-5);margin-top:12px">Al desactivar, la sección se oculta; lo ya registrado no se borra.</p>
     </div>
     <div class="card notifcard" id="notifCard">
       <span class="tag">Notificaciones</span><h2 style="margin:3px 0 8px">Recordatorios</h2>
       <div class="notifstate off" id="notifState">—</div>
-      <button class="act" id="btnNotifOn">🔔 Activar notificaciones</button>
+      <button class="act" id="btnNotifOn"><span class="ic" data-ic="campana"></span>Activar notificaciones</button>
       <div id="notifPrefs" style="display:none">
-        <div class="nrow"><span><span class="nl">🍽️ Comidas</span><br><span class="ns">Te avisa para que planifiques con tiempo</span></span><div class="acts"><button class="actbtn" id="nComSi">Sí</button><button class="actbtn" id="nComNo">No</button></div></div>
+        <div class="nrow"><span><span class="nl"><span class="ic" data-ic="comida"></span>Comidas</span><br><span class="ns">Te avisa para que planifiques con tiempo</span></span><div class="acts"><button class="actbtn" id="nComSi">Sí</button><button class="actbtn" id="nComNo">No</button></div></div>
         <div class="horas" id="notifHoras">
           <div><label class="fld" style="margin-top:0">Almuerzo</label><input type="time" id="nHoraAm"></div>
           <div><label class="fld" style="margin-top:0">Cena</label><input type="time" id="nHoraPm"></div>
         </div>
-        <div class="nrow"><span><span class="nl">💧 Hidratación</span><br><span class="ns">Solo si vas atrasado con tu meta del día</span></span><div class="acts"><button class="actbtn" id="nAguaSi">Sí</button><button class="actbtn" id="nAguaNo">No</button></div></div>
-        <div class="nrow"><span><span class="nl">📅 Registro pendiente</span><br><span class="ns">Si te quedó el día anterior sin cargar</span></span><div class="acts"><button class="actbtn" id="nRegSi">Sí</button><button class="actbtn" id="nRegNo">No</button></div></div>
-        <div class="nrow"><span><span class="nl">🏋️ Día de actividad</span><br><span class="ns">Aviso los días de gimnasio o deporte</span></span><div class="acts"><button class="actbtn" id="nActSi">Sí</button><button class="actbtn" id="nActNo">No</button></div></div>
+        <div class="nrow"><span><span class="nl"><span class="ic" data-ic="agua"></span>Hidratación</span><br><span class="ns">Solo si vas atrasado con tu meta del día</span></span><div class="acts"><button class="actbtn" id="nAguaSi">Sí</button><button class="actbtn" id="nAguaNo">No</button></div></div>
+        <div class="nrow"><span><span class="nl"><span class="ic" data-ic="calendario"></span>Registro pendiente</span><br><span class="ns">Si te quedó el día anterior sin cargar</span></span><div class="acts"><button class="actbtn" id="nRegSi">Sí</button><button class="actbtn" id="nRegNo">No</button></div></div>
+        <div class="nrow"><span><span class="nl"><span class="ic" data-ic="pesa"></span>Día de actividad</span><br><span class="ns">Aviso los días de gimnasio o deporte</span></span><div class="acts"><button class="actbtn" id="nActSi">Sí</button><button class="actbtn" id="nActNo">No</button></div></div>
         <div class="horas"><div><label class="fld" style="margin-top:0">Hora del aviso de actividad</label><input type="time" id="nHoraAct"></div></div>
         <button class="act ghost" id="btnNotifTest" style="margin-top:14px">Probar una notificación</button>
         <button class="act ghost" id="btnNotifOff" style="margin-top:10px">Desactivar en este dispositivo</button>
@@ -1182,7 +1196,7 @@
     <div class="card">
       <span class="tag">Ayuda</span><h2 style="margin:3px 0 8px">¿Necesitás una mano?</h2>
       <p class="muted" style="font-size:var(--fs-6);margin-bottom:12px">Volvé a ver la introducción cuando quieras. Y recordá: en cada sección tenés el signo <b>?</b> arriba a la derecha para un recordatorio rápido.</p>
-      <button class="act ghost" id="btnVerTour">🎬 Ver el tutorial de nuevo</button>
+      <button class="act ghost" id="btnVerTour"><span class="ic" data-ic="play"></span>Ver el tutorial de nuevo</button>
     </div>
     <!-- Borrado de cuenta. Google Play lo exige dentro de la app para cualquier
          app con cuentas de usuario; ver sección 8 del documento técnico. -->
@@ -1206,8 +1220,8 @@
   <section class="view" id="v-diario">
     <div class="card">
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="actbtn on" id="subDiario">📔 Diario</button>
-        <button class="actbtn" id="subHistoria">🕰️ Mi historia</button>
+        <button class="actbtn on" id="subDiario"><span class="ic" data-ic="libro"></span>Diario</button>
+        <button class="actbtn" id="subHistoria"><span class="ic" data-ic="reloj"></span>Mi historia</button>
       </div>
       <span class="tag">Diario personal</span><h2 style="margin:3px 0 6px">Tu bitácora</h2>
       <p class="muted" style="font-size:var(--fs-6)">Todo lo que escribís, en un solo lugar. Escribí libremente: pensamientos, cómo te sentiste, lo que quieras recordar.</p>
@@ -1224,11 +1238,11 @@
       <button class="act" id="btnDQuick" style="margin-top:10px">＋ Guardar anotación</button>
     </div>
     <div class="diaryhead">
-      <input type="text" id="dSearch" placeholder="🔍 Buscar en tus anotaciones…" autocomplete="off">
+      <div class="searchbox"><span class="ic sic" data-ic="lupa"></span><input type="text" id="dSearch" placeholder="Buscar en tus anotaciones…" autocomplete="off"></div>
     </div>
     <div id="diaryList"></div>
     <div class="narrador">
-      <h3>✨ Narrador de tu diario</h3>
+      <h3><span class="ic" data-ic="chispa"></span>Narrador de tu diario</h3>
       <p class="sub">Convertí un período de tu diario en un relato de ficción. La IA usa lo que escribiste, tus sueños y tu día a día.</p>
       <button class="act" id="btnAbrirNarr">Generar una historia</button>
       <div class="narrpanel" id="narrPanel">
@@ -1237,7 +1251,7 @@
           <button class="rangebtn on" data-range="semana">Última semana</button>
           <button class="rangebtn" data-range="mes">Último mes</button>
           <button class="rangebtn" data-range="libre">Elegir fechas</button>
-          <button class="rangebtn" data-range="vida">🕰️ Mi vida entera</button>
+          <button class="rangebtn" data-range="vida"><span class="ic" data-ic="reloj"></span>Mi vida entera</button>
         </div>
         <div id="rangeLibre" style="display:none;margin-top:8px">
           <div class="frow"><div><label class="fld" style="margin-top:4px">Desde</label><input type="date" id="narrDesde"></div><div><label class="fld" style="margin-top:4px">Hasta</label><input type="date" id="narrHasta"></div></div>
@@ -1246,12 +1260,12 @@
 
         <label class="fld">2 · ¿Qué incluir?</label>
         <div class="srcchecks" id="srcChecks">
-          <div class="srcrow"><input type="checkbox" id="src_diario" checked><label for="src_diario">📔 Diario personal <span class="srch">— el alma del relato</span></label></div>
-          <div class="srcrow"><input type="checkbox" id="src_suenos" checked><label for="src_suenos">💭 Sueños <span class="srch">— material onírico</span></label></div>
-          <div class="srcrow"><input type="checkbox" id="src_animo" checked><label for="src_animo">🙂 Ánimo y energía <span class="srch">— color emocional</span></label></div>
-          <div class="srcrow"><input type="checkbox" id="src_gym" checked><label for="src_gym">🏋️ Entrenamientos <span class="srch">— contexto</span></label></div>
-          <div class="srcrow"><input type="checkbox" id="src_comidas" checked><label for="src_comidas">🍴 Comidas <span class="srch">— detalles cotidianos</span></label></div>
-          <div class="srcrow"><input type="checkbox" id="src_recuerdos"><label for="src_recuerdos">🕰️ Mis recuerdos <span class="srch">— tu historia de vida</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_diario" checked><label for="src_diario"><span class="ic" data-ic="libro"></span>Diario personal <span class="srch">— el alma del relato</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_suenos" checked><label for="src_suenos"><span class="ic" data-ic="sueno"></span>Sueños <span class="srch">— material onírico</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_animo" checked><label for="src_animo"><span class="ic" data-ic="animo"></span>Ánimo y energía <span class="srch">— color emocional</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_gym" checked><label for="src_gym"><span class="ic" data-ic="pesa"></span>Entrenamientos <span class="srch">— contexto</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_comidas" checked><label for="src_comidas"><span class="ic" data-ic="comida"></span>Comidas <span class="srch">— detalles cotidianos</span></label></div>
+          <div class="srcrow"><input type="checkbox" id="src_recuerdos"><label for="src_recuerdos"><span class="ic" data-ic="reloj"></span>Mis recuerdos <span class="srch">— tu historia de vida</span></label></div>
         </div>
 
         <label class="fld">3 · ¿Qué género?</label>
@@ -1264,7 +1278,7 @@
           <button class="genchip" data-gen="poesia">Poesía<span class="ga">Neruda</span></button>
         </div>
 
-        <button class="act" id="btnGenerar" style="margin-top:16px">✨ Crear mi historia</button>
+        <button class="act" id="btnGenerar" style="margin-top:16px"><span class="ic" data-ic="chispa"></span>Crear mi historia</button>
         <div class="narrloading" id="narrLoading" style="display:none"><div class="dots">✦ ✦ ✦</div><p style="margin-top:8px">Tejiendo tu historia… esto puede tardar unos segundos.</p></div>
       </div>
     </div>
@@ -1275,8 +1289,8 @@
   <section class="view" id="v-historia">
     <div class="card">
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="actbtn" id="subDiario2">📔 Diario</button>
-        <button class="actbtn on" id="subHistoria2">🕰️ Mi historia</button>
+        <button class="actbtn" id="subDiario2"><span class="ic" data-ic="libro"></span>Diario</button>
+        <button class="actbtn on" id="subHistoria2"><span class="ic" data-ic="reloj"></span>Mi historia</button>
       </div>
       <span class="tag">Mi historia</span><h2 style="margin:3px 0 6px">La historia de tu vida</h2>
       <p class="muted" style="font-size:var(--fs-6)">Guardá tus recuerdos sin importar si recordás la fecha exacta. La app los ordena solos y va armando tu línea de tiempo.</p>
@@ -1727,7 +1741,7 @@ async function google(){gmsg(null,"");const{error}=await sb.auth.signInWithOAuth
 async function conBoton(id,fn){const b=el(id);if(!b)return fn();const t=b.textContent;b.disabled=true;b.textContent="…";try{await fn();}finally{b.disabled=false;b.textContent=t;}}
 
 /* ---------- RENDER GENERAL ---------- */
-function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();renderHistorias();renderRecuerdos();}
+function renderAll(){renderWeekbar();renderCalendar();renderStats();renderPlanTab();renderRutinas();renderLegend();renderProgress();renderDiary();renderHistorias();renderRecuerdos();pintarIconos();}
 function renderLegend(){
   const conocerme=perfil.objetivo==="conocerme";
   let h='';
@@ -1866,6 +1880,71 @@ const ICO_REG={
   periodo: svgReg('--dot-periodo',
     '<path d="M8 1.4c2.6 2.9 4.1 5.2 4.1 7.2A4.1 4.1 0 0 1 8 12.7 4.1 4.1 0 0 1 3.9 8.6c0-2 1.5-4.3 4.1-7.2z"/>'),
 };
+/* ---------- ÍCONOS DE CROMO ----------
+   Dos familias, con una regla que evita discutir caso por caso:
+
+   · ICO_REG (arriba) son categorías de DATO. Van rellenas con su --dot-*, el
+     mismo color que las identifica en el calendario. Si la comida es naranja en
+     una celda, es naranja en la leyenda, en el aviso y en el narrador.
+   · ICO (acá) son navegación y acciones. Van de trazo en currentColor, porque
+     viven adentro de botones que cambian de color al activarse: una subpestaña
+     prendida es blanca sobre verde y apagada es gris sobre claro. Un color fijo
+     se vería mal en uno de los dos estados.
+
+   Se escriben una vez y se colocan con data-ic en el markup, no repitiendo el
+   SVG entero en cada botón. */
+function svgIco(cuerpo){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '+
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+cuerpo+'</svg>';
+}
+const ICO={
+  pesa:       svgIco('<path d="M4 9.5v5M7 7.5v9M17 7.5v9M20 9.5v5M7 12h10"/>'),
+  libro:      svgIco('<path d="M12 7.6v11.9"/><path d="M12 7.6C12 6.2 9.9 4.8 7 4.8H3.6v11.8H7c2.9 0 5 1.4 5 2.9"/>'+
+                     '<path d="M12 7.6c0-1.4 2.1-2.8 5-2.8h3.4v11.8H17c-2.9 0-5 1.4-5 2.9"/>'),
+  calendario: svgIco('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>'),
+  chispa:     svgIco('<path d="M11 3.5l1.6 4.6 4.6 1.6-4.6 1.6L11 15.9 9.4 11.3 4.8 9.7l4.6-1.6z"/>'+
+                     '<path d="M18 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>'),
+  lapiz:      svgIco('<path d="M16.5 3.9l3.6 3.6-11 11L4.5 20l1.4-4.6z"/><path d="M14.4 6l3.6 3.6"/>'),
+  documento:  svgIco('<path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/>'+
+                     '<path d="M13.5 3.5V9H19"/><path d="M8.5 13h7M8.5 16.5h5"/>'),
+  campana:    svgIco('<path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/>'+
+                     '<path d="M10.2 18.6a2 2 0 0 0 3.6 0"/>'),
+  play:       svgIco('<circle cx="12" cy="12" r="8.5"/><path d="M10.4 8.9l5 3.1-5 3.1z"/>'),
+  reloj:      svgIco('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.2V12l3.2 1.9"/>'),
+  lupa:       svgIco('<circle cx="10.8" cy="10.8" r="6.3"/><path d="M15.4 15.4L20 20"/>'),
+  hoja:       svgIco('<path d="M20 4c0 8.4-4.6 12.6-10.4 12.6A5.6 5.6 0 0 1 4 11C4 5.8 9.2 4 20 4z"/>'+
+                     '<path d="M15.6 8.4C12 10 8.9 13.2 7 20"/>'),
+  cronometro: svgIco('<circle cx="12" cy="13.6" r="7.4"/><path d="M12 9.6v4l2.5 1.5"/>'+
+                     '<path d="M9.5 2.6h5M12 2.6v3.6"/>'),
+  regla:      svgIco('<rect x="2.6" y="8" width="18.8" height="8" rx="1.6"/>'+
+                     '<path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>'),
+  papelera:   svgIco('<path d="M4.5 6.5h15"/>'+
+                     '<path d="M9.6 6.5V4.8a1.3 1.3 0 0 1 1.3-1.3h2.2a1.3 1.3 0 0 1 1.3 1.3v1.7"/>'+
+                     '<path d="M6.6 6.5l.9 12a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l.9-12"/>'+
+                     '<path d="M10.4 10.4v6M13.6 10.4v6"/>'),
+  micro:      svgIco('<rect x="9" y="3" width="6" height="11" rx="3"/>'+
+                     '<path d="M5.5 11.6a6.5 6.5 0 0 0 13 0"/><path d="M12 18.1V21"/>'),
+  sueno:      svgIco('<path d="M19.6 14.4A8 8 0 0 1 9.6 4.4a8 8 0 1 0 10 10z"/><path d="M16 3v3M14.5 4.5h3"/>'),
+};
+/* Los íconos de cromo se colocan con <span data-ic="pesa"></span>: así el markup
+   dice qué significa y no arrastra 200 caracteres de SVG por botón. Se pinta al
+   arrancar y de nuevo tras cualquier render que inserte data-ic; ya pintados se
+   saltean, así que llamarlo de más no cuesta. */
+/* En el HTML que se arma desde JS no siempre corre una pasada de pintado, así
+   que ahí el ícono se incrusta ya resuelto. `solo` es para los botones que no
+   llevan texto al lado y no necesitan el margen. */
+function ico(n,solo){
+  return '<span class="ic'+(solo?" solo":"")+'">'+(ICO[n]||ICO_REG[n]||"")+'</span>';
+}
+function pintarIconos(raiz){
+  (raiz||document).querySelectorAll("[data-ic]").forEach(n=>{
+    if(n.firstChild)return;
+    const k=n.getAttribute("data-ic");
+    const s=k==="animo"?icoAnimo(4):(ICO[k]||ICO_REG[k]);
+    if(s)n.innerHTML=s;
+  });
+}
+
 /* El ánimo en la celda: una carita, pero propia y coloreada por nivel.
    Se probó dejarla como emoji junto a los íconos nuevos y no funciona: la carita
    amarilla es lo más llamativo de la celda y choca con los íconos planos.
@@ -2793,7 +2872,7 @@ function renderLoggerHTML(){
     h+='<div class="logrow"><div class="top">'+
        (logRows.length>1?'<button class="agarre" title="Arrastrar para reordenar" aria-label="Reordenar '+escA(r.ex)+'">⠿</button>':'')+
        '<span class="lname">'+ico+esc(r.ex)+'</span>'+
-       '<span class="topbtns"><button class="modo" data-modo="'+i+'" title="Cambiar a '+esc(modoEtiqueta(modoSiguiente(m)).replace(/^\S+\s/,""))+'">'+modoEtiqueta(m)+'</button>'+
+       '<span class="topbtns"><button class="modo" data-modo="'+i+'" title="Cambiar a '+esc(modoNombre(modoSiguiente(m)))+'">'+modoEtiqueta(m)+'</button>'+
        '<button class="rmv" data-rm="'+i+'">✕</button></span></div>';
     if(m==="tiempo"){
       h+='<div class="fields"><div class="f"><label>Minutos</label><input type="number" inputmode="numeric" min="0" id="mn'+i+'" value="'+(r.min!==""&&r.min!=null?r.min:"")+'"></div>'+
@@ -3015,9 +3094,15 @@ function modoDe(nombre){
   // un deporte del catalogo (futbol, handball, tenis...) se mide en tiempo
   return buscarDeporte(nombre)?"tiempo":"peso";
 }
-const MODOS=[["peso","🏋️ Peso"],["tiempo","⏱️ Tiempo"],["distancia","📏 Distancia"]];
+/* Cada modo lleva su nombre plano aparte del ícono: el nombre solo hace falta
+   para el title del botón, que es texto y no admite marcado. Antes se sacaba
+   del rótulo quitando el emoji con una regex, que con un SVG adentro no sirve. */
+const MODOS=[["peso","Peso","pesa"],["tiempo","Tiempo","cronometro"],
+             ["distancia","Distancia","regla"]];
 function modoSiguiente(m){const i=MODOS.findIndex(x=>x[0]===m);return MODOS[(i+1)%MODOS.length][0];}
-function modoEtiqueta(m){const x=MODOS.find(e=>e[0]===m);return x?x[1]:MODOS[0][1];}
+function modoDef(m){return MODOS.find(e=>e[0]===m)||MODOS[0];}
+function modoNombre(m){return modoDef(m)[1];}
+function modoEtiqueta(m){const x=modoDef(m);return ico(x[2])+x[1];}
 function nuevaFila(nombre,modo){
   const md=modo||modoDe(nombre),u=ultimaCarga(nombre,mKey);
   const mismo=(u&&(u.modo||"peso")===md)?u:null;
@@ -3984,8 +4069,14 @@ function renderProgress(){
   el("cBal").textContent=okM;
   el("statAlc").style.display=permiteAlcohol()?"":"none";
   el("statFum").style.display=permiteFumar()?"":"none";
-  if(permiteAlcohol())el("cAlc").textContent=streakNo(k=>alim[k]&&alim[k].alcohol);
-  if(permiteFumar())el("cFum").textContent=streakNo(k=>bien[k]&&bien[k].fumo);
+  /* El rótulo concuerda con el número: con 1 decía "1 Días s/alcohol". */
+  const rachaSin=(idN,idL,cond,que)=>{
+    const n=streakNo(cond);
+    el(idN).textContent=n;
+    el(idL).textContent=(n===1?"Día s/":"Días s/")+que;
+  };
+  if(permiteAlcohol())rachaSin("cAlc","lAlc",k=>alim[k]&&alim[k].alcohol,"alcohol");
+  if(permiteFumar())rachaSin("cFum","lFum",k=>bien[k]&&bien[k].fumo,"fumar");
   // peso: puntos crudos + media móvil, que es la que muestra la tendencia real
   const pts=medidas.filter(m=>m.peso_kg!=null);const svg=el("chart");
   if(pts.length===0)svg.innerHTML='<text x="160" y="75" text-anchor="middle" fill="'+cv("--ink-soft","#69736d")+'" font-family="Sometype Mono" font-size="10">Cargá tu peso arriba para ver la tendencia</text>';
@@ -4572,11 +4663,11 @@ let vozRec=null,vozBtnId=null,vozTargetId=null,vozHintId=null;
 
 function micHTML(btnId,hintId){
   if(!vozDisponible())return "";
-  return '<div class="microw"><button type="button" class="micbtn" id="'+btnId+'">🎤 Dictar</button><span class="michint" id="'+hintId+'"></span></div>';
+  return '<div class="microw"><button type="button" class="micbtn" id="'+btnId+'">'+ico("micro")+'Dictar</button><span class="michint" id="'+hintId+'"></span></div>';
 }
 function detenerDictado(){
   if(vozRec){try{vozRec.stop();}catch(e){}}
-  if(vozBtnId&&el(vozBtnId)){el(vozBtnId).className="micbtn";el(vozBtnId).textContent="🎤 Dictar";}
+  if(vozBtnId&&el(vozBtnId)){el(vozBtnId).className="micbtn";el(vozBtnId).innerHTML=ico("micro")+"Dictar";}
   if(vozHintId&&el(vozHintId)){el(vozHintId).textContent="";el(vozHintId).className="michint";}
   vozRec=null;vozBtnId=null;vozTargetId=null;vozHintId=null;
 }
@@ -5626,7 +5717,7 @@ function renderRutinas(){
   cont.innerHTML=rutinas.map(r=>{
     const ejs=rutinaEj[r.id]||[];
     const md=rutModo[r.id]||"peso",t=(md==="tiempo"),dd=(md==="distancia");
-    let h='<div class="rutcard"><div class="rh"><span class="rn">'+esc(r.nombre)+'</span><button class="rdel" data-delrut="'+r.id+'" title="Borrar rutina">🗑️</button></div>';
+    let h='<div class="rutcard"><div class="rh"><span class="rn">'+esc(r.nombre)+'</span><button class="rdel" data-delrut="'+r.id+'" title="Borrar rutina">'+ico("papelera",true)+'</button></div>';
     h+='<div class="rmeta">'+(ejs.length?ejs.length+(ejs.length===1?" ejercicio":" ejercicios"):"sin ejercicios aún")+'</div>';
     ejs.forEach((e,i)=>{
       const ico=e.modo==="tiempo"?"⏱️ ":(e.modo==="distancia"?"📏 ":"");
@@ -6097,6 +6188,7 @@ function init(){
     ["btnLogin","btnSignup","btnGoogle"].forEach(id=>el(id).disabled=true);return;
   }
   renderCalTabIcon();
+  pintarIconos();   // el markup trae data-ic; acá se resuelven a SVG
   sb=supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   sb.auth.onAuthStateChange((_e,session)=>onSession(session));
   sb.auth.getSession().then(({data})=>onSession(data.session));
