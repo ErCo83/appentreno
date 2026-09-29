@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eliminar tu cuenta · Entreno</title>
+<meta name="description" content="Cómo pedir la eliminación de tu cuenta de Entreno y de todos tus datos, desde la app o por correo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Mismos tokens y misma estructura que privacidad.html: son dos páginas del
+     mismo trámite y tienen que verse como una sola cosa. */
+  :root{--bg:#eef0ec;--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--red:#b3402e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.15}
+  header{background:linear-gradient(155deg,var(--pitch),var(--pitch-deep));color:#eef3ef;padding:44px 22px 40px;position:relative;overflow:hidden;border-radius:0 0 26px 26px}
+  header::after{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);pointer-events:none}
+  .head-inner{max-width:720px;margin:0 auto;position:relative;z-index:2}
+  .eyebrow{font-family:"Sometype Mono",monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-soft)}
+  header h1{font-size:2rem;font-weight:800;margin-top:8px}
+  header .sub{color:#aec1b4;margin-top:8px;font-size:.95rem}
+  main{max-width:720px;margin:0 auto;padding:28px 22px 60px}
+  .intro{font-size:1.02rem;margin-bottom:8px}
+  h2{font-size:1.3rem;font-weight:800;color:var(--pitch);margin:32px 0 12px;padding-top:8px}
+  h3{font-size:1.05rem;font-weight:700;margin:20px 0 8px}
+  p{margin-bottom:12px}
+  ul{margin:0 0 14px 0;padding-left:4px;list-style:none}
+  li{position:relative;padding-left:22px;margin-bottom:8px}
+  li::before{content:"";position:absolute;left:4px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  strong{font-weight:700}
+  .highlight{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;margin:16px 0}
+  .aviso{background:#fdf2e9;border:1px solid var(--accent-soft);border-radius:14px;padding:14px 16px;font-size:.9rem;color:#8c3b20;margin:16px 0}
+  /* Los dos caminos, numerados, porque el orden importa: el de la app es
+     inmediato y el del correo depende de que alguien lo lea. */
+  .via{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;position:relative}
+  .via .n{font-family:"Sometype Mono",monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .via h3{margin:6px 0 10px}
+  .via ol{margin:0;padding-left:20px}
+  .via ol li{padding-left:4px}
+  .via ol li::before{display:none}
+  .tag{display:inline-block;font-family:"Sometype Mono",monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink-soft);margin-left:6px;vertical-align:2px}
+  .tag.ya{background:#e8f3ec;border-color:#bcd9c7;color:#1d5c3c}
+  .contact{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px}
+  .contact .email{font-family:"Sometype Mono",monospace;font-size:1rem;color:var(--accent);font-weight:600;word-break:break-all}
+  .contact .nota{font-size:.8rem;color:var(--ink-soft);margin-top:8px;font-style:italic}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.94rem}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  th{font-family:"Sometype Mono",monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  hr{border:none;border-top:1px solid var(--line-2);margin:34px 0 20px}
+  a{color:var(--pitch)}
+  footer{max-width:720px;margin:0 auto;padding:0 22px 50px;color:var(--ink-faint);font-size:.82rem;font-style:italic}
+  @media(max-width:520px){header h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <div class="eyebrow">Entreno · gimnasio, fútbol y bienestar</div>
+    <h1>Eliminar tu cuenta</h1>
+    <div class="sub">Última actualización: septiembre de 2026</div>
+  </div>
+</header>
+
+<main>
+  <p class="intro">Esta página explica cómo pedir que se elimine tu cuenta de <strong>Entreno</strong> y todo lo que registraste en ella. Podés hacerlo vos mismo desde la app, o pedirlo por correo si ya no la tenés instalada.</p>
+
+  <div class="aviso">
+    <strong>Es definitivo.</strong> No hay papelera ni forma de recuperar los datos después. Si querés conservar algo —tu diario, tus medidas, tu historial— guardalo antes.
+  </div>
+
+  <h2>Cómo pedirlo</h2>
+
+  <div class="via">
+    <div class="n">Opción 1 · recomendada</div>
+    <h3>Desde la app <span class="tag ya">inmediato</span></h3>
+    <ol>
+      <li>Abrí <strong>Entreno</strong> e iniciá sesión.</li>
+      <li>Andá a <strong>Perfil</strong>. La última tarjeta es <strong>Tu cuenta · Eliminar mi cuenta</strong>.</li>
+      <li>Tocá <strong>Eliminar mi cuenta</strong>.</li>
+      <li>Escribí tu correo para confirmar y aceptá.</li>
+    </ol>
+    <p style="margin:12px 0 0;font-size:.9rem;color:var(--ink-soft)">El borrado ocurre en el momento. Al terminar, la sesión se cierra sola.</p>
+  </div>
+
+  <div class="via">
+    <div class="n">Opción 2</div>
+    <h3>Por correo <span class="tag">hasta 30 días</span></h3>
+    <p style="margin-bottom:10px">Si no tenés la app instalada o no podés entrar a tu cuenta, escribinos desde <strong>la misma dirección de correo con la que te registraste</strong>, con el asunto <strong>“Eliminar mi cuenta”</strong>.</p>
+    <div class="contact" style="margin-top:0">
+      <div class="email">mimundorganizado@gmail.com</div>
+      <div class="nota">Pedimos que escribas desde tu propia dirección porque es lo único que nos permite verificar que la cuenta es tuya. No vamos a pedirte la contraseña por correo, nunca.</div>
+    </div>
+  </div>
+
+  <h2>Qué se elimina</h2>
+  <p>Todo. Los datos de la app cuelgan de tu usuario, así que al borrarlo se borran con él:</p>
+  <ul>
+    <li>Tu perfil: nombre, sexo, fecha de nacimiento, altura, peso inicial, objetivo y preferencias.</li>
+    <li>Tu actividad diaria, tu plan semanal y tus rutinas.</li>
+    <li>Tus comidas, calorías, hidratación, alcohol y tabaco.</li>
+    <li>Tus medidas corporales y su historial.</li>
+    <li>Tu diario personal, tus recuerdos y las historias generadas.</li>
+    <li>Tu registro de ciclo menstrual, si lo usabas.</li>
+    <li>Tus informes mensuales y tus suscripciones a notificaciones.</li>
+    <li>Tu usuario y tu método de acceso (correo o Google).</li>
+  </ul>
+
+  <h2>Qué se conserva, y por cuánto</h2>
+  <table>
+    <tr><th>Dato</th><th>Plazo</th><th>Por qué</th></tr>
+    <tr>
+      <td>Registros de facturación, si hubo una suscripción paga</td>
+      <td>10 años</td>
+      <td>Obligación fiscal y contable. No incluyen nada de lo que registraste en la app.</td>
+    </tr>
+    <tr>
+      <td>Registros técnicos del servidor (fecha y hora de acceso)</td>
+      <td>Hasta 30 días</td>
+      <td>Se rotan solos y no se usan para identificarte una vez borrada la cuenta.</td>
+    </tr>
+    <tr>
+      <td>Copias de seguridad</td>
+      <td>Hasta 30 días</td>
+      <td>Se sobrescriben en su ciclo normal. No se consultan salvo un incidente.</td>
+    </tr>
+  </table>
+  <p>Fuera de eso no queda nada, ni de forma anonimizada.</p>
+
+  <div class="highlight">
+    <strong>Los datos de salud no se venden ni se comparten.</strong> Lo que registrás en Entreno se usa para mostrártelo a vos y para generar tus informes. Está detallado en la <a href="privacidad.html">Política de Privacidad</a>.
+  </div>
+
+  <h2>Eliminar la app no elimina la cuenta</h2>
+  <p>Desinstalar Entreno saca la app del teléfono, pero tus datos siguen en el servidor y vas a encontrarlos si volvés a entrar. Para que dejen de existir hay que pedir el borrado por alguna de las dos vías de arriba.</p>
+
+  <h2>¿Dudas antes de decidir?</h2>
+  <p>Si lo que querés es dejar de recibir avisos, o dejar de registrar algo puntual, no hace falta borrar la cuenta: en <strong>Perfil</strong> podés apagar las notificaciones y cada sección de registro por separado. Lo ya cargado no se pierde y podés volver a prenderlo cuando quieras.</p>
+
+  <div class="contact">
+    <p style="margin-bottom:6px">Para cualquier consulta sobre tus datos:</p>
+    <div class="email">mimundorganizado@gmail.com</div>
+    <div class="nota">Conforme a la Ley 25.326 de Protección de Datos Personales de Argentina, tenés derecho a acceder, rectificar, actualizar y suprimir tus datos personales.</div>
+  </div>
+
+  <hr>
+</main>
+
+<footer>
+  Entreno · Eliminación de cuenta · Esta página existe para cumplir con el requisito de Google Play de ofrecer una vía pública de borrado, además de la que está dentro de la app.
+</footer>
+
+</body>
+</html>
