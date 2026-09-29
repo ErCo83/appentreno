@@ -476,11 +476,16 @@
     letter-spacing:.08em;text-transform:uppercase;display:flex;flex-direction:column;
     align-items:center;gap:4px;position:relative;transition:color .16s ease}
   /* La pastilla de la pestaña activa, detrás del ícono */
-  .tabbar button .i{font-size:var(--fs-9);line-height:1;filter:grayscale(.55);opacity:.55;
+  /* Los cuatro íconos laterales son SVG de trazo con `currentColor`: heredan el
+     color de la pestaña, así que participan del sistema de color en vez de ser
+     una estampita de color fijo. Eso es lo que un emoji no puede hacer —y por eso
+     hacía falta el filtro de escala de grises, que ya no se usa. */
+  .tabbar button .i{line-height:0;opacity:.75;
     width:42px;height:28px;display:flex;align-items:center;justify-content:center;
-    border-radius:99px;transition:background .18s ease,opacity .18s ease,filter .18s ease}
+    border-radius:99px;transition:background .18s ease,opacity .18s ease}
+  .tabbar button .i svg{width:22px;height:22px;display:block}
   .tabbar button.on{color:var(--accent);font-weight:600}
-  .tabbar button.on .i{filter:none;opacity:1;
+  .tabbar button.on .i{opacity:1;
     background:var(--accent-bg-2);
     background:color-mix(in srgb,var(--accent) 16%,transparent)}
   .tabbar button:active .i{transform:scale(.92)}
@@ -1310,11 +1315,11 @@
 <div class="tipov" id="tipOv"><div class="tipcard" id="tipCard"></div></div>
 <div class="toast" id="toast"></div>
 <nav class="tabbar" id="tabbar">
-  <button data-v="v-prog"><span class="i">📈</span>Progreso</button>
-  <button data-v="v-rutinas"><span class="i">🏋️</span>Rutinas</button>
+  <button data-v="v-prog"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5v15h16"/><path d="M7.5 15.5l3.5-4.5 3 2.5 4.5-6"/></svg></span>Progreso</button>
+  <button data-v="v-rutinas"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5M7 7.5v9M17 7.5v9M20 9.5v5M7 12h10"/></svg></span>Rutinas</button>
   <button class="on center" data-v="v-cal"><span class="i" id="calTabIcon"></span>Calendario</button>
-  <button data-v="v-diario" id="tabDiario"><span class="i">📖</span>Diario</button>
-  <button data-v="v-perfil"><span class="i">👤</span>Perfil</button>
+  <button data-v="v-diario" id="tabDiario"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.6v11.9"/><path d="M12 7.6C12 6.2 9.9 4.8 7 4.8H3.6v11.8H7c2.9 0 5 1.4 5 2.9"/><path d="M12 7.6c0-1.4 2.1-2.8 5-2.8h3.4v11.8H17c-2.9 0-5 1.4-5 2.9"/></svg></span>Diario</button>
+  <button data-v="v-perfil"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20c0-3.7 3.2-6.2 7.2-6.2s7.2 2.5 7.2 6.2"/></svg></span>Perfil</button>
 </nav>
 
 <script>
