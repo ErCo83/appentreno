@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Entreno</title>
+<title>Tenaz</title>
+<meta name="description" content="Entrenamiento, comida, bienestar y diario personal en un solo lugar. Anotá tu día y mirá cómo venís.">
 <meta name="theme-color" content="#1d4b39">
 <script>
 /* Se aplica antes de pintar: si esperara al script principal, la app abriria
@@ -956,8 +957,8 @@
 <header>
   <div class="toprow">
     <div>
-      <div class="eyebrow" id="headEyebrow">v2 · multi-usuario</div>
-      <h1>Entreno</h1>
+      <div class="eyebrow" id="headEyebrow">¿cómo voy?</div>
+      <h1>Tenaz</h1>
       <div class="conn" id="conn" hidden><span class="dot"></span><span id="connTxt">—</span></div>
     </div>
     <div class="headbtns"><button class="helpbtn" id="btnHelp" hidden title="Ayuda de esta sección">?</button><button class="outbtn" id="btnLogout" hidden>Salir</button></div>
@@ -1687,7 +1688,7 @@ function showOnly(id){["authView","onboardView"].forEach(v=>el(v).hidden=(v!==id
   if(id==="authView")closeSheet();}
 async function onSession(session){
   user=session&&session.user||null;
-  if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="v2 · multi-usuario";return;}
+  if(!user){showOnly("authView");el("conn").hidden=true;el("headEyebrow").textContent="¿cómo voy?";return;}
   gmsg(null,"");setConn("","Cargando tus datos…");
   try{
     const [rp,rpl,ra,rc,rb,rad,rco,rdi,rme,rru,rre,rhi,rrec,rinf,rcic,rda]=await Promise.all([
@@ -5080,7 +5081,7 @@ function renderReporte(){
   const pctPrev=(confiablePrev&&pv.conRegistro)?Math.round(Math.min(pv.cumplidos,pv.conRegistro)/pv.conRegistro*100):null;
   const objetivoNeutral=perfil.objetivo==="conocerme";
 
-  let h='<div class="rephead"><div class="inner"><div class="eyebrow">Reporte mensual · Entreno</div><h2>'+nombreMes+'</h2><div class="who">'+esc(perfil.nombre||"")+'</div></div></div><div class="repbody">';
+  let h='<div class="rephead"><div class="inner"><div class="eyebrow">Reporte mensual · Tenaz</div><h2>'+nombreMes+'</h2><div class="who">'+esc(perfil.nombre||"")+'</div></div></div><div class="repbody">';
 
   h+='<div class="repnav"><button id="repPrev">‹</button><span class="lbl">Cambiar de mes</span><button id="repNext">›</button></div>';
 
@@ -5274,7 +5275,7 @@ function renderReporte(){
 
   h+=renderInformeHTML();
   h+='<div class="repactions"><button class="pdf" id="repPdf">📄 Descargar PDF</button><button class="close" id="repClose">Cerrar</button></div>';
-  h+='<div class="repfoot">Generado por Entreno · '+new Date().toLocaleDateString("es-AR")+'</div>';
+  h+='<div class="repfoot">Generado por Tenaz · '+new Date().toLocaleDateString("es-AR")+'</div>';
   h+='</div>';
 
   el("repContent").innerHTML=h;
@@ -6063,7 +6064,7 @@ async function borrarCuenta(){
     }
     try{localStorage.removeItem(CLAVE_PEND);}catch(e){}
     try{await sb.auth.signOut();}catch(e){}
-    alert("Tu cuenta y todos tus datos fueron eliminados.\n\nGracias por haber usado Entreno.");
+    alert("Tu cuenta y todos tus datos fueron eliminados.\n\nGracias por haber usado Tenaz.");
     location.reload();
   }catch(e){
     toast("No se pudo eliminar la cuenta: revisá que la función borrar-cuenta esté desplegada");
@@ -6072,7 +6073,7 @@ async function borrarCuenta(){
 async function probarNotif(){
   if(!swReg)swReg=await navigator.serviceWorker.getRegistration()||null;
   if(!swReg||Notification.permission!=="granted"){toast("Activá las notificaciones primero");return;}
-  swReg.showNotification("Entreno",{
+  swReg.showNotification("Tenaz",{
     body:"¡Funciona! Así vas a ver los recordatorios.",
     icon:"icon-192.png",badge:"badge-96.png",tag:"prueba"});
 }
@@ -6108,7 +6109,7 @@ async function doLogout(){
   const em=el("email"),pw=el("pass");if(em)em.value="";if(pw)pw.value="";
   showOnly("authView");
   el("conn").hidden=true;
-  el("headEyebrow").textContent="v2 · multi-usuario";
+  el("headEyebrow").textContent="¿cómo voy?";
   gmsg("ok","Cerraste sesión. ¡Hasta la próxima!");
   window.scrollTo(0,0);
 }

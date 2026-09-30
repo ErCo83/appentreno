@@ -1,7 +1,7 @@
 {
-  "name": "Entreno & Fútbol",
-  "short_name": "Entreno",
-  "description": "Seguimiento de gimnasio, fútbol, bienestar y alimentación.",
+  "name": "Tenaz",
+  "short_name": "Tenaz",
+  "description": "Entrenamiento, comida, bienestar y diario personal en un solo lugar.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
