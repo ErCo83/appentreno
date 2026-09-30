@@ -4688,6 +4688,31 @@ function detenerDictado(){
   if(vozHintId&&el(vozHintId)){el(vozHintId).textContent="";el(vozHintId).className="michint";}
   vozRec=null;vozBtnId=null;vozTargetId=null;vozHintId=null;
 }
+/* Arma la transcripción de la sesión a partir de la lista de resultados.
+
+   Hay dos formas de entregarlos y hay que soportar las dos, porque no se puede
+   saber de antemano cuál usa el navegador:
+
+   · Por segmentos, como dice la especificación: cada resultado es un pedazo
+     nuevo y la transcripción es la suma de todos.
+   · Acumulativos, como hace Chrome en Android: cada resultado repite todo lo
+     dicho desde el principio. Sumarlos da "bueno / bueno Esto / bueno Esto es",
+     que es exactamente el defecto que apareció en el TWA el 30/9/2026.
+
+   La regla que distingue un caso del otro sin adivinar: si el pedazo que llega
+   EMPIEZA con lo que ya se juntó, es acumulativo y reemplaza; si no, es un
+   segmento y se suma. */
+function transcripcion(resultados){
+  let texto="";
+  for(let i=0;i<resultados.length;i++){
+    const p=(resultados[i][0]&&resultados[i][0].transcript)||"";
+    if(!p)continue;
+    if(texto&&p.startsWith(texto))texto=p;
+    else if(!texto)texto=p;
+    else texto+=(/\s$/.test(texto)||/^\s/.test(p))?p:(" "+p);
+  }
+  return texto.trim();
+}
 function iniciarDictado(btnId,targetId,hintId){
   if(!vozDisponible()){toast("Tu navegador no permite dictado por voz");return;}
   // si ya estaba grabando (el mismo o otro campo), cortar
@@ -4699,32 +4724,20 @@ function iniciarDictado(btnId,targetId,hintId){
   const btn=el(btnId),hint=el(hintId);
   if(btn){btn.className="micbtn rec";btn.innerHTML=ico("detener")+"Detener";}
   if(hint){hint.textContent="Escuchando… hablá tranquilo";hint.className="michint live";}
-  /* Cuántos resultados finales ya se escribieron. La especificación dice que
-     `resultIndex` marca desde dónde hay novedades, pero Chrome en Android lo
-     manda en 0 en cada evento y reenvía los finales anteriores: confiando en él,
-     cada evento vuelve a agregar todo lo dicho hasta ese momento. El síntoma es
-     el texto repitiéndose cada vez más (visto en el TWA, 30/9/2026).
-     Llevando la cuenta acá, un resultado se escribe una sola vez aunque llegue
-     veinte veces. */
-  let entregados=0;
+  /* Lo que había en el campo antes de empezar. Todo lo dictado se escribe a
+     continuación de esto, REEMPLAZANDO en cada evento en vez de agregar: así no
+     importa cuántas veces el navegador reenvíe lo mismo. */
+  const base=(el(targetId)&&el(targetId).value)||"";
   rec.onresult=e=>{
-    let fin="",parcial="";
-    for(let i=0;i<e.results.length;i++){
-      const r=e.results[i];
-      if(r.isFinal){
-        if(i>=entregados){fin+=r[0].transcript;entregados=i+1;}
-      }else parcial+=r[0].transcript;
-    }
-    if(fin.trim()){
-      const t=el(vozTargetId);
-      if(t){
-        const sep=(t.value&&!/\s$/.test(t.value))?" ":"";
-        t.value=t.value+sep+fin.trim();
-        t.dispatchEvent(new Event("input",{bubbles:true}));
-      }
+    const t=el(vozTargetId);
+    if(t){
+      const dicho=transcripcion(e.results);
+      const sep=(base&&!/\s$/.test(base)&&dicho)?" ":"";
+      t.value=base+sep+dicho;
+      t.dispatchEvent(new Event("input",{bubbles:true}));
     }
     const h=el(vozHintId);
-    if(h)h.textContent=parcial.trim()?("… "+parcial.trim()):"Escuchando… hablá tranquilo";
+    if(h)h.textContent="Escuchando… hablá tranquilo";
   };
   rec.onerror=ev=>{
     const msgs={"not-allowed":"Necesitamos permiso para usar el micrófono",
