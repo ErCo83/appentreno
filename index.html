@@ -4702,16 +4702,24 @@ function detenerDictado(){
    La regla que distingue un caso del otro sin adivinar: si el pedazo que llega
    EMPIEZA con lo que ya se juntó, es acumulativo y reemplaza; si no, es un
    segmento y se suma. */
+/* Se prende con ?dictado=debug en la URL. */
+const DICT_DEBUG=/[?&]dictado=debug/.test(location.search);
+function normEsp(s){return s.replace(/\s+/g," ").trim();}
 function transcripcion(resultados){
   let texto="";
   for(let i=0;i<resultados.length;i++){
-    const p=(resultados[i][0]&&resultados[i][0].transcript)||"";
+    const p=normEsp((resultados[i][0]&&resultados[i][0].transcript)||"");
     if(!p)continue;
-    if(texto&&p.startsWith(texto))texto=p;
-    else if(!texto)texto=p;
-    else texto+=(/\s$/.test(texto)||/^\s/.test(p))?p:(" "+p);
+    if(!texto){texto=p;continue;}
+    /* La comparación va sobre el texto normalizado: Android manda los pedazos
+       con espacios de más y con un espacio adelante, y comparando en crudo
+       " bueno Esto" no empieza con "bueno", así que se sumaba en vez de
+       reemplazar. Ése era el defecto que quedaba. */
+    if(p.startsWith(texto))texto=p;          // acumulativo: reemplaza
+    else if(texto.startsWith(p))continue;    // reenvío de algo más corto: se ignora
+    else texto+=" "+p;                       // segmento nuevo: se suma
   }
-  return texto.trim();
+  return texto;
 }
 function iniciarDictado(btnId,targetId,hintId){
   if(!vozDisponible()){toast("Tu navegador no permite dictado por voz");return;}
@@ -4737,7 +4745,13 @@ function iniciarDictado(btnId,targetId,hintId){
       t.dispatchEvent(new Event("input",{bubbles:true}));
     }
     const h=el(vozHintId);
-    if(h)h.textContent="Escuchando… hablá tranquilo";
+    /* Con ?dictado=debug el rótulo muestra en crudo lo que manda el navegador,
+       para poder ver la forma real de los resultados en un teléfono en vez de
+       deducirla. No cambia nada de lo que se escribe en el campo. */
+    if(h)h.textContent=DICT_DEBUG
+      ? ("[" + e.results.length + "] " + Array.from(e.results)
+          .map(r=>JSON.stringify(r[0].transcript)+(r.isFinal?"F":"i")).join(" + "))
+      : "Escuchando… hablá tranquilo";
   };
   rec.onerror=ev=>{
     const msgs={"not-allowed":"Necesitamos permiso para usar el micrófono",
