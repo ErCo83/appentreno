@@ -1938,6 +1938,7 @@ const ICO={
                      '<path d="M9.6 6.5V4.8a1.3 1.3 0 0 1 1.3-1.3h2.2a1.3 1.3 0 0 1 1.3 1.3v1.7"/>'+
                      '<path d="M6.6 6.5l.9 12a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l.9-12"/>'+
                      '<path d="M10.4 10.4v6M13.6 10.4v6"/>'),
+  detener:    svgIco('<circle cx="12" cy="12" r="8.5"/><rect x="9" y="9" width="6" height="6" rx="1.4" fill="currentColor"/>'),
   micro:      svgIco('<rect x="9" y="3" width="6" height="11" rx="3"/>'+
                      '<path d="M5.5 11.6a6.5 6.5 0 0 0 13 0"/><path d="M12 18.1V21"/>'),
   sueno:      svgIco('<path d="M19.6 14.4A8 8 0 0 1 9.6 4.4a8 8 0 1 0 10 10z"/><path d="M16 3v3M14.5 4.5h3"/>'),
@@ -4696,13 +4697,23 @@ function iniciarDictado(btnId,targetId,hintId){
   rec.lang="es-AR";rec.continuous=true;rec.interimResults=true;
   vozRec=rec;vozBtnId=btnId;vozTargetId=targetId;vozHintId=hintId;
   const btn=el(btnId),hint=el(hintId);
-  if(btn){btn.className="micbtn rec";btn.textContent="⏹️ Detener";}
+  if(btn){btn.className="micbtn rec";btn.innerHTML=ico("detener")+"Detener";}
   if(hint){hint.textContent="Escuchando… hablá tranquilo";hint.className="michint live";}
+  /* Cuántos resultados finales ya se escribieron. La especificación dice que
+     `resultIndex` marca desde dónde hay novedades, pero Chrome en Android lo
+     manda en 0 en cada evento y reenvía los finales anteriores: confiando en él,
+     cada evento vuelve a agregar todo lo dicho hasta ese momento. El síntoma es
+     el texto repitiéndose cada vez más (visto en el TWA, 30/9/2026).
+     Llevando la cuenta acá, un resultado se escribe una sola vez aunque llegue
+     veinte veces. */
+  let entregados=0;
   rec.onresult=e=>{
     let fin="",parcial="";
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal)fin+=t;else parcial+=t;
+    for(let i=0;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal){
+        if(i>=entregados){fin+=r[0].transcript;entregados=i+1;}
+      }else parcial+=r[0].transcript;
     }
     if(fin.trim()){
       const t=el(vozTargetId);
