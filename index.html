@@ -244,8 +244,17 @@
   .wzcount{font-family:"Sometype Mono",monospace;font-size:var(--fs-2);letter-spacing:.14em;
     text-transform:uppercase;color:var(--on-pitch-soft);margin-left:auto}
   /* Lo único que scrollea */
+  /* El contenido va centrado cuando entra, pero `center` a secas en un
+     contenedor con scroll empuja lo que sobra ARRIBA del origen, y ahí no se
+     puede llegar: no se scrollea hacia arriba más allá de 0. En el paso 7 del
+     plan semanal eso dejaba entre 141px y 419px inalcanzables según el alto de
+     pantalla y el tamaño de fuente del sistema (reportado el 1/10/2026).
+     `safe center` centra igual, pero cuando el contenido desborda se comporta
+     como `start` y no se pierde nada. Si el navegador no lo soporta, la
+     declaración es inválida y queda el `center` de la línea de arriba. */
   .wzstep{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
-    justify-content:center;padding:6px 0 16px;-webkit-overflow-scrolling:touch}
+    justify-content:center;justify-content:safe center;
+    padding:6px 0 16px;-webkit-overflow-scrolling:touch}
   .wzstep::-webkit-scrollbar{width:0}
   .wzstep.entra{animation:wzIn .26s cubic-bezier(.2,0,0,1) both}
   @keyframes wzIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
