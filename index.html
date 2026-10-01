@@ -25,7 +25,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{color-scheme:light;--bg:#eef0ec;--elev:#fff;--elev-2:#f7f8f6;--elev-line:#e7e9e5;--elev-shadow:0 14px 34px -16px rgba(20,53,39,.55),0 1px 2px rgba(20,40,30,.06);--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--green:#2f8f5b;--red:#c2452e;--blue:#3a6ea5;--fs-1:.55rem;--fs-2:.62rem;--fs-3:.68rem;--fs-4:.74rem;--fs-5:.8rem;--fs-6:.86rem;--fs-7:.92rem;--fs-8:1rem;--fs-9:1.1rem;--fs-10:1.2rem;--fs-11:1.35rem;--fs-12:1.5rem;--fs-13:2rem;--fs-14:2.4rem;--fs-15:3rem;--rest:#e7e9e4;--rest-2:#e3e6e1;--ok-bg:#e2f0e8;--ok-line:#a9d4bc;--ok-ink:#20603c;--bad-bg:#fbeae5;--bad-line:#efb9a6;--bad-ink:#8c3b20;--warn-bg:#fdf2e9;--warn-line:#d9cfa9;--warn-ink:#8c5a20;--info-bg:#eef4f8;--info-line:#c6dced;--info-ink:#2b6a97;--info-bar:#d8e6f0;--info-soft:#4a95c9;--accent-bg:#fdf6f1;--accent-bg-2:#f8e9de;--on-pitch:#eef3ef;--on-pitch-soft:#aec1b4;--pitch-ok:#62d39a;--pitch-bad:#ef9b85;--deco-1:#f3ede4;--deco-2:#eef2ec;--on-accent:#fff;--dot-comida:#e2643a;--dot-agua:#3a6ea5;--dot-alcohol:#9c3357;--dot-diario:#7b5ea7;--dot-periodo:#d6336c;--dot-a1:#c2452e;--dot-a2:#dd8452;--dot-a3:#d9a441;--dot-a4:#7fb069;--dot-a5:#2f8f5b;--r:18px;--shadow:0 1px 2px rgba(20,40,30,.04),0 12px 28px -22px rgba(20,53,39,.4)}
+  :root{color-scheme:light;--bg:#eef0ec;--elev:#fff;--elev-2:#f7f8f6;--elev-line:#e7e9e5;--elev-shadow:0 14px 34px -16px rgba(20,53,39,.55),0 1px 2px rgba(20,40,30,.06);--surface:#fff;--surface-2:#f7f8f6;--ink:#1a201d;--ink-soft:#69736d;--ink-faint:#9aa39c;--pitch:#1d4b39;--pitch-deep:#143527;--accent:#e2643a;--accent-soft:#f3b48f;--line:#e7e9e5;--line-2:#dfe2dd;--green:#2f8f5b;--red:#c2452e;--blue:#3a6ea5;--fs-1:.55rem;--fs-2:.62rem;--fs-3:.68rem;--fs-4:.74rem;--fs-5:.8rem;--fs-6:.86rem;--fs-7:.92rem;--fs-8:1rem;--fs-9:1.1rem;--fs-10:1.2rem;--fs-11:1.35rem;--fs-12:1.5rem;--fs-13:2rem;--fs-14:2.4rem;--fs-15:3rem;--rest:#e7e9e4;--rest-2:#e3e6e1;--ok-bg:#e2f0e8;--ok-line:#a9d4bc;--ok-ink:#20603c;--bad-bg:#fbeae5;--bad-line:#efb9a6;--bad-ink:#8c3b20;--warn-bg:#fdf2e9;--warn-line:#d9cfa9;--warn-ink:#8c5a20;--info-bg:#eef4f8;--info-line:#c6dced;--info-ink:#2b6a97;--info-bar:#d8e6f0;--info-soft:#4a95c9;--accent-bg:#fdf6f1;--accent-bg-2:#f8e9de;--on-pitch:#eef3ef;--on-pitch-soft:#aec1b4;--pitch-ok:#62d39a;--pitch-bad:#ef9b85;--deco-1:#f3ede4;--deco-2:#eef2ec;--on-accent:#fff;
+  /* El aviso flotante se invierte respecto de la app: oscuro sobre claro y
+     claro sobre oscuro. Antes usaba --ink de fondo y --on-accent de texto, y
+     como --on-accent no se redefine, en tema oscuro quedaba blanco sobre un
+     fondo que se había vuelto claro: ilegible. */
+  --toast-bg:#1a201d;--toast-ink:#ffffff;--dot-comida:#e2643a;--dot-agua:#3a6ea5;--dot-alcohol:#9c3357;--dot-diario:#7b5ea7;--dot-periodo:#d6336c;--dot-a1:#c2452e;--dot-a2:#dd8452;--dot-a3:#d9a441;--dot-a4:#7fb069;--dot-a5:#2f8f5b;--r:18px;--shadow:0 1px 2px rgba(20,40,30,.04),0 12px 28px -22px rgba(20,53,39,.4)}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:var(--fs-8);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
     /* La barra mide ~60px y el botón central sobresale 26px por encima: sin esto
@@ -898,7 +903,7 @@
   .kgrid tfoot td{border-top:2px solid var(--line-2);border-bottom:none;padding-top:9px;font-weight:700;font-size:var(--fs-5)}
   .kgrid .dw{color:var(--ink-faint);font-size:var(--fs-3)}
   .kacum{font-family:"Sometype Mono",monospace}
-  .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:var(--on-accent);padding:11px 18px;border-radius:13px;font-size:var(--fs-6);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+  .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-ink);padding:11px 18px;border-radius:13px;font-size:var(--fs-6);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
 
   /* ---------- TEMA ----------
@@ -911,7 +916,7 @@
       color-scheme:dark;
       --elev:#26302a;--elev-2:#2d3830;--elev-line:#3d4a43;--elev-shadow:0 16px 32px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05);
       --bg:#111613;--surface:#1a211d;--surface-2:#212a25;
-      --ink:#e6ebe7;--ink-soft:#a2aca6;--ink-faint:#7b857f;
+      --ink:#e6ebe7;--toast-bg:#e6ebe7;--toast-ink:#14201a;--ink-soft:#a2aca6;--ink-faint:#7b857f;
       --line:#28312b;--line-2:#354039;
       --accent:#f0764a;--accent-soft:#b8724f;
       --green:#4fb87c;--red:#e2705a;--blue:#5f97cf;
@@ -933,7 +938,7 @@
       color-scheme:dark;
       --elev:#26302a;--elev-2:#2d3830;--elev-line:#3d4a43;--elev-shadow:0 16px 32px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05);
       --bg:#111613;--surface:#1a211d;--surface-2:#212a25;
-      --ink:#e6ebe7;--ink-soft:#a2aca6;--ink-faint:#7b857f;
+      --ink:#e6ebe7;--toast-bg:#e6ebe7;--toast-ink:#14201a;--ink-soft:#a2aca6;--ink-faint:#7b857f;
       --line:#28312b;--line-2:#354039;
       --accent:#f0764a;--accent-soft:#b8724f;
       --green:#4fb87c;--red:#e2705a;--blue:#5f97cf;
