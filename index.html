@@ -2810,6 +2810,32 @@ function agregarActividad(cat,disc){
   mActs.push({categoria:cat,disciplina:n,planificada:planif,
     min:hay?ms.min:"",seg:hay?ms.seg:"",nota:""});
 }
+/* Mete los ejercicios de una rutina en el registro del día. Es lo mismo que
+   hace la precarga automática de un día de gym planificado, pero a pedido:
+   sirve cuando el gimnasio fue una actividad imprevista y el plan de ese día
+   no tenía ninguna rutina asignada. */
+function cargarRutinaEnLogger(rutId){
+  const ejs=rutinaEj[rutId];
+  if(!ejs||!ejs.length){toast("Esa rutina todavía no tiene ejercicios");return;}
+  ejs.forEach(e=>{
+    const md=e.modo||"peso";
+    if(logRows.some(r=>normTxt(r.ex)===normTxt(e.ejercicio)))return;
+    const fila=nuevaFila(e.ejercicio,md);
+    if(md==="tiempo"&&e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
+    if(md==="distancia"){
+      if(e.distancia_m!=null){const de=distAEdit(e.distancia_m);fila.dist=de.valor;fila.unidad=de.unidad;}
+      if(e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
+      if(e.vueltas!=null)fila.vueltas=e.vueltas;
+    }
+    if(md==="peso"){
+      if(e.series!=null)fila.series=e.series;
+      if(e.reps!=null)fila.reps=e.reps;
+      if(e.kg!=null)fila.kg=e.kg;
+    }
+    logRows.push(fila);
+  });
+  mRutinaPrecargada=true;
+}
 function hayActCat(cat){return mActs.some(a=>a.categoria===cat);}
 function gymActive(){const p=planFor(mKey);
   return (p.tipo==="gym"&&mEstado==="cumpli")||mExtraGym||hayActCat("gym");}
@@ -2887,15 +2913,37 @@ function renderActsHTML(p){
   return h;
 }
 function renderLoggerHTML(){
-  const pd=planFor(mKey),esDep=(pd.tipo==="deporte");
-  const nomDep=esDep?(depDe(pd.detalle)||sportLabel(mKey)):"";
+  const pd=planFor(mKey);
+  /* El título sale de las ACTIVIDADES del día, no del plan. Antes miraba sólo
+     el plan: si el plan decía fútbol y la persona terminó yendo al gimnasio,
+     la sección se titulaba "Detalle de Fútbol" y parecía no tener nada que ver
+     con lo que había hecho. El registro estaba ahí y funcionaba, pero el
+     rótulo decía que era otra cosa. Reportado el 3/10/2026. */
+  const deps=mActs.filter(a=>a.categoria==="deporte");
+  let titulo;
+  if(gymActive())titulo="Ejercicios realizados";
+  else if(deps.length===1)titulo="Detalle de "+deps[0].disciplina;
+  else if(deps.length>1)titulo="Detalle de la sesión";
+  else{
+    // Todavía no hay actividades cargadas: el plan es lo único que se sabe.
+    const esDep=(pd.tipo==="deporte");
+    const nomDep=esDep?(depDe(pd.detalle)||sportLabel(mKey)):"";
+    titulo=(esDep&&nomDep!=="Deporte")?("Detalle de "+nomDep):"Ejercicios realizados";
+  }
   // La duración de la actividad ya se carga arriba, en su renglón: acá va el
   // detalle de la sesión (entrada en calor, series, un tramo de running).
-  let h='<div class="seclabel">'+(esDep&&nomDep!=="Deporte"
-    ? esc("Detalle de "+nomDep)
-    : "Ejercicios realizados")+'</div>';
+  let h='<div class="seclabel">'+esc(titulo)+'</div>';
   if(mRutinaPrecargada)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
   else if(mDeportePrecargado)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">⏱️ La duración va arriba, en el renglón de la actividad. Acá podés sumar lo que hayas hecho además.</div>';
+  /* Un día de gimnasio PLANIFICADO precarga la rutina que tiene asignada. Uno
+     sin planificar no tiene ninguna asignada, así que no hay qué precargar:
+     en vez de adivinar cuál quería, se ofrecen las suyas para cargar de un
+     toque. Es el caso de "se suspendió el partido y fui al gimnasio". */
+  if(logRows.length===0&&gymActive()&&rutinas.length){
+    h+='<div class="seclabel" style="margin-top:2px">Cargar una rutina</div><div class="acts">';
+    rutinas.forEach(r=>{h+='<button class="actbtn" data-cargarut="'+r.id+'">'+esc(r.nombre)+'</button>';});
+    h+='</div>';
+  }
   if(logRows.length===0)h+='<p class="muted" style="font-size:var(--fs-6);margin-bottom:4px">Opcional. Cada renglón puede ir con peso, por tiempo (cinta, plancha) o por distancia (running, ciclismo, natación).</p>';
   logRows.forEach((r,i)=>{
     const u=ultimaCarga(r.ex,mKey),m=r.modo||"peso";
@@ -3500,6 +3548,8 @@ function attachModal(){
     mActPicker=false;renderModal();});
   document.querySelectorAll("[data-rmact]").forEach(x=>x.onclick=()=>{syncModal();
     mActs.splice(parseInt(x.dataset.rmact),1);renderModal();});
+  document.querySelectorAll("[data-cargarut]").forEach(x=>x.onclick=()=>{syncModal();
+    cargarRutinaEnLogger(x.dataset.cargarut);renderModal();});
   if((b=el("fumoSi")))b.onclick=()=>{syncModal();mFumo=true;if(!mFumoTipo)mFumoTipo="Tabaco";renderModal();};
   if((b=el("fumoNo")))b.onclick=()=>{syncModal();mFumo=false;renderModal();};
   if((b=el("alcSi")))b.onclick=()=>{syncModal();mAlcohol=true;if(!mAlcTipo)mAlcTipo="Vino";renderModal();};
