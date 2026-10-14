@@ -2091,13 +2091,18 @@ function rachaVista(){
    segundo: un día sin anotar no dice que faltaste, dice que no se sabe. */
 function adherenciaMes(){
   const nd=new Date(viewY,viewM+1,0).getDate(),hoy=todayStr();
-  let previstos=0,conRegistro=0,sinCarga=0;
+  let previstos=0,conRegistro=0,sinCarga=0,cumplidos=0,cumplidosPlan=0;
   for(let dn=1;dn<=nd;dn++){const d=new Date(viewY,viewM,dn),k=ymd(d);
     if(k>hoy)break;
+    const es=estadoDia(k);
+    if(es==="cumplido")cumplidos++;          // todos los días: el titular de la tarjeta
     if(planFor(d).tipo==="descanso")continue;
     previstos++;
-    if(estadoDia(k)==="sin_carga")sinCarga++;else conRegistro++;}
-  return {previstos:previstos,conRegistro:conRegistro,sinCarga:sinCarga};
+    if(es==="sin_carga")sinCarga++;else conRegistro++;
+    if(es==="cumplido")cumplidosPlan++;      // sólo los del plan: el numerador del %
+  }
+  return {previstos:previstos,conRegistro:conRegistro,sinCarga:sinCarga,
+          cumplidos:cumplidos,cumplidosPlan:cumplidosPlan};
 }
 /* Un porcentaje sobre 2 días registrados de 30 es más engañoso que no mostrarlo.
    Se exige que lo registrado no sea minoría, y al menos 3 días. */
@@ -2124,13 +2129,10 @@ function renderStats(){
   const colaRacha=" Los días libres, los de recuperación y los que quedaron sin registrar no la cortan.";
   el("statStreak").title=(r.actual?"Días seguidos cumpliendo, hasta hoy.":"Mejor racha de "+nombreMes+".")+colaRacha;
   // 3) Días activos del mes visible, con la adherencia al plan como contexto
-  const nd=new Date(viewY,viewM+1,0).getDate();
-  let md=0;
-  for(let dn=1;dn<=nd;dn++){const k=ymd(new Date(viewY,viewM,dn));
-    if(k>todayStr())break;
-    if(achieved(k))md++;}
-  el("stMonth").textContent=md;
+  // El conteo lo hace adherenciaMes en un solo recorrido: cuando vivía acá
+  // aparte, el titular contaba todos los días y el porcentaje sólo los del plan.
   const ad=adherenciaMes();
+  el("stMonth").textContent=ad.cumplidos;
   const em=el("stMonth");
   if(perfil.objetivo==="conocerme"||ad.previstos===0){
     el("stMonthSub").textContent=ad.previstos===0?"sin plan":"";
@@ -2143,12 +2145,15 @@ function renderStats(){
     el("statMonth").title="En "+nombreMes+" quedaron "+ad.sinCarga+" de "+ad.previstos+
       " días planificados sin registrar, así que todavía no se puede calcular una adherencia que signifique algo.";
   }else{
-    const pct=Math.round((Math.min(md,ad.conRegistro)/ad.conRegistro)*100);
+    const pct=Math.round((ad.cumplidosPlan/ad.conRegistro)*100);
+    const fueraPlan=ad.cumplidos-ad.cumplidosPlan;
     // Texto corto: en 390 px, "de 16 registrados · 100%" se parte en tres líneas
     el("stMonthSub").textContent=ad.conRegistro+" reg · "+pct+"%";
     em.className=pct>=80?"good":(pct<50?"bad":"");
-    el("statMonth").title="Cumpliste "+md+" de los "+ad.conRegistro+" días planificados que registraste en "+
-      nombreMes+" ("+pct+"% de adherencia)."+
+    el("statMonth").title="Cumpliste "+ad.cumplidosPlan+" de los "+ad.conRegistro+
+      " días planificados que registraste en "+nombreMes+" ("+pct+"% de adherencia)."+
+      (fueraPlan?" Además entrenaste "+fueraPlan+(fueraPlan===1?" día":" días")+
+        " fuera del plan, que suman al número grande pero no a la adherencia.":"")+
       (ad.sinCarga?" Quedan "+ad.sinCarga+" días sin registrar, que no se cuentan.":"")+
       " Cuenta gimnasio, deporte y actividad extra.";
   }
@@ -4876,11 +4881,17 @@ function resumenParaAgente(y,m){
   let pY=y,pM=m-1;if(pM<0){pM=11;pY--;}
   const pv=mesStats(pY,pM);
   const comp=(o)=>({
-    diasTranscurridos:o.dias,planificados:o.planificados,cumplidos:o.cumplidos,noFui:o.noFui,
+    diasTranscurridos:o.dias,planificados:o.planificados,noFui:o.noFui,
+    // No se manda un `cumplidos` a secas: al lado de `planificadosConRegistro`
+    // invitaba a rehacer la división con conjuntos distintos. `diasActivos`
+    // incluye lo entrenado fuera del plan; `cumplidosDelPlan` no, y es el que da
+    // el cumplimiento.
+    diasActivos:o.cumplidos,cumplidosDelPlan:o.cumplidosPlan,
+    diasFueraDelPlan:o.cumplidos-o.cumplidosPlan,
     // `planificadosConRegistro` es el denominador del cumplimiento: los días sin
     // registro quedan aparte en vez de contarse como faltas.
     planificadosConRegistro:o.conRegistro,planificadosSinRegistro:o.sinCarga,
-    cumplimientoPct:o.conRegistro?Math.round(o.cumplidos/o.conRegistro*100):null,
+    cumplimientoPct:o.conRegistro?Math.round(o.cumplidosPlan/o.conRegistro*100):null,
     diasRecuperacion:o.recupDias,sesionesRecuperacion:o.recupSesiones,
     minutosRecuperacion:Math.round((o.recupSeg||0)/60),
     extras:o.extras,diasGym:o.gymDias,diasDeporte:o.depDias,sesionesConCargas:o.sesionesGym,
@@ -4913,7 +4924,11 @@ function resumenParaAgente(y,m){
       "no se saben y no se cuentan ni como cumplidos ni como faltas. Los días de "+
       "recuperación (kinesiología, fisioterapia) son ausencias justificadas: no "+
       "suman entrenamiento ni restan cumplimiento. Si planificadosSinRegistro es "+
-      "alto frente a planificadosConRegistro, decilo en vez de afirmar una adherencia.",
+      "alto frente a planificadosConRegistro, decilo en vez de afirmar una adherencia. "+
+      "diasActivos incluye lo que entrenó fuera del plan y cumplidosDelPlan no: el "+
+      "cumplimiento sale de cumplidosDelPlan sobre planificadosConRegistro. Los "+
+      "diasFueraDelPlan son esfuerzo de más, nunca incumplimiento: mencionalos como "+
+      "algo a favor si los hay.",
     recuperacionPorDisciplina:Object.values(s.recupPorDisc).map(d=>
       ({disciplina:d.nombre,sesiones:d.sesiones,minutos:Math.round(d.seg/60)}))};
   if(perfil.registra_periodo){
@@ -5088,7 +5103,7 @@ function ultimaMedidaAntes(fechaISO,campo){
 function mesStats(y,m){
   const hoy=todayStr(),nd=diasDelMes(y,m),mp=y+"-"+pad2(m+1);
   const s={mp:mp,dias:0,planificados:0,conRegistro:0,sinCarga:0,
-    cumplidos:0,noFui:0,extras:0,gymDias:0,depDias:0,
+    cumplidos:0,cumplidosPlan:0,noFui:0,extras:0,gymDias:0,depDias:0,
     recupDias:0,recupSesiones:0,recupSeg:0,recupPorDisc:{},
     kcalDias:[],enObjetivo:0,alcoholDias:0,
     energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
@@ -5103,7 +5118,11 @@ function mesStats(y,m){
     // Los días planificados se parten en los que dejaron rastro y los que no:
     // el cumplimiento se mide contra los primeros (ver renderReporte).
     if(p.tipo!=="descanso"){s.planificados++;
-      if(es==="sin_carga")s.sinCarga++;else s.conRegistro++;}
+      if(es==="sin_carga")s.sinCarga++;else s.conRegistro++;
+      // El numerador del cumplimiento vive acá adentro a propósito: medirlo
+      // sobre todos los días y dividirlo por los planificados compara conjuntos
+      // distintos, y entrenar un día de descanso daba más de 100%.
+      if(es==="cumplido")s.cumplidosPlan++;}
     if(es==="cumplido")s.cumplidos++;
     if(es==="falta")s.noFui++;
     if(es==="recuperacion")s.recupDias++;
@@ -5178,9 +5197,11 @@ function renderReporte(){
   // un día sin anotar no dice que faltaste, dice que no se sabe.
   const confiable=adherenciaConfiable({conRegistro:s.conRegistro,sinCarga:s.sinCarga});
   const confiablePrev=adherenciaConfiable({conRegistro:pv.conRegistro,sinCarga:pv.sinCarga});
-  // Se topea en 100: cumplir un día libre puede dar más cumplidos que planificados
-  const pctCumpl=s.conRegistro?Math.round(Math.min(s.cumplidos,s.conRegistro)/s.conRegistro*100):0;
-  const pctPrev=(confiablePrev&&pv.conRegistro)?Math.round(Math.min(pv.cumplidos,pv.conRegistro)/pv.conRegistro*100):null;
+  // Numerador y denominador cuentan los MISMOS días: los del plan. No se topea
+  // en 100 — si alguna vez vuelve a pasarse, es un error de conteo y tiene que
+  // verse, no quedar disimulado como un mes perfecto.
+  const pctCumpl=s.conRegistro?Math.round(s.cumplidosPlan/s.conRegistro*100):0;
+  const pctPrev=(confiablePrev&&pv.conRegistro)?Math.round(pv.cumplidosPlan/pv.conRegistro*100):null;
   const objetivoNeutral=perfil.objetivo==="conocerme";
 
   let h='<div class="rephead"><div class="inner"><div class="eyebrow">Reporte mensual · Tenaz</div><h2>'+nombreMes+'</h2><div class="who">'+esc(perfil.nombre||"")+'</div></div></div><div class="repbody">';
@@ -5195,7 +5216,13 @@ function renderReporte(){
     h+='<div class="repgrid">';
     h+=kpi("Cumplimiento",confiable?(pctCumpl+"%"):"—",
       confiable&&pctPrev!=null?delta(pctCumpl,pctPrev):"");
-    h+=kpi("Días activos",s.cumplidos+" / "+s.conRegistro,delta(s.cumplidos,pv.cumplidos));
+    // Días activos es el total, dentro y fuera del plan: entrenar un día libre
+    // es entrenar. Cuando hay días fuera del plan, el subtítulo explica de dónde
+    // sale la diferencia con el cumplimiento; si no, se muestra la comparación.
+    const fueraPlan=s.cumplidos-s.cumplidosPlan;
+    h+=kpi("Días activos",String(s.cumplidos),
+      fueraPlan>0?'<span class="d flat">'+s.cumplidosPlan+' del plan · '+fueraPlan+' fuera</span>'
+                 :delta(s.cumplidos,pv.cumplidos));
     // La cobertura es la contracara de sacar los días sin carga del denominador:
     // sin ella, registrar un solo día del mes se leería como un mes perfecto.
     h+=kpi("Días registrados",s.conRegistro+" / "+s.planificados,delta(s.conRegistro,pv.conRegistro));
