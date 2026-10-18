@@ -1778,6 +1778,17 @@ async function onSession(session){
     if(err)throw err.error;
     perfil=rp.data;
     if(!perfil){startOnboarding();return;}
+    /* El huso horario se escribía SÓLO al activar notificaciones, así que faltaba
+       en todos los demás perfiles. Hace falta para poder segmentar el consumo de
+       IA por región sin pedirle al usuario ningún dato nuevo. Va en horas, igual
+       que donde ya se escribía. Si el update falla no pasa nada: es un dato de
+       análisis, no puede trabar el inicio de sesión. */
+    const tzAhora=-Math.round(new Date().getTimezoneOffset()/60);
+    if(perfil.tz_offset!==tzAhora){
+      perfil.tz_offset=tzAhora;
+      sb.from("perfiles").update({tz_offset:tzAhora}).eq("user_id",user.id)
+        .then(()=>{},()=>{});
+    }
     if((rpl.data||[]).length){capSemana=("semana" in rpl.data[0]);capVigencia=("vigente_desde" in rpl.data[0]);}
     cargarPlanVers(rpl.data||[]);
     capActividades=!(rda&&rda.error&&rda.error.code==="42P01");
@@ -3443,6 +3454,15 @@ function avisarErrorEst(data){
   const m=data&&data.error&&ERR_EST[data.error];
   toast(m||"No pude estimar, probá de nuevo");
 }
+/* Una respuesta 401 NO llega por ERR_EST: supabase-js convierte cualquier
+   respuesta que no sea 2xx en excepción, así que nunca hay `data` que mirar.
+   Sin esto, una sesión vencida se le muestra al usuario como «revisá que la
+   función esté desplegada», que lo manda a buscar donde no es. */
+function fallaEst(e,porDefecto){
+  const st=e&&e.context&&e.context.status;
+  if(st===401)return "Se venció tu sesión. Salí y volvé a entrar para estimar";
+  return porDefecto;
+}
 async function estimateFood(mi){
   const di=el("fad"+mi),btn=el("fest"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
@@ -3452,7 +3472,7 @@ async function estimateFood(mi){
     if(error)throw error;
     if(aplicarEstimacion(mi,data))toast("≈ "+data.kcal+" kcal estimadas");
     else avisarErrorEst(data);
-  }catch(e){toast("No pude estimar: revisá que la función esté desplegada");}
+  }catch(e){toast(fallaEst(e,"No pude estimar: revisá que la función esté desplegada"));}
   btn.disabled=false;btn.textContent=old;
 }
 /* --- Estimar desde una foto ---
@@ -3496,7 +3516,7 @@ async function estimarDesdeFoto(mi,file){
       if(di&&!desc&&data.supuesto)di.value=String(data.supuesto).split(/[.,;(]/)[0].trim().slice(0,60);
       toast("≈ "+data.kcal+" kcal desde la foto");
     }else avisarErrorEst(data);
-  }catch(e){toast("No pude leer la foto, probá de nuevo");}
+  }catch(e){toast(fallaEst(e,"No pude leer la foto, probá de nuevo"));}
   btn.disabled=false;btn.textContent=old;
 }
 /* --- Panel rápido de hidratación (desde el Calendario, para HOY) --- */
