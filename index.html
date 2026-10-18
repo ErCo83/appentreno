@@ -3047,7 +3047,7 @@ function renderWellBody(){
   return h;
 }
 function renderFoodBody(){
-  let h='<div class="fhint">Escribí el alimento y poné las kcal, o tocá <b>✨</b> para estimarlas y <b>📷</b> para sacarle una foto. Sumalo con <b>＋</b> o <b>Enter</b>; si te lo olvidás, al guardar lo agregamos igual.</div>';
+  let h='<div class="fhint">Escribí el alimento y poné las kcal, o tocá <b>✨</b> para estimarlas, <b>📷</b> para sacarle una foto o <b>🖼️</b> para elegir una que ya tengas. Sumalo con <b>＋</b> o <b>Enter</b>; si te lo olvidás, al guardar lo agregamos igual.</div>';
   MOMENTS.forEach((m,mi)=>{
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
     h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span style="display:flex;align-items:center;gap:8px"><span class="mk">'+(sub>0?sub+" kcal":"")+'</span><button class="sugbtn" data-sug="'+mi+'">✨ ideas</button></span></div>';
@@ -3056,10 +3056,14 @@ function renderFoodBody(){
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal">'+
        '<button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button>'+
-       '<button class="est foto" data-foto="'+mi+'" id="ffot'+mi+'" title="Estimar desde una foto">📷</button>'+
-       // Sin `capture`: el sistema ofrece galería, archivos y cámara. Con él iba
-       // derecho a la cámara, y entonces sólo se podía registrar una comida en el
-       // momento de comerla: una foto ya sacada no servía.
+       '<button class="est foto" data-foto="'+mi+'" id="ffot'+mi+'" title="Sacar una foto ahora">📷</button>'+
+       '<button class="est foto" data-galeria="'+mi+'" id="fgal'+mi+'" title="Elegir una foto de la galería">🖼️</button>'+
+       /* Dos campos, porque ninguno de los dos solo alcanza. Con
+          capture="environment" Android abre la cámara y saltea el selector; sin
+          él, los Android nuevos abren el selector de fotos del sistema, que no
+          ofrece sacar una. Un botón para cada uno es la única forma de tener las
+          dos sin que el usuario adivine. */
+       '<input type="file" accept="image/*" capture="environment" id="ffilec'+mi+'" hidden>'+
        '<input type="file" accept="image/*" id="ffile'+mi+'" hidden>'+
        '<button class="add" data-fadd="'+mi+'">＋</button></div>';
     h+='<div id="festbox'+mi+'">'+estimacionHTML(mi)+'</div></div>';
@@ -3642,12 +3646,16 @@ function attachModal(){
     pintarEstimacion(parseInt(p[0]));
   });
   document.querySelectorAll("[data-est]").forEach(x=>x.onclick=()=>estimateFood(+x.dataset.est));
-  // El 📷 abre el selector de archivo oculto; el input dispara la estimación.
+  // Cada botón abre su campo oculto; los dos campos disparan la misma estimación.
   document.querySelectorAll("[data-foto]").forEach(x=>x.onclick=()=>{
-    const mi=+x.dataset.foto,f=el("ffile"+mi);if(f)f.click();});
+    const f=el("ffilec"+(+x.dataset.foto));if(f)f.click();});
+  document.querySelectorAll("[data-galeria]").forEach(x=>x.onclick=()=>{
+    const f=el("ffile"+(+x.dataset.galeria));if(f)f.click();});
   MOMENTS.forEach((m,mi)=>{
-    const f=el("ffile"+mi);
-    if(f)f.onchange=()=>{const file=f.files&&f.files[0];f.value="";estimarDesdeFoto(mi,file);};
+    ["ffilec","ffile"].forEach(pref=>{
+      const f=el(pref+mi);
+      if(f)f.onchange=()=>{const file=f.files&&f.files[0];f.value="";estimarDesdeFoto(mi,file);};
+    });
   });
   document.querySelectorAll("[data-drm]").forEach(x=>x.onclick=()=>delDiario(parseInt(x.dataset.drm)));
   const inp=el("exSearch");if(inp){inp.oninput=()=>renderExSuggest(inp.value);inp.onfocus=()=>renderExSuggest(inp.value);}
@@ -4741,7 +4749,7 @@ async function savePerfil(){
    construido después. */
 const TOUR=[
   {emoji:"📅",titulo:"Tu día en una pantalla",texto:"El Calendario es el corazón. Tocá cualquier día y registrás todo junto: qué entrenaste, cómo dormiste, qué comiste y tu ánimo. El fondo del día te dice cómo fue: verde cumpliste, rojizo no fuiste, rayado quedó sin registrar.",hl:"Un día rayado no cuenta como falta: la app no inventa lo que no sabe."},
-  {emoji:"🍽️",titulo:"Anotá lo que comés sin pensarlo",texto:"Escribí el alimento y tocá ✨ para que la IA estime las calorías, o 📷 para sacarle una foto. Te dice sobre qué porción calculó, así que si tu plato era más chico lo corregís en un toque.",hl:"Con comida envasada, sacale foto a la etiqueta: de ahí sale el dato exacto."},
+  {emoji:"🍽️",titulo:"Anotá lo que comés sin pensarlo",texto:"Escribí el alimento y tocá ✨ para que la IA estime las calorías, 📷 para sacarle una foto o 🖼️ para elegir una de la galería. Te dice sobre qué porción calculó, así que si tu plato era más chico lo corregís en un toque.",hl:"Con comida envasada, sacale foto a la etiqueta: de ahí sale el dato exacto."},
   {emoji:"🗓️",titulo:"Tu plan, y tu semana real",texto:"En Plan semanal definís qué hacés cada día, y podés tener semanas distintas dentro del mes. Los cambios rigen desde la fecha que elijas, así que tu historial no se reescribe. En Rutinas armás sesiones reutilizables y las asignás a tus días.",hl:"Surgió un partido que no estaba en el plan, o fuiste al kinesiólogo? Se registra igual."},
   {emoji:"📈",titulo:"Mirá tu progreso",texto:"Peso con media móvil, volumen de entrenamiento, récords personales, tus deportes del mes y tus sesiones de recuperación. Y una vez por mes, un reporte completo que podés guardar en PDF.",hl:"¿Perdido en alguna sección? Tocá el signo ? arriba a la derecha."},
   {emoji:"✨",titulo:"Y algo que no tiene ninguna otra app",texto:"En Diario escribís lo que quieras, y un narrador con IA convierte un período de tu vida en un relato de ficción del género que elijas. Tus sueños también cuentan.",hl:"Cuanto más escribas, mejores historias vas a poder generar."}
