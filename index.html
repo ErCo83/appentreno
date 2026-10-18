@@ -1410,6 +1410,55 @@ const EMO={energia:["😵","🥱","😐","🙂","⚡"],animo:["😞","😕","�
 const EMOLBL={energia:"Energía",animo:"Ánimo",sueno:"Sueño"};
 const EMOTXT=["muy mal","mal","normal","bien","muy bien"];
 const ALC_TYPES=["Vino","Cerveza","Fernet","Otro"];
+/* Cómo se nombran acá las bebidas que marcan el «¿Tomaste alcohol?» del día.
+   La clave es el tipo que ya maneja ALC_TYPES, así que esto no agrega vocabulario
+   nuevo: sólo dice por qué palabras llegar a cada uno. */
+const ALC_PALABRAS={
+  Vino:["vino","tinto","malbec","cabernet","syrah","merlot","chardonnay","rosado",
+        "espumante","champagne","champan","prosecco","borgona","sangria"],
+  Cerveza:["cerveza","birra","porron","ipa","lager","stout","porter","chopp","radler"],
+  Fernet:["fernet","fernandito","branca"],
+  Otro:["gin","ginebra","gintonic","whisky","whiskey","vodka","ron","tequila","mezcal",
+        "aperol","spritz","negroni","campari","vermut","vermouth","daiquiri","mojito",
+        "caipirinha","pisco","grappa","licor","sidra","hidromiel","aperitivo","cuba libre"]
+};
+/* «Cerveza sin alcohol» no es alcohol. Se chequea antes que nada. */
+const ALC_NIEGA=["sin alcohol","cero alcohol","desalcoholizad","0,0","0.0"];
+/* Devuelve el tipo de ALC_TYPES si el texto nombra una bebida alcohólica.
+   Compara por PALABRA COMPLETA, no por subcadena: `ron` vive adentro de `turron`
+   y `gin` adentro de `ginger`, así que un indexOf suelto inventaría tragos. */
+function alcoholDe(desc){
+  const crudo=normTxt(desc);
+  if(ALC_NIEGA.some(n=>crudo.indexOf(n)>=0))return null;
+  const t=" "+crudo.replace(/[^a-z0-9]+/g," ").trim()+" ";
+  for(let i=0;i<ALC_TYPES.length;i++){
+    const pals=ALC_PALABRAS[ALC_TYPES[i]]||[];
+    for(let j=0;j<pals.length;j++)if(t.indexOf(" "+pals[j]+" ")>=0)return ALC_TYPES[i];
+  }
+  return null;
+}
+/* Prende el «¿Tomaste alcohol?» del día si el alimento nombra una bebida, y
+   devuelve si lo prendió para que quien llame lo avise.
+     · NUNCA lo apaga: borrar la cerveza no puede borrar una respuesta que pudo
+       haber marcado el usuario a propósito.
+     · No pisa el tipo ya elegido.
+     · En perfiles sin seguimiento de alcohol, o de menores, no hace nada. */
+function marcarAlcoholSi(desc){
+  if(!permiteAlcohol()||mAlcohol)return false;
+  const tipo=alcoholDe(desc);
+  if(!tipo)return false;
+  mAlcohol=true;
+  if(!mAlcTipo)mAlcTipo=tipo;
+  return true;
+}
+/* Única puerta de entrada de un alimento al día. Los cuatro caminos —el ＋, el
+   autocompletado, las ideas de IA y el rescate de lo no confirmado— pasan por
+   acá, o cada uno se comportaría distinto frente al alcohol. */
+function sumarAlimento(m,desc,kcal){
+  mFood[m].push({desc:desc,kcal:kcal});
+  return marcarAlcoholSi(desc);
+}
+function avisoAlcohol(desc){toast("Marcamos alcohol en el día por «"+desc+"»");}
 const FUMO_TYPES=["Tabaco","THC","CBD"];
 const FLUJO_TYPES=["Manchado","Leve","Moderado","Abundante"];
 
@@ -3008,7 +3057,10 @@ function renderFoodBody(){
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal">'+
        '<button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button>'+
        '<button class="est foto" data-foto="'+mi+'" id="ffot'+mi+'" title="Estimar desde una foto">📷</button>'+
-       '<input type="file" accept="image/*" capture="environment" id="ffile'+mi+'" hidden>'+
+       // Sin `capture`: el sistema ofrece galería, archivos y cámara. Con él iba
+       // derecho a la cámara, y entonces sólo se podía registrar una comida en el
+       // momento de comerla: una foto ya sacada no servía.
+       '<input type="file" accept="image/*" id="ffile'+mi+'" hidden>'+
        '<button class="add" data-fadd="'+mi+'">＋</button></div>';
     h+='<div id="festbox'+mi+'">'+estimacionHTML(mi)+'</div></div>';
   });
@@ -3238,27 +3290,35 @@ function renderFoodSuggest(mi,qRaw){
   let list=foodCatalog().filter(f=>f.desc.toLowerCase().includes(q.toLowerCase())).slice(0,6);
   let h=list.map(f=>'<div data-d="'+escA(f.desc)+'" data-k="'+(f.kcal!=null?f.kcal:"")+'"><span>'+esc(f.desc)+'</span><span class="k">'+(f.kcal!=null?f.kcal+" kcal":"—")+'</span></div>').join("");
   box.innerHTML=h;box.className="suggest"+(h?" show":"");
-  box.querySelectorAll("div").forEach(dv=>dv.onclick=()=>{syncModal();mFood[MOMENTS[mi]].push({desc:dv.getAttribute("data-d"),kcal:dv.getAttribute("data-k")!==""?parseFloat(dv.getAttribute("data-k")):null});renderModal();});
+  box.querySelectorAll("div").forEach(dv=>dv.onclick=()=>{syncModal();
+    const d=dv.getAttribute("data-d");
+    const marco=sumarAlimento(MOMENTS[mi],d,dv.getAttribute("data-k")!==""?parseFloat(dv.getAttribute("data-k")):null);
+    renderModal();if(marco)avisoAlcohol(d);});
 }
 function addFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi);
   const desc=(di.value||"").trim();if(!desc){di.focus();return;}
   const kcal=ki.value!==""?parseFloat(ki.value):null;
   delete mEst[mi];   // el supuesto era de esa comida, no de la siguiente
-  syncModal();mFood[MOMENTS[mi]].push({desc:desc,kcal:kcal});renderModal();
+  syncModal();
+  const marco=sumarAlimento(MOMENTS[mi],desc,kcal);
+  renderModal();
+  if(marco)avisoAlcohol(desc);
 }
 /* Rescata lo que el usuario escribió pero no confirmó con ＋ */
 function flushPendingFood(){
-  let n=0;
+  let n=0,alc=false;
   MOMENTS.forEach((m,mi)=>{
     const di=el("fad"+mi),ki=el("fak"+mi);
     if(!di)return;
     const desc=(di.value||"").trim();if(!desc)return;
     const kcal=(ki&&ki.value!=="")?parseFloat(ki.value):null;
-    mFood[m].push({desc:desc,kcal:kcal});
+    if(sumarAlimento(m,desc,kcal))alc=true;
     di.value="";if(ki)ki.value="";n++;
   });
-  return n;
+  // Devuelve objeto y no un número: acá no se puede avisar con un toast propio,
+  // porque el de «Día guardado» lo pisaría. El aviso viaja con ése.
+  return {n:n,alcohol:alc};
 }
 function markPending(mi){
   const di=el("fad"+mi),w=el("fpend"+mi);
@@ -3353,10 +3413,10 @@ async function pedirSugerencias(mi){
 function agregarSugerencia(mi,idx){
   const s=(sugCache[mi]||[])[idx];if(!s)return;
   syncModal();
-  mFood[MOMENTS[mi]].push({desc:s.nombre,kcal:s.kcal!=null?s.kcal:null});
+  const marco=sumarAlimento(MOMENTS[mi],s.nombre,s.kcal!=null?s.kcal:null);
   sugAbierta=null;
   renderModal();
-  toast("Agregado a "+MOMENTS[mi]);
+  toast("Agregado a "+MOMENTS[mi]+(marco?" · marcamos alcohol en el día":""));
 }
 /* Aplica el resultado de una estimación, venga de texto o de foto. */
 function aplicarEstimacion(mi,data){
@@ -3921,7 +3981,7 @@ async function subirPendientes(silencioso){
 }
 async function saveDay(){
   syncModal();
-  const rescatados=flushPendingFood();
+  const resc=flushPendingFood(),rescatados=resc.n;
   const p=armarDiaPayload();
   const guardadoKey=p.fecha;
   try{
@@ -3931,7 +3991,8 @@ async function saveDay(){
     renderAll();closeSheet();
     destellarDia(guardadoKey);
     if(records.length)setTimeout(()=>avisarRecords(records),900);
-    toast(rescatados>0?("Día guardado ✓ (sumé "+rescatados+(rescatados===1?" alimento":" alimentos")+" que quedaban escritos)"):"Día guardado ✓");
+    toast((rescatados>0?("Día guardado ✓ (sumé "+rescatados+(rescatados===1?" alimento":" alimentos")+" que quedaban escritos)"):"Día guardado ✓")+
+      (resc.alcohol?" · marcamos alcohol en el día":""));
     pintarPendientes();
     subirPendientes(true);
   }catch(e){
