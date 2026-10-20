@@ -1934,7 +1934,7 @@ function balDias(keys){
 function makeWeekCell(ds){
   const w=document.createElement("div");w.className="wk";
   const bd=balDias(ds.map(ymd));
-  if(!bd){w.title="Sin comidas registradas esta semana";return w;}
+  if(!bd){w.title="Sin calorías cargadas esta semana";return w;}
   w.className="wk "+(bd.ok?"ok":"no");
   const detalle="Semana del "+ds[0].getDate()+"/"+(ds[0].getMonth()+1)+": "+fmtBal(bd.suma)+" kcal frente al objetivo · "+
     bd.dias+(bd.dias===1?" día":" días")+" · "+fmtBal(bd.prom)+"/día";
@@ -2173,7 +2173,7 @@ function renderStats(){
   const b=balanceMes(),eb=el("stBal");
   if(!b.dias){eb.textContent="—";eb.className="";
     el("stBalSub").textContent="sin registros";
-    el("statBal").title="Sin comidas registradas en "+nombreMes+".";}
+    el("statBal").title="Sin calorías cargadas en "+nombreMes+".";}
   else{
     const prom=Math.round(b.suma/b.dias),info=balanceInfo(b.target+prom,b.target);
     eb.textContent=fmtBal(Math.round(b.suma));
@@ -5096,7 +5096,9 @@ function renderGrillaKcal(y,m,target){
     acum+=dif;conDato++;if(bal.ok)cumplidos++;
     filas.push({d:d,dw:dw,kcal:c,dif:dif,ok:bal.ok});
   }
-  if(!conDato)return '<p class="repempty">Sin comidas registradas este mes.</p>';
+  // Esta grilla es de calorías: si no hay ninguna, lo que falta son los números,
+  // no necesariamente las comidas.
+  if(!conDato)return '<p class="repempty">Ningún día con calorías cargadas este mes.</p>';
   let h='<p class="muted" style="font-size:var(--fs-5);margin-bottom:2px">Objetivo diario: <b>'+target+' kcal</b></p>';
   h+='<table class="kgrid"><thead><tr><th>Día</th><th>Consumido</th><th>Dif.</th><th>✓</th></tr></thead><tbody>';
   filas.forEach(f=>{
@@ -5194,7 +5196,7 @@ function mesStats(y,m){
   const s={mp:mp,dias:0,planificados:0,conRegistro:0,sinCarga:0,
     cumplidos:0,cumplidosPlan:0,noFui:0,extras:0,gymDias:0,depDias:0,
     recupDias:0,recupSesiones:0,recupSeg:0,recupPorDisc:{},
-    kcalDias:[],enObjetivo:0,alcoholDias:0,
+    kcalDias:[],comidaDias:0,comidaSinKcal:0,enObjetivo:0,alcoholDias:0,
     energia:[],animo:[],sueno:[],horas:[],bienDias:0,fumoDias:0,
     aguaDias:[],aguaMeta:0,
     sesionesGym:0,ejercicios:new Set(),maxKg:{},
@@ -5226,6 +5228,12 @@ function mesStats(y,m){
     if((p.tipo==="deporte"&&a.estado==="cumpli")||a.extra_deporte||actsDe(k).some(x=>x.categoria==="deporte"))s.depDias++;
     const c=consumedFor(k);
     if(c!=null){s.kcalDias.push(c);if(balanceInfo(c,calorieTarget()).ok)s.enObjetivo++;}
+    /* «Registró comidas» y «tiene calorías» son dos preguntas distintas, y la
+       app permite anotar qué comiste sin poner números. consumedFor() contesta
+       la segunda: devuelve null cuando no hay kcal, que para ese día es
+       correcto. Usarla para la primera le decía a quien anota sin números que
+       no había registrado nada. */
+    if((comi[k]||[]).length){s.comidaDias++;if(c==null)s.comidaSinKcal++;}
     if(alim[k]&&alim[k].alcohol)s.alcoholDias++;
     const ag=aguaDe(k);
     if(ag>0){s.aguaDias.push(ag);if(ag>=metaAguaDia(k))s.aguaMeta++;}
@@ -5370,8 +5378,15 @@ function renderReporte(){
 
   // ALIMENTACIÓN
   h+='<div class="repsec"><h3>🍽️ Alimentación</h3>';
-  if(s.kcalDias.length===0){h+='<p class="repempty">Sin comidas registradas este mes.</p>';}
-  else{
+  if(s.comidaDias===0&&s.kcalDias.length===0){
+    h+='<p class="repempty">Sin comidas registradas este mes.</p>';
+  }else if(s.kcalDias.length===0){
+    // Anotó qué comió, pero sin calorías: no hay promedio ni balance posible,
+    // y decirle que no registró nada sería borrarle el trabajo.
+    h+='<p class="repempty">Registraste comidas <b>'+s.comidaDias+(s.comidaDias===1?' día':' días')+
+       '</b>, pero ninguna con calorías, así que todavía no se puede calcular el promedio ni el balance.</p>'+
+       '<div class="fhint" style="margin-top:8px">Para que salgan esos números, al cargar un alimento tocá <b>✨</b> y la IA estima las calorías, o <b>📷</b> para sacarle una foto.</div>';
+  }else{
     const prom=Math.round(promedio(s.kcalDias));
     const promPrev=pv.kcalDias.length?Math.round(promedio(pv.kcalDias)):null;
     h+='<div class="repgrid">';
@@ -5385,6 +5400,13 @@ function renderReporte(){
       const balance=s.kcalDias.reduce((a,c)=>a+(c-target),0);
       h+='<div style="margin-top:10px"><div class="repline"><span class="rl">Balance acumulado del mes</span><span class="rv" style="color:'+((perfil.objetivo==="musculo"?balance>=0:balance<=0)?"var(--green)":"var(--accent)")+'">'+(balance>0?"+":"")+balance.toLocaleString("es-AR")+' kcal</span></div></div>';
     }
+    // Los días anotados sin calorías no entran en ningún promedio. Decirlo, o
+    // el denominador parece más chico de lo que la persona cargó.
+    if(s.comidaSinKcal)
+      h+='<div class="fhint" style="margin-top:10px">Otros '+s.comidaSinKcal+
+         (s.comidaSinKcal===1?' día tiene comidas anotadas sin calorías, así que no entra':
+                              ' días tienen comidas anotadas sin calorías, así que no entran')+
+         ' en estos promedios.</div>';
   }
   h+='</div>';
 
