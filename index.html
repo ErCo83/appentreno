@@ -448,6 +448,11 @@
   .fitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:var(--fs-6)}
   .fitem .fk{font-family:"Sometype Mono",monospace;font-size:var(--fs-5);color:var(--ink-soft);white-space:nowrap}
   .fitem .rmv{background:none;border:none;color:var(--red);font-size:var(--fs-8);cursor:pointer;padding:0 2px}
+  /* Las calorías del renglón ya cargado son editables, igual que las series y
+     los kilos de un ejercicio. Antes el renglón sólo tenía la ✕: para corregir
+     un número había que borrarlo y volver a escribirlo entero. */
+  .fitem .fkin{width:72px;text-align:right;font-family:"Sometype Mono",monospace;font-size:var(--fs-5);
+    background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:4px 7px;color:var(--ink)}
   .faddwrap{position:relative;margin-top:7px}
   .faddrow{display:flex;gap:6px;margin-top:6px}
   .faddrow input.k{width:70px;text-align:center;font-family:"Sometype Mono",monospace}
@@ -3063,7 +3068,7 @@ function renderFoodBody(){
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
     h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span style="display:flex;align-items:center;gap:8px"><span class="mk">'+(sub>0?sub+" kcal":"")+'</span><button class="sugbtn" data-sug="'+mi+'">✨ ideas</button></span></div>';
     h+='<div class="sugbox'+(sugAbierta===mi?" show":"")+'" id="sugbox'+mi+'">'+renderSugerenciasHTML(mi)+'</div>';
-    mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><span class="fk">'+(it.kcal!=null?it.kcal+" kcal":"—")+'</span><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
+    mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><input type="number" class="fkin" id="fki'+mi+'_'+ii+'" inputmode="numeric" placeholder="kcal" value="'+(it.kcal!=null?it.kcal:"")+'" aria-label="Calorías de '+escA(it.desc)+'"><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal">'+
        '<button class="est" data-est="'+mi+'" id="fest'+mi+'" title="Estimar con IA">✨</button>'+
@@ -3302,13 +3307,23 @@ function foodCatalog(){const f={},kc={};Object.keys(comi).sort().forEach(date=>{
 function renderFoodSuggest(mi,qRaw){
   const q=(qRaw||"").trim(),box=el("fsug"+mi);if(!box)return;
   if(!q){box.className="suggest";box.innerHTML="";return;}
-  let list=foodCatalog().filter(f=>f.desc.toLowerCase().includes(q.toLowerCase())).slice(0,6);
+  // normTxt y no toLowerCase: sin esto «platano» no encontraba «plátano» y la
+  // persona terminaba creando un duplicado. El buscador de ejercicios ya lo hacía.
+  let list=foodCatalog().filter(f=>normTxt(f.desc).includes(normTxt(q))).slice(0,6);
   let h=list.map(f=>'<div data-d="'+escA(f.desc)+'" data-k="'+(f.kcal!=null?f.kcal:"")+'"><span>'+esc(f.desc)+'</span><span class="k">'+(f.kcal!=null?f.kcal+" kcal":"—")+'</span></div>').join("");
   box.innerHTML=h;box.className="suggest"+(h?" show":"");
+  /* Tocar una sugerencia PRECARGA los campos, no agrega el alimento. Es el
+     patrón del buscador de ejercicios, donde elegir uno trae las series y los
+     kilos de la última vez y los deja editables. Antes acá se insertaba el
+     renglón terminado con las kcal guardadas y no había dónde ajustarlo.
+     Si después se olvidan de tocar ＋, flushPendingFood() lo rescata al guardar. */
   box.querySelectorAll("div").forEach(dv=>dv.onclick=()=>{syncModal();
-    const d=dv.getAttribute("data-d");
-    const marco=sumarAlimento(MOMENTS[mi],d,dv.getAttribute("data-k")!==""?parseFloat(dv.getAttribute("data-k")):null);
-    renderModal();if(marco)avisoAlcohol(d);});
+    const di=el("fad"+mi),ki=el("fak"+mi);
+    if(di)di.value=dv.getAttribute("data-d");
+    if(ki)ki.value=dv.getAttribute("data-k");
+    box.className="suggest";box.innerHTML="";
+    markPending(mi);
+    if(ki&&ki.focus)ki.focus();});
 }
 function addFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi);
@@ -3709,6 +3724,11 @@ function syncModal(){
   mActs.forEach((a,i)=>{
     const mn=el("am"+i),sg=el("as"+i),nt=el("an"+i);
     if(mn)a.min=mn.value;if(sg)a.seg=sg.value;if(nt)a.nota=nt.value;});
+  /* Las kcal de cada alimento ya agregado viven en un input, así que se leen
+     acá como las series y los kilos de los ejercicios. */
+  if(typeof mFood!=="undefined"&&mFood)MOMENTS.forEach((m,mi)=>{
+    (mFood[m]||[]).forEach((it,ii)=>{const c=el("fki"+mi+"_"+ii);
+      if(c)it.kcal=(c.value!==""&&c.value!=null)?parseFloat(c.value):null;});});
   let x;if((x=el("whHours")))mHoras=x.value;
   if((x=el("whDream")))mTexto=x.value;
   if((x=el("fdTotal")))mTotalManual=x.value;
