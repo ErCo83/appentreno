@@ -1202,6 +1202,7 @@
     </div>
     <div class="card">
       <span class="tag">Funcionalidades</span><h2 style="margin:3px 0 10px">Qué registrás</h2>
+      <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="sueno"></span>Descanso y ánimo</span><br><span class="fs">Energía, ánimo y horas dormidas</span></span><div class="acts"><button class="actbtn" id="fBieSi">Sí</button><button class="actbtn" id="fBieNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="alcohol"></span>Alcohol</span><br><span class="fs">Check diario y seguimiento</span></span><div class="acts"><button class="actbtn" id="fAlcSi">Sí</button><button class="actbtn" id="fAlcNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="hoja"></span>Fumar</span><br><span class="fs">Tabaco, THC o CBD</span></span><div class="acts"><button class="actbtn" id="fFumSi">Sí</button><button class="actbtn" id="fFumNo">No</button></div></div>
       <div class="fnrow"><span><span class="fl"><span class="ic" data-ic="nota"></span>Diario personal</span><br><span class="fs">Anotaciones libres por día</span></span><div class="acts"><button class="actbtn" id="fDiaSi">Sí</button><button class="actbtn" id="fDiaNo">No</button></div></div>
@@ -1406,7 +1407,7 @@ let viewY,viewM;
 /* Capacidades del backend (migraciones 012 a 014). Se detectan al cargar y se
    corrigen solas si una escritura falla por columna o tabla inexistente
    (42703 / 42P01), para que la PWA se pueda publicar antes de correr el SQL. */
-let capSemana=true,capTiempo=true,capDistancia=true,capVigencia=true,capActividades=true;
+let capSemana=true,capTiempo=true,capDistancia=true,capVigencia=true,capActividades=true,capBienestar=true;
 
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -1670,6 +1671,11 @@ function minSeg(seg){const v=Math.round(Number(seg)||0);return {min:v>=60?Math.f
 function age(){const b=parse(perfil.nacimiento),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;return a;}
 function esMenor(){try{return age()<18;}catch(e){return false;}}
 function permiteAlcohol(){return perfil.registra_alcohol && !esMenor();}
+/* Bienestar se puede apagar desde el 1/11/2026 (migración 016). Se lee con
+   `!==false` y no con `===true` a propósito: si la columna todavía no existe el
+   valor llega `undefined`, y entonces la sección se sigue viendo igual que
+   siempre. Mismo patrón de bandera de capacidad que capSemana y capVigencia. */
+function permiteBienestar(){return perfil.registra_bienestar!==false;}
 function permiteFumar(){return perfil.registra_fumar && !esMenor();}
 function latestWeight(){const p=medidas.filter(m=>m.peso_kg!=null);if(p.length)return Number(p[p.length-1].peso_kg);return perfil.peso_inicial_kg?Number(perfil.peso_inicial_kg):70;}
 /* Mifflin-St Jeor + factor de actividad + ajuste. Se extrajo como función pura
@@ -2491,13 +2497,17 @@ async function volverAlPlanBase(){
    Ahora son siete pasos, cada uno con una pregunta, y el paso 6 no pregunta nada:
    revela el objetivo calórico con su desglose. Ése es el punto: que la persona vea
    para qué sirvió lo que cargó. Ver appentreno-docs/DISENO-ONBOARDING.md */
-const OB_PASOS=7;
+const OB_PASOS=8;
 /* `nacD/M/Y` guardan cada selector por separado, no sólo la fecha compuesta.
    Hace falta: readDateSelects() devuelve "" hasta que están los tres, así que si
    sólo se guardara la fecha armada, elegir el día borraría el día al re-renderizar.
    Era exactamente el bug que impedía completar el nacimiento. */
 let ob={paso:1,nombre:"",sexo:null,nac:"",nacD:"",nacM:"",nacY:"",alt:"",peso:"",pesoSalteado:false,
-        factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false};
+        factor:null,objetivo:null,ajuste:null,ciclo:false,plan:null,ajustando:false,
+        /* Qué registrar, elegido en el paso 8. Antes el alta dejaba alcohol y
+           diario prendidos sin preguntar, y la persona veía secciones que nunca
+           eligió: ésa fue la queja más repetida de la prueba cerrada. */
+        regBien:true,regAlc:false,regFum:false,regDia:false};
 let obPlan=null;   // lo usa buildEditor/syncEditor con el prefijo "ob_"
 
 /* Los niveles de actividad explicados por lo que la persona hace. Antes eran una
@@ -2638,7 +2648,22 @@ function obPaso7(){
     '<div class="note">💡 '+esc(PLAN_RECO[ob.objetivo]||PLAN_RECO.mantener)+'</div>'+
     '<div id="obPlanEditor"></div></div>';
 }
-const OB_RENDER=[obPaso1,obPaso2,obPaso3,obPaso4,obPaso5,obPaso6,obPaso7];
+/* Va último y es deliberado. El alta termina con la persona decidiendo qué
+   quiere cargar, que es la respuesta directa a «son muchos datos para cargar».
+   El período no está acá porque ya se pregunta en el paso 2. */
+function obPaso8(){
+  const sw=(id,on,tit,txt)=>
+    '<div class="wzopt"><div class="wzoptx"><b>'+tit+'</b><span>'+txt+'</span></div>'+
+    '<button class="wzsw'+(on?" on":"")+'" id="'+id+'" role="switch" aria-checked="'+(on?"true":"false")+'"><i></i></button></div>';
+  return '<div class="wzq"><h1>¿Qué querés registrar?</h1>'+
+    '<p>La actividad y la comida vienen siempre. Lo demás es tuyo: prendé sólo lo que te sirva, y cambialo cuando quieras desde Perfil.</p>'+
+    sw("obRegBien",ob.regBien,"Descanso y ánimo","Energía, ánimo y horas de sueño. Es lo que la app cruza con tu entrenamiento en el informe mensual.")+
+    sw("obRegAlc",ob.regAlc,"Alcohol","Un check por día y qué tomaste.")+
+    sw("obRegFum",ob.regFum,"Fumar","Tabaco, THC o CBD.")+
+    sw("obRegDia",ob.regDia,"Diario personal","Una nota libre por día, que después el narrador puede convertir en una historia.")+
+    '</div>';
+}
+const OB_RENDER=[obPaso1,obPaso2,obPaso3,obPaso4,obPaso5,obPaso6,obPaso7,obPaso8];
 
 /* Cuenta hacia arriba el objetivo calórico. Es el momento de impacto del
    onboarding, así que vale la animación; se respeta prefers-reduced-motion. */
@@ -2721,6 +2746,11 @@ function obEnganchar(n){
       const num=el("obNum");if(num)num.textContent=obObjetivoCalc().total.toLocaleString("es-AR");};
   }
   if(n===7)buildEditor("obPlanEditor",obPlan,"ob_");
+  if(n===8){
+    [["obRegBien","regBien"],["obRegAlc","regAlc"],
+     ["obRegFum","regFum"],["obRegDia","regDia"]].forEach(([id,campo])=>{
+      const b=el(id);if(b)b.onclick=()=>{ob[campo]=!ob[campo];renderOb();};});
+  }
 }
 function obSiguiente(){
   if(!obValido(ob.paso))return;
@@ -2745,11 +2775,19 @@ async function saveOnboard(){
     peso_inicial_kg:(!ob.pesoSalteado&&ob.peso!=="")?parseFloat(ob.peso):null,
     factor_actividad:parseFloat(ob.factor),objetivo:ob.objetivo,
     ajuste_kcal:c.ajuste,
-    registra_alcohol:true,registra_fumar:false,registra_diario:true,
-    registra_periodo:ob.ciclo};
+    registra_alcohol:ob.regAlc,registra_fumar:ob.regFum,registra_diario:ob.regDia,
+    registra_periodo:ob.ciclo,registra_bienestar:ob.regBien};
   const rows=[];for(let dw=0;dw<7;dw++){const s=obPlan[dw];const fila={user_id:user.id,dia_semana:dw,tipo:s.tipo,detalle:s.tipo==="descanso"?null:((s.detalle||"").trim()||null)};if(capSemana)fila.semana=0;rows.push(fila);}
   try{
-    let r=await sb.from("perfiles").insert(pf);if(r.error)throw r.error;
+    let r=await sb.from("perfiles").insert(pf);
+    /* Si la migración 016 todavía no corrió, la columna no existe y Postgres
+       rechaza el insert entero con 42703. Se reintenta sin ella: el alta no se
+       puede trabar por un campo opcional. */
+    if(r.error&&r.error.code==="42703"){
+      capBienestar=false;delete pf.registra_bienestar;
+      r=await sb.from("perfiles").insert(pf);
+    }
+    if(r.error)throw r.error;
     r=await sb.from("plan_semanal").upsert(rows);
     if(r.error&&r.error.code==="42703"){capSemana=false;rows.forEach(x=>{delete x.semana;});r=await sb.from("plan_semanal").upsert(rows);}
     if(r.error)throw r.error;
@@ -2936,7 +2974,7 @@ function renderModal(){
   h+='<h3>'+(p.tipo==="descanso"?"😴 Día libre":iconFor(p)+" "+(p.tipo==="gym"?"Gimnasio":sportLabel(mKey)))+'</h3>';
   h+='<div class="when">'+DIAS[d.getDay()]+' '+d.getDate()+' de '+MONTHS[d.getMonth()]+(p.detalle?' · '+esc(p.detalle):'')+'</div>';
   h+=acc("act","🏃 Actividad",actSummary(),renderActBody(p));
-  h+=acc("well","🌙 Bienestar",wellSummary(),renderWellBody());
+  if(permiteBienestar())h+=acc("well","🌙 Bienestar",wellSummary(),renderWellBody());
   h+=acc("food","🍽️ Alimentación",foodSummary(),renderFoodBody());
   if(perfil.registra_diario)h+=acc("dia","✍️ Diario personal",diaSummary(),renderDiaBody());
   h+='<button class="act" id="saveDay" style="margin-top:6px">Guardar día</button>';
@@ -4659,7 +4697,7 @@ async function saveMetric(){
 const FACTORES=[["1.2","Sedentario"],["1.375","Ligero"],["1.55","Moderado"],["1.725","Alto"],["1.9","Muy alto"]];
 const OBJETIVOS=[["bajar","Bajar grasa"],["mantener","Mantener"],["musculo","Ganar músculo"],["conocerme","Solo registrar para conocerme"]];
 const SUGERIDO={bajar:-350,mantener:0,musculo:200,conocerme:0};
-let pfSexo,pfFactor,pfObjetivo,pfAlc,pfFum,pfDia,pfPer;
+let pfSexo,pfFactor,pfObjetivo,pfAlc,pfFum,pfDia,pfPer,pfBie;
 /* ---------- TEMA ELEGIDO POR EL USUARIO ---------- */
 const TEMAS=[["light","☀️ Claro"],["dark","🌙 Oscuro"],["system","📱 Sistema"]];
 function temaGuardado(){
@@ -4694,6 +4732,9 @@ function renderPerfil(){
   renderTemaChips();
   pfSexo=perfil.sexo;pfFactor=String(perfil.factor_actividad);pfObjetivo=perfil.objetivo;
   pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;pfDia=!!perfil.registra_diario;pfPer=!!perfil.registra_periodo;
+  // `!==false` y no `!!`: sin la migración 016 el valor llega undefined y la
+  // sección tiene que seguir viéndose, no apagarse sola.
+  pfBie=perfil.registra_bienestar!==false;
   el("pNombre").value=perfil.nombre||"";
   buildDateSelects("pNac");setDateSelects("pNac",perfil.nacimiento);
   el("pAlt").value=perfil.altura_cm||"";
@@ -4727,6 +4768,7 @@ function refreshPerfilChips(){
   // en OTRA tarjeta, más arriba, así que quien activaba «Fumar» acá y volvía al
   // calendario no había guardado nada y la sección no aparecía nunca. Un
   // interruptor que parece instantáneo tiene que serlo.
+  flagPair("fBieSi","fBieNo",pfBie,v=>{pfBie=v;refreshPerfilChips();guardarFlag("registra_bienestar",v);});
   flagPair("fAlcSi","fAlcNo",pfAlc,v=>{pfAlc=v;refreshPerfilChips();guardarFlag("registra_alcohol",v);});
   flagPair("fFumSi","fFumNo",pfFum,v=>{pfFum=v;refreshPerfilChips();guardarFlag("registra_fumar",v);});
   flagPair("fDiaSi","fDiaNo",pfDia,v=>{pfDia=v;refreshPerfilChips();guardarFlag("registra_diario",v);});
@@ -4748,6 +4790,7 @@ async function guardarFlag(campo,valor){
     perfil[campo]=antes;
     pfAlc=!!perfil.registra_alcohol;pfFum=!!perfil.registra_fumar;
     pfDia=!!perfil.registra_diario;pfPer=!!perfil.registra_periodo;
+    pfBie=perfil.registra_bienestar!==false;
     refreshPerfilChips();renderAll();
     toast("No se pudo guardar: "+traducir(e));
   }
