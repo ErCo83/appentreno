@@ -451,6 +451,12 @@
   /* Las calorías del renglón ya cargado son editables, igual que las series y
      los kilos de un ejercicio. Antes el renglón sólo tenía la ✕: para corregir
      un número había que borrarlo y volver a escribirlo entero. */
+  .exrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:var(--fs-6)}
+  .exrow .exn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .exrow .exc{font-family:"Sometype Mono",monospace;font-size:var(--fs-3);color:var(--ink-faint);white-space:nowrap}
+  .exrow input{flex:1;min-width:0}
+  .exrow button{background:none;border:none;cursor:pointer;padding:0 3px;color:var(--ink-soft);font-size:var(--fs-7)}
+  .exrow button.okb{color:var(--green);font-weight:700}
   .fitem .fkin{width:72px;text-align:right;font-family:"Sometype Mono",monospace;font-size:var(--fs-5);
     background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:4px 7px;color:var(--ink)}
   .faddwrap{position:relative;margin-top:7px}
@@ -1081,6 +1087,11 @@
       <span class="tag">Nueva rutina</span><h2 style="margin:3px 0 8px">Crear</h2>
       <input type="text" id="nuevaRutina" placeholder="Nombre (ej: Sesión A · full body)">
       <button class="act" id="btnNuevaRutina" style="margin-top:10px">＋ Crear rutina</button>
+    </div>
+    <div class="card">
+      <span class="tag">Ejercicios</span><h2 style="margin:3px 0 6px">Tus ejercicios</h2>
+      <p class="muted" style="font-size:var(--fs-6)">Todo lo que cargaste alguna vez. Si escribiste el mismo de dos formas —«Press banca» y «Press de banca»— renombrá uno con el nombre del otro y se unen: los récords y el «última vez» vuelven a ser una sola historia.</p>
+      <div id="exAdminList" style="margin-top:10px"></div>
     </div>
   </section>
 
@@ -3166,11 +3177,17 @@ function renderDiaBody(){
 
 /* ---------- Buscadores ---------- */
 // Busca el último registro de un ejercicio en días anteriores
+/* ENLACE POR NOMBRE, NORMALIZADO.
+   Hasta el 7/11/2026 el buscador comparaba con normTxt() —que saca acentos y
+   mayúsculas— y el historial con toLowerCase() pelado. O sea que el buscador
+   consideraba iguales dos nombres que el historial consideraba distintos:
+   elegías lo que te ofrecía y el récord no aparecía. Ahora los dos usan la
+   misma regla. */
 function ultimaCarga(ejercicio,excluirFecha){
-  const nombre=String(ejercicio||"").toLowerCase();
+  const nombre=normTxt(ejercicio);
   const fechas=Object.keys(loads).filter(f=>f!==excluirFecha).sort();
   for(let i=fechas.length-1;i>=0;i--){
-    const it=(loads[fechas[i]]||[]).find(x=>String(x.ejercicio).toLowerCase()===nombre);
+    const it=(loads[fechas[i]]||[]).find(x=>normTxt(x.ejercicio)===nombre);
     if(it)return{fecha:fechas[i],series:it.series,reps:it.reps,kg:it.kg,modo:it.modo||"peso",
       duracion_seg:it.duracion_seg!=null?it.duracion_seg:null,
       distancia_m:it.distancia_m!=null?it.distancia_m:null,vueltas:it.vueltas!=null?it.vueltas:null};
@@ -3213,12 +3230,12 @@ function txtRecord(modo,valor){
 /* Mejor marca historica de un ejercicio en un modo dado, opcionalmente
    ignorando una fecha (para poder comparar el dia que se esta guardando). */
 function recordDe(ejercicio,modo,excluirFecha){
-  const nombre=String(ejercicio||"").toLowerCase();
+  const nombre=normTxt(ejercicio);
   let mejor=null;
   Object.keys(loads).forEach(fch=>{
     if(excluirFecha&&fch===excluirFecha)return;
     (loads[fch]||[]).forEach(it=>{
-      if(String(it.ejercicio).toLowerCase()!==nombre)return;
+      if(normTxt(it.ejercicio)!==nombre)return;
       if((it.modo||"peso")!==modo)return;
       const v=valorRecord(it);
       if(v==null)return;
@@ -3232,12 +3249,12 @@ function recordDe(ejercicio,modo,excluirFecha){
    sirve para el "tu record" del logger. Para saber si un dia rompio un record
    hay que mirar solo lo que ya existia. */
 function mejorAntesDe(ejercicio,modo,fecha){
-  const nombre=String(ejercicio||"").toLowerCase();
+  const nombre=normTxt(ejercicio);
   let mejor=null;
   Object.keys(loads).forEach(fch=>{
     if(fch>=fecha)return;
     (loads[fch]||[]).forEach(it=>{
-      if(String(it.ejercicio).toLowerCase()!==nombre)return;
+      if(normTxt(it.ejercicio)!==nombre)return;
       if((it.modo||"peso")!==modo)return;
       const v=valorRecord(it);
       if(v==null)return;
@@ -3269,14 +3286,29 @@ function todosLosRecords(){
     (loads[fch]||[]).forEach(it=>{
       const modo=it.modo||"peso",v=valorRecord(it);
       if(v==null)return;
-      const clave=String(it.ejercicio).toLowerCase()+"|"+modo;
+      const clave=normTxt(it.ejercicio)+"|"+modo;
       if(!mapa[clave]||v>mapa[clave].valor)
         mapa[clave]={ejercicio:it.ejercicio,modo:modo,valor:v,fecha:fch};
     });
   });
   return Object.values(mapa).sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.ejercicio.localeCompare(b.ejercicio,"es"));
 }
-function exFreq(){const f={};Object.values(loads).forEach(a=>a.forEach(it=>{f[it.ejercicio]=(f[it.ejercicio]||0)+1;}));return f;}
+/* Agrupa por nombre normalizado, no por el texto exacto: antes «Press» y
+   «press» eran dos entradas distintas del catálogo. Devuelve {grafía: veces},
+   usando como grafía la más veces escrita — que es la que la persona prefiere
+   sin haberlo decidido nunca. */
+function exFreq(){
+  const g={};
+  Object.values(loads).forEach(a=>a.forEach(it=>{
+    const k=normTxt(it.ejercicio);if(!k)return;
+    if(!g[k])g[k]={n:0,gr:{}};
+    g[k].n++;g[k].gr[it.ejercicio]=(g[k].gr[it.ejercicio]||0)+1;}));
+  const f={};
+  Object.keys(g).forEach(k=>{
+    const gr=Object.keys(g[k].gr).sort((a,b)=>g[k].gr[b]-g[k].gr[a]||a.localeCompare(b,"es"));
+    f[gr[0]]=g[k].n;});
+  return f;
+}
 function exCatalog(){const f=exFreq();return Object.keys(f).sort((a,b)=>{const d=f[b]-f[a];return d!==0?d:a.localeCompare(b,"es");});}
 /* Modo por defecto de un ejercicio: lo que usaste la última vez; si es nuevo,
    deciden los catálogos de actividades por distancia y por tiempo. */
@@ -3322,7 +3354,7 @@ function renderExSuggest(qRaw){
   ACT_DIST.forEach(a=>{if(!hist.some(n=>normTxt(n)===normTxt(a))&&!list.some(n=>normTxt(n)===normTxt(a)))list.push(a);});
   if(q)list=list.filter(n=>normTxt(n).includes(normTxt(q)));
   list=list.slice(0,8);
-  let h=list.map(n=>{const dup=logRows.some(r=>r.ex.toLowerCase()===n.toLowerCase());
+  let h=list.map(n=>{const dup=logRows.some(r=>normTxt(r.ex)===normTxt(n));
     const u=ultimaCarga(n,mKey);const prev=u?cargaTxt(u):"";
     const md=u?(u.modo||"peso"):modoDe(n);
     const ico=md==="tiempo"?"⏱️ ":(md==="distancia"?"📏 ":"");
@@ -3334,7 +3366,7 @@ function renderExSuggest(qRaw){
   }
   box.innerHTML=h;box.className="suggest"+(h?" show":"");
   box.querySelectorAll("div[data-add]").forEach(dv=>dv.onclick=()=>{syncModal();const nm=dv.getAttribute("data-add");
-    if(logRows.some(r=>r.ex.toLowerCase()===nm.toLowerCase()))toast("Ya cargaste «"+nm+"» hoy, lo sumo igual");
+    if(logRows.some(r=>normTxt(r.ex)===normTxt(nm)))toast("Ya cargaste «"+nm+"» hoy, lo sumo igual");
     const fila=nuevaFila(nm,dv.getAttribute("data-modo")||null);
     logRows.push(fila);
     const u=ultimaCarga(nm,mKey);
@@ -6034,7 +6066,75 @@ async function delDiaryEntry(id){
 
 /* ---------- RUTINAS ---------- */
 let rutModo={}; // modo elegido en la fila "agregar ejercicio" de cada rutina
+/* Qué ejercicio se está renombrando, por su nombre normalizado. */
+let exEdit=null;
+function renderExAdmin(){
+  const cont=el("exAdminList");if(!cont)return;
+  const f=exFreq(),nombres=exCatalog();
+  if(!nombres.length){
+    cont.innerHTML='<p class="muted" style="font-size:var(--fs-7)">Todavía no cargaste ningún ejercicio.</p>';return;}
+  cont.innerHTML=nombres.map(n=>{
+    const k=normTxt(n),veces=f[n]||0;
+    if(exEdit===k)
+      return '<div class="exrow"><input type="text" id="exRen" value="'+escA(n)+'" autocomplete="off">'+
+             '<button class="okb" data-exok="'+escA(n)+'" title="Guardar">✓</button>'+
+             '<button data-excan="1" title="Cancelar">✕</button></div>';
+    return '<div class="exrow"><span class="exn">'+esc(n)+'</span>'+
+           '<span style="display:flex;align-items:center;gap:8px">'+
+           '<span class="exc">'+veces+(veces===1?" vez":" veces")+'</span>'+
+           '<button data-exed="'+escA(n)+'" title="Renombrar">'+ico("lapiz",true)+'</button></span></div>';
+  }).join("");
+  cont.querySelectorAll("[data-exed]").forEach(b=>b.onclick=()=>{
+    exEdit=normTxt(b.dataset.exed);renderExAdmin();
+    const i=el("exRen");if(i&&i.focus){i.focus();i.select&&i.select();}});
+  cont.querySelectorAll("[data-excan]").forEach(b=>b.onclick=()=>{exEdit=null;renderExAdmin();});
+  cont.querySelectorAll("[data-exok]").forEach(b=>b.onclick=()=>{
+    const i=el("exRen");renombrarEjercicio(b.dataset.exok,i?i.value:"");});
+}
+/* Renombra un ejercicio en todo el historial. Si el nombre nuevo ya existe,
+   los dos quedan como uno solo — que es el caso que importa: un nombre mal
+   escrito la primera vez parte los récords y el progreso para siempre, y hasta
+   ahora no había forma de repararlo desde la app. */
+async function renombrarEjercicio(viejo,nuevoRaw){
+  const destino=String(nuevoRaw||"").trim();
+  const kv=normTxt(viejo),kd=normTxt(destino);
+  if(!kd){toast("Poné un nombre");return;}
+  if(kv===kd&&destino===viejo){exEdit=null;renderExAdmin();return;}
+
+  // Todas las grafías que hoy se leen como el ejercicio viejo, en los dos
+  // lugares donde vive un nombre: el historial y los renglones de rutina.
+  const variantes=new Set();let nCargas=0,nRut=0;
+  Object.values(loads).forEach(a=>a.forEach(it=>{
+    if(normTxt(it.ejercicio)===kv){variantes.add(it.ejercicio);nCargas++;}}));
+  Object.values(rutinaEj).forEach(a=>a.forEach(it=>{
+    if(normTxt(it.ejercicio)===kv){variantes.add(it.ejercicio);nRut++;}}));
+  const lista=Array.from(variantes);
+  if(!lista.length){exEdit=null;renderExAdmin();return;}
+
+  const fusiona=(kd!==kv)&&exCatalog().some(n=>normTxt(n)===kd);
+  const detalle=nCargas+(nCargas===1?" registro":" registros")+
+    (nRut?" y "+nRut+(nRut===1?" renglón de rutina":" renglones de rutina"):"");
+  const salto=String.fromCharCode(10);
+  if(!confirm((fusiona?("«"+destino+"» ya existe: los dos se van a unir en uno solo."+salto+salto):"")+
+     "Se van a cambiar "+detalle+"."+salto+salto+
+     "No se puede deshacer. ¿Seguimos?"))return;
+
+  try{
+    let r=await sb.from("cargas").update({ejercicio:destino})
+      .eq("user_id",user.id).in("ejercicio",lista);
+    if(r.error)throw r.error;
+    // `rutina_ejercicios` no tiene user_id: lo acota la RLS por la rutina.
+    r=await sb.from("rutina_ejercicios").update({ejercicio:destino}).in("ejercicio",lista);
+    if(r.error&&r.error.code!=="42P01")throw r.error;
+  }catch(e){toast("No se pudo renombrar: "+traducir(e));return;}
+
+  Object.values(loads).forEach(a=>a.forEach(it=>{if(normTxt(it.ejercicio)===kv)it.ejercicio=destino;}));
+  Object.values(rutinaEj).forEach(a=>a.forEach(it=>{if(normTxt(it.ejercicio)===kv)it.ejercicio=destino;}));
+  exEdit=null;renderExAdmin();renderAll();
+  toast(fusiona?"Unidos en «"+destino+"» ✓":"Renombrado ✓");
+}
 function renderRutinas(){
+  renderExAdmin();
   const cont=el("rutinasList");if(!cont)return;
   if(rutinas.length===0){cont.innerHTML='<div class="card"><p class="muted" style="font-size:var(--fs-7)">Todavía no tenés rutinas. Creá la primera abajo — por ejemplo "Sesión A · full body" — y después agregale ejercicios.</p></div>';return;}
   cont.innerHTML=rutinas.map(r=>{
