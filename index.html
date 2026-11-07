@@ -457,6 +457,11 @@
   .exrow input{flex:1;min-width:0}
   .exrow button{background:none;border:none;cursor:pointer;padding:0 3px;color:var(--ink-soft);font-size:var(--fs-7)}
   .exrow button.okb{color:var(--green);font-weight:700}
+  .repetir{display:block;width:100%;text-align:left;margin-top:7px;background:var(--surface-2);
+    border:1px dashed var(--line-2);border-radius:10px;padding:7px 10px;cursor:pointer;
+    font-size:var(--fs-4);color:var(--ink-soft);font-family:inherit}
+  .repetir b{color:var(--ink);font-weight:600}
+  .repetir .rf{color:var(--ink-faint)}
   .fitem .fkin{width:72px;text-align:right;font-family:"Sometype Mono",monospace;font-size:var(--fs-5);
     background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:4px 7px;color:var(--ink)}
   .faddwrap{position:relative;margin-top:7px}
@@ -2852,23 +2857,8 @@ function openDay(key){
   if(logRows.length===0){
     const p=planFor(key);
     if(p.tipo!=="descanso"&&p.rutina_id&&rutinaEj[p.rutina_id]){
-      logRows=rutinaEj[p.rutina_id].map(e=>{
-        const md=e.modo||"peso",u=ultimaCarga(e.ejercicio,key);
-        const fila=nuevaFila(e.ejercicio,md);
-        // lo que trae la rutina manda sobre lo que se hizo la ultima vez
-        if(md==="tiempo"&&e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
-        if(md==="distancia"){
-          if(e.distancia_m!=null){const de=distAEdit(e.distancia_m);fila.dist=de.valor;fila.unidad=de.unidad;}
-          if(e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
-          if(e.vueltas!=null)fila.vueltas=e.vueltas;
-        }
-        if(md==="peso"){
-          if(e.series!=null)fila.series=e.series;
-          if(e.reps!=null)fila.reps=e.reps;
-          if(e.kg!=null)fila.kg=e.kg;
-        }
-        return fila;
-      });
+      logRows=rutinaEj[p.rutina_id].map(e=>
+        sugDeRutina(nuevaFila(e.ejercicio,e.modo||"peso"),e));
       mRutinaPrecargada=logRows.length>0;
     }
   }
@@ -2939,19 +2929,7 @@ function cargarRutinaEnLogger(rutId){
   ejs.forEach(e=>{
     const md=e.modo||"peso";
     if(logRows.some(r=>normTxt(r.ex)===normTxt(e.ejercicio)))return;
-    const fila=nuevaFila(e.ejercicio,md);
-    if(md==="tiempo"&&e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
-    if(md==="distancia"){
-      if(e.distancia_m!=null){const de=distAEdit(e.distancia_m);fila.dist=de.valor;fila.unidad=de.unidad;}
-      if(e.duracion_seg!=null){const ms=minSeg(e.duracion_seg);fila.min=ms.min;fila.seg=ms.seg;}
-      if(e.vueltas!=null)fila.vueltas=e.vueltas;
-    }
-    if(md==="peso"){
-      if(e.series!=null)fila.series=e.series;
-      if(e.reps!=null)fila.reps=e.reps;
-      if(e.kg!=null)fila.kg=e.kg;
-    }
-    logRows.push(fila);
+    logRows.push(sugDeRutina(nuevaFila(e.ejercicio,md),e));
   });
   mRutinaPrecargada=true;
 }
@@ -3052,7 +3030,7 @@ function renderLoggerHTML(){
   // La duración de la actividad ya se carga arriba, en su renglón: acá va el
   // detalle de la sesión (entrada en calor, series, un tramo de running).
   let h='<div class="seclabel">'+esc(titulo)+'</div>';
-  if(mRutinaPrecargada)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">✨ Precargamos tu rutina. Ajustá los valores y confirmá con «Guardar día».</div>';
+  if(mRutinaPrecargada)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">✨ Trajimos los ejercicios de tu rutina. Tocá <b>↻ Repetir</b> o escribí lo que hiciste: <b>sólo se guarda lo que completes</b>.</div>';
   else if(mDeportePrecargado)h+='<div class="fhint" style="background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)">⏱️ La duración va arriba, en el renglón de la actividad. Acá podés sumar lo que hayas hecho además.</div>';
   /* Un día de gimnasio PLANIFICADO precarga la rutina que tiene asignada. Uno
      sin planificar no tiene ninguna asignada, así que no hay qué precargar:
@@ -3073,8 +3051,9 @@ function renderLoggerHTML(){
        '<span class="topbtns"><button class="modo" data-modo="'+i+'" title="Cambiar a '+esc(modoNombre(modoSiguiente(m)))+'">'+modoEtiqueta(m)+'</button>'+
        '<button class="rmv" data-rm="'+i+'">✕</button></span></div>';
     if(m==="tiempo"){
-      h+='<div class="fields"><div class="f"><label>Minutos</label><input type="number" inputmode="numeric" min="0" id="mn'+i+'" value="'+(r.min!==""&&r.min!=null?r.min:"")+'"></div>'+
-         '<div class="f"><label>Segundos</label><input type="number" inputmode="numeric" min="0" max="59" id="sg'+i+'" value="'+(r.seg!==""&&r.seg!=null?r.seg:"")+'"></div></div>';
+      const ps=minSeg(r.sug?r.sug.duracion_seg:0);
+      h+='<div class="fields"><div class="f"><label>Minutos</label><input type="number" inputmode="numeric" min="0" id="mn'+i+'" placeholder="'+(ps.min||"")+'" value="'+(r.min!==""&&r.min!=null?r.min:"")+'"></div>'+
+         '<div class="f"><label>Segundos</label><input type="number" inputmode="numeric" min="0" max="59" id="sg'+i+'" placeholder="'+(ps.seg||"")+'" value="'+(r.seg!==""&&r.seg!=null?r.seg:"")+'"></div></div>';
     }else if(m==="distancia"){
       h+='<div class="fields"><div class="f"><label>Distancia</label><input type="number" inputmode="decimal" step="0.01" min="0" id="ds'+i+'" value="'+(r.dist!==""&&r.dist!=null?r.dist:"")+'"></div>'+
          '<div class="f"><label>Unidad</label><select id="un'+i+'"><option value="km"'+(r.unidad!=="m"?" selected":"")+'>km</option><option value="m"'+(r.unidad==="m"?" selected":"")+'>m</option></select></div>'+
@@ -3084,9 +3063,16 @@ function renderLoggerHTML(){
       const rt=ritmo(distDe(r.dist,r.unidad),durDe(r.min,r.seg));
       if(rt)h+='<div class="lastv">Ritmo: <b>'+rt+'</b></div>';
     }else{
-      h+='<div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div>';
+      const g=r.sug||{};
+      h+='<div class="fields"><div class="f"><label>Series</label><input type="number" inputmode="numeric" id="s'+i+'" placeholder="'+(g.series!=null?g.series:"")+'" value="'+(r.series!==""?r.series:"")+'"></div><div class="f"><label>Reps</label><input type="number" inputmode="numeric" id="r'+i+'" placeholder="'+(g.reps!=null?g.reps:"")+'" value="'+(r.reps!==""?r.reps:"")+'"></div><div class="f"><label>Kg</label><input type="number" inputmode="decimal" step="0.5" id="k'+i+'" placeholder="'+(g.kg!=null?g.kg:"")+'" value="'+(r.kg!==""?r.kg:"")+'"></div></div>';
     }
-    if(u&&cargaTxt(u))h+='<div class="lastv">Última vez ('+dShort(u.fecha)+'): <b>'+esc(cargaTxt(u))+'</b></div>';
+    /* El sugerido deja de ser un cartel y pasa a ser un botón: un toque lo
+       copia a los campos. Es el «tocá el valor anterior para adoptarlo» de las
+       apps de gimnasio, y es lo que hace que no prellenar no cueste trabajo. */
+    const sTxt=r.sug?cargaTxt(r.sug):"";
+    if(sTxt)h+='<button class="repetir" data-rep="'+i+'">↻ Repetir: <b>'+esc(sTxt)+'</b>'+
+      (r.sug.fecha?' <span class="rf">('+dShort(r.sug.fecha)+')</span>':'')+'</button>';
+    else if(u&&cargaTxt(u))h+='<div class="lastv">Última vez ('+dShort(u.fecha)+'): <b>'+esc(cargaTxt(u))+'</b></div>';
     const rec=recordDe(r.ex,m,mKey);
     if(rec)h+='<div class="lastv rec">🏆 Tu récord: <b>'+esc(txtRecord(m,rec.valor))+'</b> ('+dShort(rec.fecha)+')</div>';
     h+='</div>';});
@@ -3112,11 +3098,16 @@ function renderWellBody(){
   return h;
 }
 function renderFoodBody(){
-  let h='<div class="fhint">Escribí el alimento y poné las kcal, o tocá <b>✨</b> para estimarlas, <b>📷</b> para sacarle una foto o <b>🖼️</b> para elegir una que ya tengas. Sumalo con <b>＋</b> o <b>Enter</b>; si te lo olvidás, al guardar lo agregamos igual.</div>';
+  let h='<div class="fhint">Escribí el alimento y poné las kcal, o tocá <b>✨</b> para estimarlas, <b>📷</b> para sacarle una foto o <b>🖼️</b> para elegir una que ya tengas. Si sólo ponés las kcal, lo anotamos sin nombre.</div>';
   MOMENTS.forEach((m,mi)=>{
     let sub=mFood[m].reduce((a,it)=>a+(it.kcal!=null?Number(it.kcal):0),0);
     h+='<div class="meal"><div class="mh"><span>'+m+'<span class="pend" id="fpend'+mi+'">sin agregar ⚠️</span></span><span style="display:flex;align-items:center;gap:8px"><span class="mk">'+(sub>0?sub+" kcal":"")+'</span><button class="sugbtn" data-sug="'+mi+'">✨ ideas</button></span></div>';
     h+='<div class="sugbox'+(sugAbierta===mi?" show":"")+'" id="sugbox'+mi+'">'+renderSugerenciasHTML(mi)+'</div>';
+    // Sólo cuando ese momento está vacío: una vez que empezaste a cargar, el
+    // botón estorba más de lo que ayuda.
+    if(!mFood[m].length){const uc=ultimaComida(m);
+      if(uc)h+='<button class="repetir" data-repcom="'+mi+'">↻ Igual que el '+dShort(uc.fecha)+': <b>'+
+        esc(uc.items.map(x=>x.descripcion).join(", ").slice(0,70))+'</b></button>';}
     mFood[m].forEach((it,ii)=>{h+='<div class="fitem"><span>'+esc(it.desc)+'</span><span style="display:flex;gap:8px;align-items:center"><input type="number" class="fkin" id="fki'+mi+'_'+ii+'" inputmode="numeric" placeholder="kcal" value="'+(it.kcal!=null?it.kcal:"")+'" aria-label="Calorías de '+escA(it.desc)+'"><button class="rmv" data-frm="'+mi+'_'+ii+'">✕</button></span></div>';});
     h+='<div class="faddwrap"><input type="text" id="fad'+mi+'" placeholder="Agregar alimento / bebida…" autocomplete="off"><div class="suggest" id="fsug'+mi+'"></div></div>';
     h+='<div class="faddrow"><input type="number" class="k" id="fak'+mi+'" inputmode="numeric" placeholder="kcal">'+
@@ -3329,21 +3320,59 @@ function modoSiguiente(m){const i=MODOS.findIndex(x=>x[0]===m);return MODOS[(i+1
 function modoDef(m){return MODOS.find(e=>e[0]===m)||MODOS[0];}
 function modoNombre(m){return modoDef(m)[1];}
 function modoEtiqueta(m){const x=modoDef(m);return ico(x[2])+x[1];}
+/* LA SUGERENCIA NO ES CONTENIDO, Y ESTO ARREGLA UN DEFECTO.
+   Hasta el 7/11/2026 esta función llenaba series, reps y kilos con los de la
+   última vez. Como conDato() guarda cualquier renglón que tenga algún valor,
+   abrir un día con una rutina de seis ejercicios, hacer cuatro y tocar
+   «Guardar día» guardaba los seis — dos de ellos con los números de la semana
+   pasada, como si se hubieran hecho.
+   Ahora los campos arrancan vacíos y lo sugerido vive en `sug`, que se pinta
+   como marcador de posición y se copia con un toque. Sólo se guarda lo que la
+   persona completó. */
+/* Lo que trae la rutina pisa a lo de la última vez, pero sigue siendo una
+   SUGERENCIA: entra en `sug`, no en los campos. Una rutina dice lo que había
+   que hacer, no lo que se hizo. */
+function sugDeRutina(fila,e){
+  const md=fila.modo||"peso";
+  const s=fila.sug||{modo:md};s.modo=md;
+  if(md==="tiempo"&&e.duracion_seg!=null)s.duracion_seg=e.duracion_seg;
+  if(md==="distancia"){
+    if(e.distancia_m!=null)s.distancia_m=e.distancia_m;
+    if(e.duracion_seg!=null)s.duracion_seg=e.duracion_seg;
+    if(e.vueltas!=null)s.vueltas=e.vueltas;
+  }
+  if(md==="peso"){
+    if(e.series!=null)s.series=e.series;
+    if(e.reps!=null)s.reps=e.reps;
+    if(e.kg!=null)s.kg=e.kg;
+  }
+  fila.sug=s;return fila;
+}
 function nuevaFila(nombre,modo){
   const md=modo||modoDe(nombre),u=ultimaCarga(nombre,mKey);
   const mismo=(u&&(u.modo||"peso")===md)?u:null;
-  const base={ex:nombre,modo:md,series:"",reps:"",kg:"",min:"",seg:"",dist:"",unidad:"km",vueltas:""};
-  if(md==="tiempo"){const ms=minSeg(mismo?mismo.duracion_seg:0);base.min=ms.min;base.seg=ms.seg;return base;}
-  if(md==="distancia"){
-    const de=distAEdit(mismo?mismo.distancia_m:0);base.dist=de.valor;base.unidad=de.unidad;
-    const ms=minSeg(mismo?mismo.duracion_seg:0);base.min=ms.min;base.seg=ms.seg;
-    base.vueltas=(mismo&&mismo.vueltas!=null)?mismo.vueltas:"";
-    return base;
+  return {ex:nombre,modo:md,series:"",reps:"",kg:"",min:"",seg:"",dist:"",unidad:"km",vueltas:"",
+          sug:mismo?{modo:md,series:mismo.series,reps:mismo.reps,kg:mismo.kg,
+                     duracion_seg:mismo.duracion_seg,distancia_m:mismo.distancia_m,
+                     vueltas:mismo.vueltas,fecha:mismo.fecha}:null};
+}
+/* Copia la sugerencia a los campos. Es el «tocá el valor anterior para
+   adoptarlo» que usan las apps de gimnasio: el caso frecuente —hacer lo mismo
+   que la vez pasada— cuesta un toque y no miente. */
+function repetirSugerencia(i){
+  const r=logRows[i];if(!r||!r.sug)return;
+  const s=r.sug,md=r.modo||"peso";
+  if(md==="tiempo"){const ms=minSeg(s.duracion_seg);r.min=ms.min;r.seg=ms.seg;}
+  else if(md==="distancia"){
+    const de=distAEdit(s.distancia_m);r.dist=de.valor;r.unidad=de.unidad;
+    const ms=minSeg(s.duracion_seg);r.min=ms.min;r.seg=ms.seg;
+    r.vueltas=s.vueltas!=null?s.vueltas:"";
+  }else{
+    r.series=s.series!=null?s.series:"";
+    r.reps=s.reps!=null?s.reps:"";
+    r.kg=s.kg!=null?s.kg:"";
   }
-  base.series=(mismo&&mismo.series!=null)?mismo.series:"";
-  base.reps=(mismo&&mismo.reps!=null)?mismo.reps:"";
-  base.kg=(mismo&&mismo.kg!=null)?mismo.kg:"";
-  return base;
+  renderModal();
 }
 function renderExSuggest(qRaw){
   const q=(qRaw||"").trim(),box=el("exSuggest");if(!box)return;
@@ -3382,23 +3411,48 @@ function renderFoodSuggest(mi,qRaw){
   let list=foodCatalog().filter(f=>normTxt(f.desc).includes(normTxt(q))).slice(0,6);
   let h=list.map(f=>'<div data-d="'+escA(f.desc)+'" data-k="'+(f.kcal!=null?f.kcal:"")+'"><span>'+esc(f.desc)+'</span><span class="k">'+(f.kcal!=null?f.kcal+" kcal":"—")+'</span></div>').join("");
   box.innerHTML=h;box.className="suggest"+(h?" show":"");
-  /* Tocar una sugerencia PRECARGA los campos, no agrega el alimento. Es el
-     patrón del buscador de ejercicios, donde elegir uno trae las series y los
-     kilos de la última vez y los deja editables. Antes acá se insertaba el
-     renglón terminado con las kcal guardadas y no había dónde ajustarlo.
-     Si después se olvidan de tocar ＋, flushPendingFood() lo rescata al guardar. */
+  /* Tocar una sugerencia AGREGA el alimento, en un toque.
+     El 1/11 esto se cambió a precargar los campos, buscando poder corregir las
+     calorías. Resolvió eso y abrió algo peor: un estado intermedio donde la
+     comida parece puesta y no está. Lo que hacía falta era la edición del
+     renglón —que se hizo el mismo día y se queda—, no cambiar el alta.
+     Con las dos cosas juntas: un toque para agregar, y se corrige ahí mismo. */
+  box.addEventListener("mousedown",ev=>ev.preventDefault());   // que no dispare el blur
   box.querySelectorAll("div").forEach(dv=>dv.onclick=()=>{syncModal();
-    const di=el("fad"+mi),ki=el("fak"+mi);
-    if(di)di.value=dv.getAttribute("data-d");
-    if(ki)ki.value=dv.getAttribute("data-k");
-    box.className="suggest";box.innerHTML="";
-    markPending(mi);
-    if(ki&&ki.focus)ki.focus();});
+    const d=dv.getAttribute("data-d"),k=dv.getAttribute("data-k");
+    const di=el("fad"+mi);if(di)di.value="";
+    const marco=sumarAlimento(MOMENTS[mi],d,k!==""&&k!=null?parseFloat(k):null);
+    renderModal();if(marco)avisoAlcohol(d);});
+}
+/* Lo que se cargó en ese momento del día la última vez que se cargó algo.
+   La gente desayuna casi siempre lo mismo, y hoy hay que escribirlo todos los
+   días. Es lo que en otras apps se resuelve deslizando sobre la comida. */
+function ultimaComida(momento){
+  const fechas=Object.keys(comi).filter(f=>f<mKey).sort();
+  for(let i=fechas.length-1;i>=0;i--){
+    const its=(comi[fechas[i]]||[]).filter(x=>x.momento===momento);
+    if(its.length)return{fecha:fechas[i],items:its};
+  }
+  return null;
+}
+function repetirComida(mi){
+  const m=MOMENTS[mi],u=ultimaComida(m);
+  if(!u){toast("Todavía no cargaste nada en "+m);return;}
+  syncModal();
+  let alc=false;
+  u.items.forEach(it=>{if(sumarAlimento(m,it.descripcion,it.kcal!=null?it.kcal:null))alc=true;});
+  renderModal();
+  toast("Sumé "+u.items.length+(u.items.length===1?" alimento de":" alimentos de")+" "+dShort(u.fecha)+
+        (alc?" · marcamos alcohol":""));
 }
 function addFood(mi){
   const di=el("fad"+mi),ki=el("fak"+mi);
-  const desc=(di.value||"").trim();if(!desc){di.focus();return;}
-  const kcal=ki.value!==""?parseFloat(ki.value):null;
+  const kcal=(ki&&ki.value!=="")?parseFloat(ki.value):null;
+  /* Sólo el número, sin nombre: comiste algo que no querés describir. Antes
+     había que inventarle un nombre para poder anotar las calorías. */
+  let desc=(di.value||"").trim();
+  if(!desc&&kcal!=null)desc="Otras calorías";
+  if(!desc){di.focus();return;}
   delete mEst[mi];   // el supuesto era de esa comida, no de la siguiente
   syncModal();
   const marco=sumarAlimento(MOMENTS[mi],desc,kcal);
@@ -3734,6 +3788,7 @@ function attachModal(){
   document.querySelectorAll("[data-chips]").forEach(box=>{const which=box.dataset.chips;box.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{syncModal();if(which==="alc")mAlcTipo=c.dataset.v;else if(which==="flujo")mFlujoTipo=c.dataset.v;else mFumoTipo=c.dataset.v;renderModal();});});
   document.querySelectorAll("[data-emo]").forEach(box=>{const key=box.dataset.emo;box.querySelectorAll("button").forEach(bb=>bb.onclick=()=>{syncModal();const v=parseInt(bb.dataset.val);if(key==="energia")mEnergia=mEnergia===v?null:v;else if(key==="animo")mAnimo=mAnimo===v?null:v;else mSueno=mSueno===v?null:v;renderModal();});});
   document.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{syncModal();logRows.splice(parseInt(x.dataset.rm),1);renderModal();});
+  document.querySelectorAll("[data-rep]").forEach(x=>x.onclick=()=>{syncModal();repetirSugerencia(parseInt(x.dataset.rep));});
   document.querySelectorAll("[data-modo]").forEach(x=>x.onclick=()=>{syncModal();
     const r=logRows[parseInt(x.dataset.modo)];if(!r)return;
     const nuevo=modoSiguiente(r.modo||"peso");
@@ -3743,6 +3798,7 @@ function attachModal(){
     renderModal();});
   document.querySelectorAll("[data-frm]").forEach(x=>x.onclick=()=>{syncModal();const p=x.dataset.frm.split("_");mFood[MOMENTS[+p[0]]].splice(+p[1],1);renderModal();});
   document.querySelectorAll("[data-fadd]").forEach(x=>x.onclick=()=>addFood(+x.dataset.fadd));
+  document.querySelectorAll("[data-repcom]").forEach(x=>x.onclick=()=>repetirComida(+x.dataset.repcom));
   // Los botones del recuadro de estimación: tras un renderModal() vienen sin
   // handler, porque estimacionHTML() sólo devuelve el marcado.
   document.querySelectorAll("[data-esc]").forEach(b=>b.onclick=()=>{
@@ -3769,6 +3825,19 @@ function attachModal(){
   MOMENTS.forEach((m,mi)=>{const fi=el("fad"+mi);if(fi){
     fi.oninput=()=>{renderFoodSuggest(mi,fi.value);markPending(mi);};
     fi.onfocus=()=>renderFoodSuggest(mi,fi.value);
+    /* Al irse del bloque de esa comida, lo escrito se agrega solo. Antes
+       quedaba en un limbo que sólo rescataba «Guardar día».
+       `relatedTarget` dice adónde fue el foco: si sigue dentro de la misma
+       comida —el campo de kcal, el ✨, el 📷, el ＋— todavía está cargando y no
+       hay que tocar nada. */
+    fi.onblur=(ev)=>{
+      if(!(fi.value||"").trim())return;
+      try{
+        const dest=ev&&ev.relatedTarget;
+        if(dest&&dest.closest&&fi.closest&&dest.closest(".meal")===fi.closest(".meal"))return;
+      }catch(e){}
+      addFood(mi);
+    };
     fi.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
     const ki=el("fak"+mi);if(ki)ki.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFood(mi);}};
     markPending(mi);
